@@ -14,6 +14,8 @@ Explore magical wilds, befriend glowing creatures, bring them home to your sanct
 
 **Giants:** Crystal Lake and Thunder Plains (unlocked through Professor Hoot's quests) are home to the Glimmerwhale, Mossback Titan and Skyhorn. Giants need a Grand habitat.
 
+**Play together (online co-op):** tap **Together**. One player taps *Host my sanctuary* and gets a 4-letter code; the other types the code to join. Both explore, build, shop, take on quests and befriend creatures in the host's sanctuary (coins, creatures and habitats are shared; the host's device keeps the save). When both are in the same wild area they see the same creatures. Inside the Claude app this uses the artifact's live room; on GitHub Pages it connects peer to peer with PeerJS.
+
 **Tutorial:** first-time players get a guided intro from Ranger Fern. Replay it any time from the ranger board.
 
 **Play:** open `index.html`, or the GitHub Pages site for this repo.

@@ -175,6 +175,12 @@ details .row{margin-top:8px}
 #stage.building #toast{top:auto;bottom:calc(var(--bbh,150px) + 10px)}
 #stage.building.tut #toast{bottom:calc(var(--bbh,150px) + 10px)}
 .hbtn.build{color:#10220f;background:#86e894;border-color:#e6ffe6}
+.hbtn.coop{color:#2a1030;background:#f6a8c4;border-color:#ffe6f0}
+.tin{font:600 18px/1 var(--f-body);color:var(--ink);background:#0a0d33;border:2px solid var(--btn-edge);border-radius:4px;padding:8px 10px;width:100%;box-sizing:border-box;min-width:0}
+.tin:focus{outline:2px solid var(--gold);outline-offset:1px}
+.code-in{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-family:var(--f-display);font-size:20px}
+.bigcode{font:700 34px/1 var(--f-display);letter-spacing:.2em;color:var(--gold);text-align:center;padding:8px 0;text-shadow:0 3px 0 #3a1e50}
+.who2{display:flex;gap:8px;align-items:center}.who2 .dot{width:10px;height:10px;border-radius:50%;flex:none}
 @media (max-width:560px),(pointer:coarse){.keys{display:none}}
 @media (max-width:380px){#deck{padding:0 14px}#dpad{width:94px;height:94px}.btns{width:116px}}
 @media (prefers-reduced-motion:reduce){#toast,#dpad,.pb{transition:none}}
@@ -188,7 +194,9 @@ details .row{margin-top:8px}
     <span class="chip" title="Berries"><img id="icBerry" alt=""><span id="berries">0</span></span>
     <span class="chip" id="compChip" hidden><img id="icComp" alt=""><small id="compName"></small></span>
     <span class="spacer"></span>
+    <span class="chip" id="coopChip" hidden><small id="coopName"></small></span>
     <button class="hbtn build" id="btnBuild" type="button" hidden>Build</button>
+    <button class="hbtn coop" id="btnCoop" type="button">Together</button>
     <button class="hbtn" id="btnBook" type="button">Journal</button>
     <button class="hbtn" id="btnMus" type="button" aria-pressed="true">Music</button>
     <button class="hbtn" id="btnSnd" type="button" aria-pressed="true">Sound</button>
@@ -285,6 +293,9 @@ const pRows=(head,f)=>[...P_HEAD[head],...P_BODY,...P_LEGS[f]];
 const SPR_P={down:[0,1].map(f=>makeSprite(pRows('down',f))),up:[0,1].map(f=>makeSprite(pRows('up',f))),
   right:[0,1].map(f=>makeSprite(pRows('side',f))),left:[0,1].map(f=>makeSprite(pRows('side',f),null,true,true))};
 
+const SPR_P2={};for(const d of['down','up'])SPR_P2[d]=[0,1].map(f=>makeSprite(pRows(d,f),{G:'#c84a7a',g:'#f6a8c4',b:'#b49af4',r:'#ffd860'}));
+SPR_P2.right=[0,1].map(f=>makeSprite(pRows('side',f),{G:'#c84a7a',g:'#f6a8c4',b:'#b49af4',r:'#ffd860'}));SPR_P2.left=[0,1].map(f=>makeSprite(pRows('side',f),{G:'#c84a7a',g:'#f6a8c4',b:'#b49af4',r:'#ffd860'},true,true));
+
 const VIS_ROWS=[["..HHHH..",".HHHHHH.",".HskskH.","..ssss..",".TTTTTT.","sTTTTTTs",".TTTTTT.",".DDDDDD.",".DD..DD.",".kk..kk."],
                 ["..HHHH..",".HHHHHH.",".HskskH.","..ssss..",".TTTTTT.","sTTTTTTs",".TTTTTT.",".DDDDDD.","..DD.DD.","..kk.kk."]];
 const VIS=[];{const hair=['#3a2418','#e8c060','#9a3a20','#1a1424','#d8d4e8','#6a3a8a'],shirt=['#e8553a','#5ab4f0','#ffd860','#b49af4','#6cc24a','#f6a8c4','#ff9a3a'],pants=['#3a4a8a','#5a3824','#2a2a3a','#4a6a3a'];
@@ -357,7 +368,7 @@ function migrate(s){if(!s)return s;
   if(s.v===2){s.v=3;s.zoo.w=s.zoo.w||26;s.pens.forEach(p=>{p.w=6;p.h=4;p.size='std';});s.home=defaultHome();s.inv=starterInv();s.unlocks={};s.quests={};
     s.unlocked.lake=false;s.unlocked.plains=false;s.newTown=true;}
   return s;}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function save(){if(NET.role==='guest')return;try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 function load(){try{const s=migrate(JSON.parse(localStorage.getItem(KEY)));if(s&&s.v===3)return s;}catch(e){}return null;}
 
 let state,scene='zoo',world=null,zooWorld=null,townWorld=null,homeWorld=null,wild=null,companion=null;
@@ -688,7 +699,7 @@ function vNext(v){const W=zooWorld;const nb=[[1,0],[-1,0],[0,1],[0,-1]].map(([a,
   if(v.leave){let best=null,bd=1e9;for(const n of nb){const d=W.dist[n[1]*ZW+n[0]];if(d<bd){bd=d;best=n;}}return best;}
   let o=nb.filter(([a,b])=>!(a===v.pi&&b===v.pj));if(!o.length)o=nb;const ws=o.map(([a,b])=>v.seen.has(b*ZW+a)?1:4);
   let r=R()*ws.reduce((x,y)=>x+y,0);for(let k=0;k<o.length;k++)if((r-=ws[k])<=0)return o[k];return o[0];}
-function payTip(v,amt){state.coins+=amt;state.stats.earned+=amt;if(wild)wild.homeCoins+=amt;
+function payTip(v,amt){if(NET.role!=='guest'){state.coins+=amt;state.stats.earned+=amt;}if(wild)wild.homeCoins+=amt;
   addP({x:v.x,y:v.y-18,vy:-14,life:1.3,max:1.3,kind:'coin',val:amt,scene:'zoo'});if(scene==='zoo')sfx('coin');}
 function vArrive(v){const W=zooWorld,k=v.j*ZW+v.i;v.seen.add(k);if(v.leave&&W.dist[k]===0){v.gone=true;return;}
   if(!titleOpen){for(const id of W.penAdj[k]||[]){if(v.paid.has(id))continue;v.paid.add(id);const val=penValue(penById(id));if(val>0){payTip(v,Math.max(1,Math.round(val*.5*charmMult())));v.pause=1.2;}}
@@ -698,7 +709,7 @@ function updVisitor(v,dt){if(!isPath(v.i,v.j)||!isPath(v.ti,v.tj)){v.gone=true;p
   const tx=v.ti*16+8+v.ox,ty=v.tj*16+12+v.oy,dx=tx-v.x,dy=ty-v.y,d=Math.hypot(dx,dy),s=17*dt;v.anim+=dt;
   if(d<=s){v.x=tx;v.y=ty;v.i=v.ti;v.j=v.tj;vArrive(v);}else{v.x+=dx/d*s;v.y+=dy/d*s;}}
 function simHome(dt){
-  if(!titleOpen)for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c&&!c.away)c.happy=Math.max(0,c.happy-.3*dt);}
+  if(!titleOpen&&NET.role!=='guest')for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c&&!c.away)c.happy=Math.max(0,c.happy-.3*dt);}
   const W=zooWorld;let reach=0;for(const p of state.pens)if(W.penReach.has(p.id)&&penValue(p)>0)reach++;
   visitorT-=dt;if(visitorT<=0){visitorT=Math.max(2,7-reach*.5-W.charm*.03)*(.7+R()*.6);if(reach>0&&visitors.length<16)spawnVisitor();}
   for(const v of visitors)updVisitor(v,dt);visitors=visitors.filter(v=>!v.gone);}
@@ -726,6 +737,9 @@ function placeProblem(t,i,j){if(scene==='home')return homeProblem(t,i,j);const p
   if(!freeTile(i,j))return'That spot is taken.';if(t.id!=='path'&&pt.i===i&&pt.j===j)return'You are standing there!';return null;}
 function setPath(i,j,v){const k=j*ZW+i,s=state.zoo.path;state.zoo.path=s.slice(0,k)+v+s.slice(k+1);}
 function applyTool(i,j,quiet){const t=toolDef(tool);if(!t)return false;
+  if(NET.role==='guest'){if(t.id!=='bulldoze'){if(scene==='zoo'&&locked(t)){if(!quiet)toast(`Get the ${t.name} at Bram's Builders in town.`);return false;}
+      const why=placeProblem(t,i,j);if(why){if(!quiet)toast(why);return false;}if(scene==='zoo'&&state.coins<toolCost(t)){if(!quiet)toast(`You need ${toolCost(t)} coins for that.`);return false;}}
+    sendCmd('tool',{sc:scene,tool,b:biomeSel,i,j});sfx('blip');sparks(i*16+8,j*16+8,4,'#fff6b0');return true;}
   if(scene==='home')return homeApply(t,i,j,quiet);
   if(t.id==='bulldoze')return bulldoze(i,j,quiet);
   if(locked(t)){if(!quiet)toast(`Get the ${t.name} at Bram's Builders in town.`);return false;}
@@ -891,6 +905,7 @@ function npcBlock(id){const N=NPCINFO[id],{act,offer}=npcQuest(id);let say,extra
   else say=N.idle[Math.floor(Date.now()/9000)%N.idle.length];
   return`<div class="card"><img class="spr" src="${npcPortrait(id)}" alt=""><div class="cinfo"><div class="nm">${N.short}</div><p class="say">“${say}”</p></div></div>${extra}`;}
 function npcAct(a,d){const q=QUESTS.find(x=>x.id===d.q);if(!q)return false;
+  if(NET.role==='guest'&&(a==='accept'||a==='turnin')){if(a==='turnin'&&!q.ready())return false;sendCmd('quest',{a,q:q.id});sfx(a==='turnin'?'unlock':'blip');toast(a==='accept'?`New quest: ${q.title}`:q.thanks);return true;}
   if(a==='accept'){state.quests[q.id]='active';sfx('blip');toast(`New quest: ${q.title}`);if(q.onAccept)q.onAccept();save();return true;}
   if(a==='turnin'&&q.ready()){if(q.pay)q.pay();q.give();state.quests[q.id]='done';sfx('unlock');toast(q.thanks);toast(`Quest complete! You got ${q.reward}.`);buildZoo();save();return true;}return false;}
 function npcPanel(id){openPanel(()=>head(NPCINFO[id].name)+npcBlock(id),(a,d)=>{if(npcAct(a,d))refreshPanel(true);});}
@@ -920,7 +935,8 @@ function shopPanel(id){const B=BUILDINGS.find(b=>b.id===id);
   const render=()=>head(B.name)+npcBlock(HOST[id])+`<h3>For sale</h3><div class="list">${shopItems(id).map((it,k)=>{const own=it.owned&&it.owned(),blocked=it.need&&!state.unlocks[it.need],can=!own&&!blocked&&state.coins>=it.cost;
     return`<button class="pbtn" type="button" data-act="buy" data-k="${k}" ${can?'':'disabled'}>${it.icon?`<img class="spr sm" src="${it.icon}" alt="">`:''}<span class="grow"><b>${it.name}</b><small>${own?'Owned':blocked?'Buy the one above first':it.desc}</small></span><span class="cost">${own?'✓':it.cost}</span></button>`;}).join('')}</div>`;
   openPanel(render,(a,d)=>{if(npcAct(a,d)){refreshPanel(true);return;}
-    if(a==='buy'){const it=shopItems(id)[+d.k];if(!it||state.coins<it.cost||(it.owned&&it.owned()))return;state.coins-=it.cost;it.buy();sfx('unlock');toast(`Bought ${it.name}!`);save();refreshPanel();}});}
+    if(a==='buy'){if(G('buy',{shop:id,k:+d.k})){sfx('unlock');return;}shopBuy(id,+d.k);refreshPanel();}});}
+function shopBuy(id,k){const it=shopItems(id)[k];if(!it||state.coins<it.cost||(it.owned&&it.owned()))return;state.coins-=it.cost;it.buy();sfx('unlock');toast(`Bought ${it.name}!`);save();}
 function trailPanel(z){const Z=ZONES[z];if(state.unlocked[z]){gatePanel(z);return;}
   openPanel(()=>head(`Trail to ${Z.name}`)+`<p>The trail is overgrown and you don't know the way yet.</p><p class="muted">${Z.quest?'Professor Hoot in the town square might have a map.':`You can unlock it at the ranger board in your sanctuary for ${Z.cost} coins.`}</p><button class="pbtn go" type="button" data-act="close" data-autofocus>OK</button>`,()=>{});}
 function drawBuilding(b){const x=b.x*16,y=b.y*16,w=b.w*16,h=b.h*16,roofH=Math.round(h*.45),wy=y+roofH,wh=h-roofH;
@@ -1009,11 +1025,11 @@ function homeApply(t,i,j,quiet){
   const why=homeProblem(t,i,j);if(why){if(!quiet)toast(why);return false;}
   state.home.items.push({f:t.furn,i,j});sfx('blip');sparks((i+FURN[t.furn].w/2)*16,(j+FURN[t.furn].h/2)*16,8,'#fff6b0');buildHome();save();renderBuildbar();return true;}
 function homeInfo(t){if(!t)return'';if(t.id==='bulldoze')return t.info;const Fu=FURN[t.furn];return`<b>${Fu.name}</b> · ${homeAvail(t.furn)} left to place${Fu.wall?' · goes on the wall':''}`;}
-function cycleStyle(kind){const H=state.home,list=H.styles[kind];if(list.length<2){toast(`Buy more ${kind==='wall'?'wallpaper':'floors'} at Pip's Home Goods in town.`);return;}
+function cycleStyle(kind){if(G('style',{k:kind}))return;const H=state.home,list=H.styles[kind];if(list.length<2){toast(`Buy more ${kind==='wall'?'wallpaper':'floors'} at Pip's Home Goods in town.`);return;}
   H[kind]=list[(list.indexOf(H[kind])+1)%list.length];sfx('blip');buildHome();save();renderBuildbar();}
 function furnCanvas(f){const Fu=FURN[f],c=document.createElement('canvas');c.width=Fu.w*16;c.height=Fu.h*16+16;Fu.draw(c.getContext('2d'),0,16);return c;}
 function drawFurn(it){const Fu=FURN[it.f];if(Fu)Fu.draw(ctx,it.i*16,it.j*16);}
-function rest(){const now=Date.now();if(now-(state.restAt||0)<90000){toast("You're not sleepy yet. Come back in a little while.");return;}state.restAt=now;sleepFx=2.4;
+function rest(remote){if(G('rest',{})){sleepFx=2.4;sfx('pet');toast('What a cozy nap!');return;}const now=Date.now();if(now-(state.restAt||0)<90000){toast("You're not sleepy yet. Come back in a little while.");return;}state.restAt=now;if(!remote)sleepFx=2.4;
   let n=0;for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c){c.happy=Math.min(100,c.happy+25);n++;}}
   toast(`What a cozy nap! ${n} creature${n===1?'':'s'} feel happier too.`);sfx('pet');save();}
 function playPiano(it){ensureAudio();if(AC&&!muted){const sc=[0,2,4,7,9,12,14,16];let t=AC.currentTime+.02;for(let k=0;k<6;k++){INST.musicbox(t,mtof(64+sc[(R()*sc.length)|0]),.09,.4,AC.destination);t+=.18;}}
@@ -1026,15 +1042,15 @@ function startExpedition(zk,cid,opts={}){
   const sparksL=[];for(let k=0;k<5;k++){const idx=gen.reach[(R()*gen.reach.length)|0];sparksL.push({x:(idx%gen.W.w)*16+8,y:((idx/gen.W.w)|0)*16+12,big:false});}
   for(const[i,j]of gen.islands)sparksL.push({x:i*16+8,y:j*16+12,big:true});
   if(zk==='meadow'&&state.quests.locket==='active'&&!(state.inv.locket>0)){for(let t=0;t<60;t++){const idx=gen.reach[(R()*gen.reach.length)|0],x=(idx%gen.W.w)*16+8,y=((idx/gen.W.w)|0)*16+12;if(Math.hypot(x-gen.spawn.x,y-gen.spawn.y)>140){sparksL.push({x,y,locket:true});break;}}}
-  let clover=false;if(opts.clover&&(state.inv.clover||0)>0){state.inv.clover--;clover=true;}
+  let clover=false;if(opts.clover&&(state.inv.clover||0)>0){state.inv.clover--;sendCmd('inv',{k:'clover',n:-1});clover=true;}
   wild={zone:zk,W:gen.W,water:gen.water,bushes:gen.bushes,reach:gen.reach,spawn:gen.spawn,sparks:sparksL,crs:[],spawnT:.3,haul:{caught:[],berries:0,coins:0},homeCoins:0,clover,from};
-  companion=null;if(cid){const c=getC(cid);if(c){c.away=true;companion={cid,sp:c.sp,x:gen.spawn.x-14,y:gen.spawn.y+18,face:1,moving:false,trail:[],fx:0};}}
+  companion=null;if(cid){const c=getC(cid);if(c){c.away=true;sendCmd('away',{cid,v:1});companion={cid,sp:c.sp,x:gen.spawn.x-14,y:gen.spawn.y+18,face:1,moving:false,trail:[],fx:0};}}
   world=gen.W;scene='wild';ambient=[];player.x=gen.spawn.x;player.y=gen.spawn.y+20;player.face='down';snapCam();
   for(let k=0;k<3;k++)spawnWildCr(true);
   updCompChip();toast(ZONES[zk].name+(companion?` with ${SPECIES[companion.sp].name}`:'')+(clover?' · lucky clover!':''));sfx('unlock');
 }
 function returnHome(){
-  if(companion){const c=getC(companion.cid);if(c)c.away=false;}
+  if(companion){const c=getC(companion.cid);if(c)c.away=false;sendCmd('away',{cid:companion.cid,v:0});}
   const h=wild.haul,n=h.caught.length,home=wild.homeCoins,from=wild.from||{scene:'zoo'};
   toast(`Back! ${n?`${n} new friend${n>1?'s':''}`:'No new friends this trip'} · +${h.berries} berries · +${h.coins+home} coins`);
   companion=null;wild=null;ambient=[];updCompChip();
@@ -1052,26 +1068,30 @@ function spawnWildCr(first){
   for(let t=0;t<50;t++){const idx=pool[(R()*pool.length)|0],x=(idx%wild.W.w)*16+8,y=((idx/wild.W.w)|0)*16+12,d=Math.hypot(x-player.x,y-player.y);
     if(d<(first?60:100)||d>(S.swim?320:240))continue;if(wild.crs.some(c=>Math.hypot(c.x-x,c.y-y)<(S.huge?60:30)))continue;
     if(S.huge&&!S.swim&&[[-1,0],[1,0],[0,-1]].some(([a,b])=>wild.W.solid[(((idx/wild.W.w)|0)+b)*wild.W.w+(idx%wild.W.w)+a]))continue;
-    wild.crs.push({sp:k,x,y,vx:0,vy:0,t:R()*2,face:R()<.5?1:-1,moving:false,fx:R()});
+    wild.crs.push({u:++crSeq,sp:k,x,y,vx:0,vy:0,t:R()*2,face:R()<.5?1:-1,moving:false,fx:R()});
     if(S.rar>=2&&!first)toast(S.huge?'The ground shakes… something ENORMOUS is nearby!':S.rar===3?'The ground rumbles… something legendary is near!':'A rare shimmer… something special is nearby!');return;}
 }
 const waterAt=(x,y)=>{const W=wild.W,i=Math.floor(x/16),j=Math.floor(y/16);return i>=0&&j>=0&&i<W.w&&j<W.h&&W.m[j*W.w+i]===T.WATER;};
 function moveCr(c,dx,dy){const S=SPECIES[c.sp];if(S.swim){const nx=c.x+dx,ny=c.y+dy;if(waterAt(nx-10,ny-4)&&waterAt(nx+10,ny-4)&&waterAt(nx,ny)&&waterAt(nx,ny-10)){c.x=nx;c.y=ny;return false;}return true;}
   return moveEnt(c,dx,dy,S.huge?9:4,S.huge?5:4,false);}
-function pickBush(b){const n=has('forage')?4:2;state.berries+=n;wild.haul.berries+=n;b.has=false;b.t=has('regrow')?3:40;
+function pickBush(b){const n=has('forage')?4:2;state.berries+=n;netGain(0,n);wild.haul.berries+=n;b.has=false;b.t=has('regrow')?3:40;
   for(let k=0;k<n;k++)addP({x:b.i*16+8+(R()-.5)*8,y:b.j*16+6,vx:(R()-.5)*20,vy:-30-R()*15,g:60,life:.8,max:.8,kind:'berry'});sfx('berry');}
 function digSpark(sp){wild.sparks.splice(wild.sparks.indexOf(sp),1);
-  if(sp.locket){addInv('locket',1);sparks(sp.x,sp.y-4,16,'#ff9ac0');sfx('unlock');toast("You found Nell's locket! Bring it to her in Willowbrook.");return;}
-  const amt=(sp.big?40:8+((R()*8)|0))*(has('dig')?2:1);state.coins+=amt;wild.haul.coins+=amt;
+  if(sp.locket){addInv('locket',1);sendCmd('inv',{k:'locket',n:1});sparks(sp.x,sp.y-4,16,'#ff9ac0');sfx('unlock');toast("You found Nell's locket! Bring it to her in Willowbrook.");return;}
+  const amt=(sp.big?40:8+((R()*8)|0))*(has('dig')?2:1);state.coins+=amt;netGain(amt,0);wild.haul.coins+=amt;
   addP({x:sp.x,y:sp.y-10,vy:-16,life:1.3,max:1.3,kind:'coin',val:amt});sparks(sp.x,sp.y-4,12,'#ffe27a');sfx('treasure');}
 function updWild(dt){
   for(const b of wild.bushes)if(!b.has){b.t-=dt;if(b.t<=0)b.has=true;}
-  wild.spawnT-=dt;if(wild.spawnT<=0){wild.spawnT=2.5;if(wild.crs.length<5)spawnWildCr(false);}
+  if(wild.follow&&time-wild.followT>2.5)wild.follow=false;
+  if(!wild.follow){wild.spawnT-=dt;if(wild.spawnT<=0){wild.spawnT=2.5;if(wild.crs.length<5)spawnWildCr(false);}}
   for(const c of wild.crs){if(catchG&&catchG.cr===c){c.moving=false;continue;}const S=SPECIES[c.sp];
+    if(c.hold>time){c.moving=false;continue;}
+    if(wild.follow&&c.tx!=null){const dx=c.tx-c.x,dy=c.ty-c.y;c.x+=dx*Math.min(1,dt*8);c.y+=dy*Math.min(1,dt*8);c.moving=Math.hypot(dx,dy)>.4;if(Math.abs(dx)>.3)c.face=dx>0?1:-1;
+      if((state.dex[c.sp]||0)<1&&Math.abs(c.x-player.x)<VW/2&&Math.abs(c.y-player.y)<VH/2){state.dex[c.sp]=1;sendCmd('dex',{sp:c.sp,st:1});toast(`New sighting: ${S.name}!`);}continue;}
     c.t-=dt;if(c.t<=0){if(R()<.35){c.vx=c.vy=0;c.t=1+R()*2;}else{const a=R()*6.28,sp=S.huge?6+R()*6:10+R()*12;c.vx=Math.cos(a)*sp;c.vy=Math.sin(a)*sp;c.t=1+R()*2.5;}}
     c.moving=!!(c.vx||c.vy);if(c.moving){if(moveCr(c,c.vx*dt,c.vy*dt))c.t=0;if(Math.abs(c.vx)>1)c.face=c.vx>0?1:-1;}
     c.fx-=dt;if(c.fx<=0){c.fx=.35;if(S.rar>=2)sparks(c.x+(R()-.5)*(S.huge?40:12),c.y-6-R()*(S.huge?30:10),1,'#fff6b0');}
-    if((state.dex[c.sp]||0)<1&&Math.abs(c.x-player.x)<VW/2&&Math.abs(c.y-player.y)<VH/2){state.dex[c.sp]=1;toast(`New sighting: ${S.name}!`);}}
+    if((state.dex[c.sp]||0)<1&&Math.abs(c.x-player.x)<VW/2&&Math.abs(c.y-player.y)<VH/2){state.dex[c.sp]=1;sendCmd('dex',{sp:c.sp,st:1});toast(`New sighting: ${S.name}!`);}}
   wild.crs=wild.crs.filter(c=>!c.gone&&(Math.hypot(c.x-player.x,c.y-player.y)<(SPECIES[c.sp].swim?400:300)||(catchG&&catchG.cr===c)));
   if(has('magnet')){for(const b of wild.bushes)if(b.has&&Math.hypot(b.i*16+8-player.x,b.j*16+8-player.y)<34)pickBush(b);for(const sp of wild.sparks.slice())if(Math.hypot(sp.x-player.x,sp.y-player.y)<34)digSpark(sp);}
   if(companion){const tr=companion.trail,tg=tr.length>12?tr[tr.length-12]:null;
@@ -1084,16 +1104,16 @@ function addCreature(sp){const c={id:state.nextId++,sp,happy:70,petT:0};state.ow
 
 /* ================= CATCHING ================= */
 function startCatch(c){const S=SPECIES[c.sp],rr=RAR[S.rar],calm=has('calm');const zw=Math.min(.5,rr.zone*(calm?1.5:1));
-  catchG={cr:c,pos:0,dir:1,speed:rr.speed*(calm?.85:1),zs:.1+R()*(.8-zw),zw,tries:2+(S.rar>=2?1:0),res:null,flash:0,miss:0};c.vx=c.vy=0;sfx('blip');}
+  catchG={cr:c,pos:0,dir:1,speed:rr.speed*(calm?.85:1),zs:.1+R()*(.8-zw),zw,tries:2+(S.rar>=2?1:0),res:null,flash:0,miss:0};c.vx=c.vy=0;if(wild.follow&&c.u)sendCmd('hold',{u:c.u});sfx('blip');}
 function updCatch(dt){const g=catchG;g.miss=Math.max(0,g.miss-dt);if(g.res){g.flash-=dt;if(g.flash<=0)finishCatch();return;}
   g.pos+=g.dir*g.speed*dt;if(g.pos>1){g.pos=1;g.dir=-1;}if(g.pos<0){g.pos=0;g.dir=1;}}
 function catchPress(){const g=catchG;if(g.res)return;const hit=g.pos>=g.zs&&g.pos<=g.zs+g.zw;
   if(hit){g.res='win';g.flash=.7;sfx('catch');sparks(g.cr.x,g.cr.y-8,18,'#fff6b0');hearts(g.cr.x,g.cr.y-10,4);}
   else{g.tries--;if(g.tries<=0){g.res='lose';g.flash=.5;sfx('fail');}else{g.miss=.35;sfx('miss');g.zs=.1+R()*(.8-g.zw);}}}
 function finishCatch(){const g=catchG;catchG=null;const c=g.cr,S=SPECIES[c.sp];c.gone=true;
-  if(g.res==='win'){tutEv.caught=true;const first=(state.dex[c.sp]||0)<2;const pi=addCreature(c.sp);wild.haul.caught.push(c.sp);
-    toast(`${S.name} joined your sanctuary! ${pi>=0?'It moved into an empty habitat.':S.huge?'It needs a Grand habitat. For now it waits by the burrow.':'It is waiting in the burrow.'}`);if(first)toast(`New journal entry: ${S.name} · ${S.abName}`);save();}
-  else{poof(c.x,c.y-6);toast(`${S.name} slipped away.`);}}
+  if(g.res==='win'){tutEv.caught=true;const first=(state.dex[c.sp]||0)<2;const pi=NET.role==='guest'?(sendCmd(c.u&&wild.follow?'wcatch':'caught',{u:c.u,sp:c.sp}),-2):addCreature(c.sp);wild.haul.caught.push(c.sp);
+    toast(pi===-2?`${S.name} joined the sanctuary!`:`${S.name} joined your sanctuary! ${pi>=0?'It moved into an empty habitat.':S.huge?'It needs a Grand habitat. For now it waits by the burrow.':'It is waiting in the burrow.'}`);if(first)toast(`New journal entry: ${S.name} · ${S.abName}`);save();}
+  else{poof(c.x,c.y-6);if(wild.follow&&c.u)sendCmd('wflee',{u:c.u});toast(`${S.name} slipped away.`);}}
 
 /* ================= INTERACTION ================= */
 function findTarget(){const L=[];
@@ -1177,7 +1197,9 @@ function penPanel(i){
         if(!fits(b,p))return`<button class="pbtn" type="button" disabled>${img(b.sp,'spr sm')}<span class="grow"><b>${S.name}</b><small>Too big! Needs a Grand habitat.</small></span></button>`;
         return`<button class="pbtn" type="button" data-act="place" data-id="${b.id}">${img(b.sp,'spr sm')}<span class="grow"><b>${S.name}</b><small>${love?'<span class="good">Loves this habitat</span>':`Prefers ${BIOMES[ELEM[S.el].home].name}`} · appeal ${S.appeal}</small></span></button>`;}).join('')}</div>`
       :`<p class="muted">The burrow is empty. Befriend creatures in the wilds and they will move in.</p>`)+rebuild;};
-  const onAct=(a,d)=>{const p=state.pens[i];if(!p)return;const c=p.cid&&getC(p.cid),m=c&&penMot[c.id],hx=m?m.x:(p.i+p.w/2)*16,hy=m?m.y-12:p.j*16+30;
+  const onAct=(a,d)=>{const p=state.pens[i];if(!p)return;if(G('pen',{pid:p.id,a,d:{id:d.id,b:d.b}})){sfx('blip');return;}penAct(p,a,d);refreshPanel(a==='place');};
+  openPanel(render,onAct);}
+function penAct(p,a,d){const c=p.cid&&getC(p.cid),m=c&&penMot[c.id],hx=m?m.x:(p.i+p.w/2)*16,hy=m?m.y-12:p.j*16+30;
     if(a==='feed'&&c){if(state.berries<1)return;state.berries--;c.happy=Math.min(100,c.happy+40);hearts(hx,hy,5);sfx('berry');tutEv.fed=true;}
     else if(a==='pet'&&c){tutEv.fed=true;if(Date.now()-(c.petT||0)<15000){toast(`${SPECIES[c.sp].name} is still glowing from the last pet.`);}else{c.petT=Date.now();c.happy=Math.min(100,c.happy+10);hearts(hx,hy,3);sfx('pet');}}
     else if(a==='golden'&&c&&state.inv.golden>0){state.inv.golden--;c.happy=100;hearts(hx,hy,8);sparks(hx,hy,10,'#ffd860');sfx('unlock');tutEv.fed=true;}
@@ -1185,8 +1207,7 @@ function penPanel(i){
     else if(a==='burrow'&&c){p.cid=null;delete penMot[c.id];}
     else if(a==='place'){p.cid=+d.id;delete penMot[p.cid];sfx('blip');}
     else if(a==='rebuild'){if(state.coins<25)return;state.coins-=25;p.biome=d.b;buildZoo();sfx('unlock');}
-    save();refreshPanel(a==='place');};
-  openPanel(render,onAct);}
+    save();}
 
 let gateSel={zone:'meadow',cid:0,clover:false};
 function gatePanel(fixed){
@@ -1225,11 +1246,11 @@ function boardPanel(){
     <div class="stat"><span>Creatures befriended</span><b>${state.owned.length}</b></div><div class="stat"><span>Charm (flowers, trees, benches…)</span><b>${zooWorld.charm} · tips +${Math.round((charmMult()-1)*100)}%</b></div>
     <div class="stat"><span>Next habitat costs</span><b>${nextPenCost()}</b></div>
     <div class="row"><button class="pbtn" type="button" data-act="tut">Replay the tutorial</button></div>`;
-  const onAct=(a,d)=>{if(a==='berries'&&state.coins>=15){state.coins-=15;state.berries+=5;sfx('berry');}
-    else if(a==='unlock'){const Z=ZONES[d.z];if(state.coins<Z.cost)return;state.coins-=Z.cost;state.unlocked[d.z]=true;gateSel.zone=d.z;sfx('unlock');toast(`${Z.name} unlocked! Head to the gate.`);}
-    else if(a==='tut'){closePanel();tutStart();return;}
-    save();refreshPanel();};
+  const onAct=(a,d)=>{if(a==='tut'){closePanel();tutStart();return;}if(G('board',{a,z:d.z})){sfx('blip');return;}boardAct(a,d.z);refreshPanel();};
   openPanel(render,onAct);}
+function boardAct(a,z){if(a==='berries'&&state.coins>=15){state.coins-=15;state.berries+=5;sfx('berry');}
+  else if(a==='unlock'&&ZONES[z]&&ZONES[z].cost){const Z=ZONES[z];if(state.coins<Z.cost)return;state.coins-=Z.cost;state.unlocked[z]=true;gateSel.zone=z;sfx('unlock');toast(`${Z.name} unlocked! Head to the gate.`);}
+  save();}
 function burrowPanel(){const render=()=>{const b=burrowList();return head('The burrow')+(b.length?`<p>These friends are waiting for a home. Visit an empty habitat, or tap Build to make a new one.</p><div class="list">${b.map(c=>{const S=SPECIES[c.sp];
   return`<div class="pbtn" style="cursor:default">${img(c.sp,'spr sm')}<span class="grow"><b>${S.name}</b><small>Prefers ${BIOMES[ELEM[S.el].home].name} · ${S.abName}</small></span></div>`;}).join('')}</div>`:`<p class="muted">Cozy and empty. New friends rest here when every habitat is full.</p>`)
   +`<button class="pbtn go" type="button" data-act="close" data-autofocus>Done</button>`;};openPanel(render,()=>{});}
@@ -1251,7 +1272,7 @@ function drawCr(sp,x,y,face,moving,swim){const S=SPECIES[sp];const right=face>=0
   const sw=Math.max(10,Math.round(spr.width*.7));if(!swim)shadow(x,y,sw);
   const dx=Math.round(x-spr.width/2),dy=Math.round(y-spr.height-bob)+(swim?Math.round(spr.height*.2):0);ctx.drawImage(spr,dx,dy);
   if(swim){const wl=Math.round(y-spr.height*.15);ctx.globalAlpha=.55;fill(ctx,'#3b86d4',dx,wl,spr.width,Math.max(0,dy+spr.height-wl));ctx.globalAlpha=1;fill(ctx,'rgba(220,245,255,.8)',dx+2,wl,spr.width-4,1);}}
-function drawPlayer(){const set=SPR_P[player.face]||SPR_P.down,spr=set[player.moving?player.frame:0];shadow(player.x,player.y,10);ctx.drawImage(spr,Math.round(player.x-spr.width/2),Math.round(player.y-spr.height));}
+function drawPlayer(){const PS=NET.role==='guest'?SPR_P2:SPR_P,set=PS[player.face]||PS.down,spr=set[player.moving?player.frame:0];shadow(player.x,player.y,10);ctx.drawImage(spr,Math.round(player.x-spr.width/2),Math.round(player.y-spr.height));}
 function drawGate(){fill(ctx,'#6a4228',146,2,5,30);fill(ctx,'#6a4228',169,2,5,30);fill(ctx,'#8a5a34',146,2,2,30);fill(ctx,'#8a5a34',169,2,2,30);
   fill(ctx,'#5a3824',141,3,38,7);fill(ctx,'#9a6a3e',141,2,38,6);fill(ctx,'#c08a52',141,2,38,1);fill(ctx,'#e8d8a8',153,9,14,8);fill(ctx,'#5a3824',153,16,14,1);
   const tw=(Math.sin(time*3)+1)/2;fill(ctx,tw>.5?'#9ef0f0':'#b49af4',159,11,2,4);fill(ctx,'#ffd860',157,12,6,2);
@@ -1307,9 +1328,11 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;fi
     for(const c of wild.crs)L.push({y:c.y,d:()=>{drawCr(c.sp,c.x,c.y,c.face,c.moving,!!SPECIES[c.sp].swim);if(catchG&&catchG.cr===c)drawBang(c);}});
     if(companion)L.push({y:companion.y,d:()=>drawCr(companion.sp,companion.x,companion.y,companion.face,companion.moving,false)});
     if(has('sense'))L.push({y:1e6,d:drawSense});}
+  if(partnerHere()){const pv=NET.pv;L.push({y:pv.y,d:drawPartner});if(NET.partner.c&&SPECIES[NET.partner.c]&&NET.pc)L.push({y:NET.pc.y,d:()=>drawCr(NET.partner.c,NET.pc.x,NET.pc.y,NET.pc.f,!!NET.partner.m,false)});}
   L.push({y:player.y,d:drawPlayer});L.sort((a,b)=>a.y-b.y);for(const o of L)o.d();drawParts();if(buildMode)drawBuildOverlay();ctx.restore();
   if(scene==='wild'){const Z=ZONES[wild.zone];if(Z.dark)drawDark(cx,cy);if(Z.tint)fill(ctx,Z.tint,0,0,VW,VH);}
   ctx.save();ctx.translate(-cx,-cy);drawAmbient();ctx.restore();
+  if(partnerHere())drawPartnerArrow(cx,cy);
   if(catchG)drawCatch();
   if(sleepFx>0){ctx.globalAlpha=Math.min(1,Math.sin(Math.min(1,sleepFx/2.4)*Math.PI)*1.2);fill(ctx,'#0a0820',0,0,VW,VH);ctx.globalAlpha=1;}}
 function drawSense(){let best=null,bs=-1;for(const c of wild.crs){const d=Math.hypot(c.x-player.x,c.y-player.y),sc=SPECIES[c.sp].rar*1000-d;if(d>40&&sc>bs){bs=sc;best=c;}}if(!best)return;
@@ -1318,7 +1341,7 @@ function drawSense(){let best=null,bs=-1;for(const c of wild.crs){const d=Math.h
 /* ================= INPUT ================= */
 const keys=new Set(),KMAP={ArrowUp:'U',w:'U',W:'U',ArrowDown:'D',s:'D',S:'D',ArrowLeft:'L',a:'L',A:'L',ArrowRight:'R',d:'R',D:'R'};
 let padDir={x:0,y:0};
-addEventListener('keydown',e=>{const k=e.key;
+addEventListener('keydown',e=>{const k=e.key;if(e.target&&e.target.tagName==='INPUT'){if(k==='Escape')closePanel();return;}
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(k))e.preventDefault();ensureAudio();
   if(panelOpen){if(k==='Escape'||k==='x'||k==='X'||k==='Backspace'){e.preventDefault();closePanel();return;}
     if(KMAP[k]==='D'||KMAP[k]==='R'){e.preventDefault();focusMove(1);return;}if(KMAP[k]==='U'||KMAP[k]==='L'){e.preventDefault();focusMove(-1);return;}
@@ -1351,6 +1374,161 @@ btnMus.addEventListener('click',()=>{musicOn=!musicOn;try{localStorage.setItem('
 ['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
 document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
 let lastTouchEnd=0;document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTouchEnd<350&&!e.target.closest('button,summary,input'))e.preventDefault();lastTouchEnd=now;},{passive:false});
+
+/* ================= PLAY TOGETHER (online co-op) =================
+   One player hosts: their sanctuary is the shared world and their device keeps the
+   authoritative copy. The guest gets that state, walks around freely, and sends
+   requests ("build here", "feed this creature", "I caught a Glowfox") that the host
+   applies and sends back. In the Claude app this runs over the artifact "room";
+   anywhere else (GitHub Pages) it falls back to PeerJS (WebRTC). */
+let NET={role:null,mode:null,code:null,r:null,roomApi:undefined,peer:null,conn:null,partner:null,partnerId:null,pv:null,pc:null,lastSnap:'',snapT:0,posT:0,wT:0,rx:{},solo:null,lastPos:0,gotState:false};
+let crSeq=0;
+const SHARED=['coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
+const PJ_URL='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function myName(){let n='';try{n=localStorage.getItem('as-name')||'';}catch(e){}return n||'Friend';}
+const cleanName=n=>String(n||'').replace(/[^\p{L}\p{N} _.'-]/gu,'').slice(0,14)||'Friend';
+const partnerName=()=>cleanName(NET.partner&&NET.partner.n);
+function sendCmd(c,a){if(NET.role==='guest')netSend({t:'cmd',c,a});}
+function G(c,a){if(NET.role!=='guest')return false;sendCmd(c,a);return true;}
+function netGain(coins,berries){if(NET.role==='guest')sendCmd('gain',{coins,berries});}
+function fixWorld(){world=scene==='zoo'?zooWorld:scene==='town'?townWorld:scene==='home'?homeWorld:(wild?wild.W:zooWorld);}
+function partnerHere(){const p=NET.partner;if(!p||!NET.pv||p.s!==scene)return false;if(scene==='wild')return !!wild&&p.z===wild.zone;return true;}
+function snapStr(){const o={};for(const k of SHARED)o[k]=state[k];return JSON.stringify(o);}
+async function getRoom(){if(NET.roomApi!==undefined)return NET.roomApi;
+  try{NET.roomApi=window.claude&&window.claude.use?await window.claude.use('room'):null;}catch(e){NET.roomApi=null;}
+  if(NET.roomApi){NET.roomApi.onPeers(()=>{if(panelOpen&&panelCtx&&panelCtx.coop)refreshPanel();},()=>{});}
+  return NET.roomApi;}
+const transport=async()=>(await getRoom())?'room':(window.claude?null:'peer');
+function netSend(o){try{
+  if(NET.mode==='peer'){if(NET.conn&&NET.conn.open)NET.conn.send(o);return;}
+  if(NET.mode==='room'&&NET.r){const txt=JSON.stringify(o);
+    const fail=e=>{if(e&&e.code==='not_permitted'&&!NET.warned){NET.warned=1;toast('Online play needs edit access to this game. Ask the owner to share it with you as an editor.');}};
+    if(txt.length<=3000){NET.r.emit('m',o).catch(fail);return;}
+    const parts=[];for(let i=0;i<txt.length;){let len=Math.min(3000,txt.length-i);while(JSON.stringify(txt.substr(i,len)).length>3400)len=Math.floor(len*.8);parts.push(txt.substr(i,len));i+=len;}
+    const id=Math.random().toString(36).slice(2,8),n=parts.length;parts.forEach((d,i)=>NET.r.emit('m',{t:'chunk',id,i,n,d}).catch(fail));}}catch(e){}}
+function onRaw(d){if(!d||typeof d!=='object')return;if(d.t==='chunk'){const b=NET.rx[d.id]||(NET.rx[d.id]={n:d.n,parts:[],got:0,at:time});if(b.parts[d.i]==null){b.parts[d.i]=d.d;b.got++;}
+    if(b.got===b.n){delete NET.rx[d.id];try{onNet(JSON.parse(b.parts.join('')));}catch(e){}}for(const k in NET.rx)if(time-NET.rx[k].at>20)delete NET.rx[k];return;}onNet(d);}
+function onNet(m){try{switch(m.t){
+  case'hello':if(NET.role==='host'){NET.lastSnap='';NET.snapT=0;}break;
+  case'state':if(NET.role==='guest'&&typeof m.s==='string')applySnap(m.s);break;
+  case'cmd':if(NET.role==='host')hostRun(m.c,m.a||{});break;
+  case'wcr':if(NET.role==='guest')applyWcr(m);break;
+  case'pos':onPos(m.p);break;
+  case'toast':if(typeof m.msg==='string')toast(m.msg.slice(0,140));break;
+  case'bye':partnerLeft();break;}}catch(e){console.error('net',e);}}
+function applySnap(s){const o=JSON.parse(s);if(!o||!o.zoo||!o.pens||!o.owned)return;
+  const zc=JSON.stringify(o.zoo)!==JSON.stringify(state.zoo)||JSON.stringify(o.pens.map(p=>[p.id,p.i,p.j,p.w,p.biome]))!==JSON.stringify(state.pens.map(p=>[p.id,p.i,p.j,p.w,p.biome]));
+  const hc=JSON.stringify(o.home)!==JSON.stringify(state.home),mine=companion?companion.cid:null;
+  for(const k of SHARED)if(o[k]!==undefined)state[k]=o[k];
+  if(mine){const c=getC(mine);if(c)c.away=true;}
+  if(zc)buildZoo();if(hc)buildHome();fixWorld();if(panelOpen&&panelCtx&&!panelCtx.coop)refreshPanel();if(buildMode)renderBuildbar();
+  if(!NET.gotState){NET.gotState=true;toast(`You're in ${partnerName()}'s sanctuary! Coins, creatures and habitats are shared.`);updCoopChip();}}
+function applyWcr(m){if(scene!=='wild'||!wild||wild.zone!==m.z||!Array.isArray(m.l))return;
+  if(!wild.follow){wild.follow=true;wild.crs=wild.crs.filter(c=>catchG&&catchG.cr===c);}wild.followT=time;const seen=new Set();
+  for(const e of m.l){if(!Array.isArray(e))continue;const[u,sp,x,y,f]=e;if(!SPECIES[sp]||typeof x!=='number'||typeof y!=='number')continue;seen.add(u);
+    let c=wild.crs.find(q=>q.u===u);if(!c){c={u,sp,x,y,vx:0,vy:0,t:9,face:f>0?1:-1,moving:false,fx:R()};wild.crs.push(c);}c.tx=x;c.ty=y;}
+  wild.crs=wild.crs.filter(c=>seen.has(c.u)||(catchG&&catchG.cr===c));}
+function hostRun(c,a){const sv={scene,tool,biomeSel},num=v=>typeof v==='number'&&isFinite(v);
+  try{switch(c){
+    case'tool':if((a.sc!=='zoo'&&a.sc!=='home')||!num(a.i)||!num(a.j))break;scene=a.sc;tool=String(a.tool);if(BIOMES[a.b])biomeSel=a.b;if(toolDef(tool))applyTool(a.i|0,a.j|0,true);break;
+    case'style':if(a.k==='wall'||a.k==='floor'){scene='home';const H=state.home,list=H.styles[a.k];if(list.length>1){H[a.k]=list[(list.indexOf(H[a.k])+1)%list.length];buildHome();}}break;
+    case'pen':{const p=penById(a.pid);if(p&&typeof a.a==='string')penAct(p,a.a,a.d||{});break;}
+    case'buy':if(['market','bakery','builder','goods'].includes(a.shop)&&num(a.k))shopBuy(a.shop,a.k);break;
+    case'quest':{const q=QUESTS.find(x=>x.id===a.q);if(q&&(a.a==='accept'||a.a==='turnin'))npcAct(a.a,{q:q.id});break;}
+    case'board':boardAct(a.a,a.z);break;
+    case'caught':if(SPECIES[a.sp]){addCreature(a.sp);toast(`${partnerName()} befriended a ${SPECIES[a.sp].name}!`);}break;
+    case'wcatch':if(SPECIES[a.sp]){if(wild){const cr=wild.crs.find(x=>x.u===a.u);if(cr)cr.gone=true;}addCreature(a.sp);toast(`${partnerName()} befriended a ${SPECIES[a.sp].name}!`);}break;
+    case'wflee':case'hold':if(wild){const cr=wild.crs.find(x=>x.u===a.u);if(cr){if(c==='wflee')cr.gone=true;else cr.hold=time+12;}}break;
+    case'gain':if(num(a.coins)&&a.coins>=0&&a.coins<=200)state.coins+=a.coins;if(num(a.berries)&&a.berries>=0&&a.berries<=8)state.berries+=a.berries;break;
+    case'inv':if((a.k==='locket'||a.k==='clover')&&(a.n===1||a.n===-1))state.inv[a.k]=Math.max(0,(state.inv[a.k]||0)+a.n);break;
+    case'dex':if(SPECIES[a.sp]&&(a.st===1||a.st===2)&&(state.dex[a.sp]||0)<a.st)state.dex[a.sp]=a.st;break;
+    case'away':{const cc=getC(a.cid);if(cc)cc.away=!!a.v;break;}
+    case'rest':rest(true);break;}}
+  catch(e){console.error('cmd',c,e);}
+  finally{scene=sv.scene;tool=sv.tool;biomeSel=sv.biomeSel;fixWorld();if(buildMode)renderBuildbar();if(panelOpen&&panelCtx&&!panelCtx.coop)refreshPanel();}
+  NET.snapT=0;save();}
+function myPos(){return{s:scene,z:scene==='wild'&&wild?wild.zone:null,x:Math.round(player.x),y:Math.round(player.y),f:player.face,m:player.moving?1:0,fr:player.frame,
+  c:companion?companion.sp:null,cx:companion?Math.round(companion.x):0,cy:companion?Math.round(companion.y):0,cf:companion?companion.face:1,n:myName(),role:NET.role};}
+function onPos(p){if(!p||typeof p!=='object'||typeof p.x!=='number'||typeof p.y!=='number')return;const first=!NET.partner;NET.partner=p;NET.lastPos=time;
+  if(!NET.pv||first||Math.hypot(p.x-NET.pv.x,p.y-NET.pv.y)>120)NET.pv={x:p.x,y:p.y};if(p.c&&(!NET.pc||first))NET.pc={x:p.cx,y:p.cy,f:p.cf};
+  if(first)partnerJoined();}
+function partnerJoined(){toast(`${partnerName()} ${NET.role==='host'?'joined your sanctuary!':'is here!'}`);sfx('unlock');if(NET.role==='host'){NET.lastSnap='';NET.snapT=0;}else netSend({t:'hello'});updCoopChip();if(panelOpen&&panelCtx&&panelCtx.coop)refreshPanel();}
+function partnerLeft(){if(!NET.partner)return;const n=partnerName();NET.partner=null;NET.pv=null;NET.pc=null;toast(`${n} left.`);
+  if(NET.role==='guest'){leaveGame(true);return;}updCoopChip();if(panelOpen&&panelCtx&&panelCtx.coop)refreshPanel();}
+function netTick(dt){if(!NET.role)return;
+  if(NET.partner&&NET.pv){const p=NET.partner,k=Math.min(1,dt*10);NET.pv.x+=(p.x-NET.pv.x)*k;NET.pv.y+=(p.y-NET.pv.y)*k;if(p.c&&NET.pc){NET.pc.x+=(p.cx-NET.pc.x)*k;NET.pc.y+=(p.cy-NET.pc.y)*k;NET.pc.f=p.cf;}
+    if(NET.mode==='peer'&&time-NET.lastPos>8)partnerLeft();}
+  NET.posT-=dt;if(NET.posT<=0){NET.posT=.1;const p=myPos();if(NET.mode==='room'&&NET.r)NET.r.presence({p}).catch(()=>{});else netSend({t:'pos',p});}
+  if(NET.role==='host'&&NET.partner){NET.snapT-=dt;if(NET.snapT<=0){NET.snapT=.5;const st=snapStr();if(st!==NET.lastSnap){NET.lastSnap=st;netSend({t:'state',s:st});}}
+    if(scene==='wild'&&wild&&NET.partner.s==='wild'&&NET.partner.z===wild.zone){NET.wT-=dt;if(NET.wT<=0){NET.wT=.15;netSend({t:'wcr',z:wild.zone,l:wild.crs.filter(c=>!c.gone).map(c=>[c.u,c.sp,Math.round(c.x),Math.round(c.y),c.face])});}}}}
+function attachRoom(r){NET.r=r;
+  r.on('m',msg=>{if(msg.sameTab)return;onRaw(msg.data);},e=>{if(e.code!=='upstream_error')toast('The connection closed.');});
+  r.onPeers(ch=>{const o=ch.peers.find(p=>!p.sameTab&&p.presence&&p.presence.p);if(o){NET.partnerId=o.peer;onPos(o.presence.p);}else if(NET.partnerId){NET.partnerId=null;partnerLeft();}},()=>{});}
+function loadPeerJS(){if(window.Peer||window.peerjs)return Promise.resolve();return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=PJ_URL;sc.onload=()=>res();sc.onerror=()=>rej(new Error('load'));document.head.appendChild(sc);});}
+const PeerC=()=>window.Peer||(window.peerjs&&(window.peerjs.Peer||window.peerjs.default));
+function pjConn(conn,onOpen){conn.on('open',()=>{NET.conn=conn;if(onOpen)onOpen();});conn.on('data',d=>onRaw(d));conn.on('close',()=>{if(NET.conn===conn){NET.conn=null;partnerLeft();}});}
+function pjHost(code){return new Promise((res,rej)=>{const P=PeerC(),peer=new P('animal-sanctuary-'+code.toLowerCase());NET.peer=peer;
+  peer.on('open',()=>res());peer.on('error',e=>{if(e.type==='unavailable-id')rej(e);else if(!NET.conn)toast('Connection trouble: '+(e.type||'unknown'));});
+  peer.on('connection',conn=>{if(NET.conn&&NET.conn.open){conn.close();return;}pjConn(conn);});});}
+function pjJoin(code){return new Promise((res,rej)=>{const P=PeerC(),peer=new P();NET.peer=peer;let done=false;
+  peer.on('open',()=>{const conn=peer.connect('animal-sanctuary-'+code.toLowerCase(),{reliable:true});pjConn(conn,()=>{done=true;res();});});
+  peer.on('error',e=>{if(!done)rej(e);});setTimeout(()=>{if(!done)rej(new Error('timeout'));},12000);});}
+function newCode(){const L='ABCDEFGHJKMNPQRSTUVWXYZ';let c='';for(let i=0;i<4;i++)c+=L[(R()*L.length)|0];return c;}
+async function hostGame(){if(NET.role)return;const mode=await transport();if(!mode){toast('Online play is not available in this view.');return;}
+  NET.busy=true;refreshCoop();let code=newCode();
+  try{if(mode==='room'){const r=await NET.roomApi.join('as-'+code.toLowerCase());attachRoom(r);NET.roomApi.presence({host:code,hn:myName()}).catch(()=>{});}
+    else{await loadPeerJS();try{await pjHost(code);}catch(e){code=newCode();await pjHost(code);}}
+    NET.role='host';NET.mode=mode;NET.code=code;toast(`Your game code is ${code}. Tell your friend!`);}
+  catch(e){toast("Couldn't start online play. Check the internet connection and try again.");resetNet();}
+  NET.busy=false;updCoopChip();refreshCoop();}
+async function joinGame(code){code=String(code||'').toUpperCase().replace(/[^A-Z]/g,'');if(code.length!==4){toast('Codes are 4 letters.');return;}if(NET.role)return;
+  const mode=await transport();if(!mode){toast('Online play is not available in this view.');return;}
+  if(scene==='wild')returnHome();if(buildMode)closeBuild();NET.busy=true;refreshCoop();
+  try{NET.solo=JSON.parse(JSON.stringify(state));NET.role='guest';NET.mode=mode;NET.code=code;state.tutDone=true;
+    if(mode==='room'){const r=await NET.roomApi.join('as-'+code.toLowerCase());attachRoom(r);netSend({t:'hello'});}
+    else{await loadPeerJS();await pjJoin(code);netSend({t:'hello'});}
+    if(scene!=='zoo')goZoo();player.x=208;player.y=40;snapCam();toast(`Joining game ${code}…`);}
+  catch(e){toast(mode==='peer'?'No game found with that code. Check the letters and try again.':"Couldn't join. Check the code and try again.");leaveGame(true);}
+  NET.busy=false;updCoopChip();refreshCoop();}
+function resetNet(){const api=NET.roomApi;NET={role:null,mode:null,code:null,r:null,roomApi:api,peer:null,conn:null,partner:null,partnerId:null,pv:null,pc:null,lastSnap:'',snapT:0,posT:0,wT:0,rx:{},solo:null,lastPos:0,gotState:false};}
+function leaveGame(quiet){const wasGuest=NET.role==='guest',solo=NET.solo;
+  try{netSend({t:'bye'});}catch(e){}
+  try{if(NET.r)NET.r.leave();}catch(e){}try{if(NET.roomApi&&NET.role==='host')NET.roomApi.presence({host:null}).catch(()=>{});}catch(e){}
+  try{if(NET.peer)NET.peer.destroy();}catch(e){}
+  resetNet();
+  if(wasGuest&&solo){if(scene==='wild'&&wild){companion=null;wild=null;}catchG=null;if(buildMode)closeBuild();state=solo;penMot={};visitors=[];buildZoo();buildHome();scene='zoo';world=zooWorld;player.x=208;player.y=40;snapCam();updCompChip();
+    if(!quiet)toast('Back in your own sanctuary.');else toast('The game ended. Back in your own sanctuary.');}
+  updCoopChip();refreshCoop();}
+function updCoopChip(){const chip=$('#coopChip');if(!NET.role){chip.hidden=true;return;}chip.hidden=false;
+  $('#coopName').textContent=NET.partner?`with ${partnerName()}`:NET.role==='host'?`code ${NET.code}`:'joining…';}
+function refreshCoop(){if(panelOpen&&panelCtx&&panelCtx.coop)refreshPanel();}
+function coopPanel(){
+  const render=()=>{const nm=esc(myName());let body='';
+    if(NET.busy)body='<p>Connecting…</p>';
+    else if(NET.role==='host')body=`<p>${NET.partner?`<b>${esc(partnerName())}</b> is playing in your sanctuary.`:'Waiting for your friend. On their device, they open this game, tap <b>Together</b>, and type this code:'}</p><div class="bigcode">${NET.code}</div>
+      <p class="muted" style="font-size:14px">You share coins, creatures, habitats and quests. Your friend wears pink. Your sanctuary saves on this device.</p>
+      <button class="pbtn" type="button" data-act="leave">Stop playing together</button>`;
+    else if(NET.role==='guest')body=`<p>${NET.partner?`You're playing in <b>${esc(partnerName())}</b>'s sanctuary (code ${NET.code}).`:`Connecting to game ${NET.code}…`}</p>
+      <p class="muted" style="font-size:14px">Everything you catch, build and buy goes into their sanctuary. Your own sanctuary is safe and comes back when you leave.</p>
+      <button class="pbtn" type="button" data-act="leave">Leave and go back to my sanctuary</button>`;
+    else{const api=NET.roomApi,open=api?api.peers().filter(p=>!p.sameTab&&p.presence&&typeof p.presence.host==='string'):[];
+      body=`<p>Play online with a friend. One of you hosts, and the other joins their sanctuary.</p>
+      <label class="muted" for="coopName2" style="font-size:14px">Your name</label><input class="tin" id="coopName2" maxlength="14" value="${nm==='Friend'?'':nm}" placeholder="Your name" autocomplete="off">
+      <button class="pbtn go" type="button" data-act="host" data-autofocus>Host my sanctuary</button>
+      ${open.length?`<h3>Games open right now</h3><div class="list">${open.map(p=>`<button class="pbtn" type="button" data-act="joinc" data-code="${esc(String(p.presence.host).replace(/[^A-Z]/g,'').slice(0,4))}"><span class="grow"><b>Join ${esc(cleanName(p.presence.hn))}'s game</b><small>Code ${esc(String(p.presence.host).replace(/[^A-Z]/g,'').slice(0,4))}</small></span></button>`).join('')}</div>`:''}
+      <h3>Join with a code</h3><div class="row"><input class="tin code-in" id="coopCode" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" style="flex:1 1 120px"><button class="pbtn" type="button" data-act="join">Join</button></div>`;}
+    return head('Play together')+body;};
+  const onAct=(a,d)=>{const nmEl=document.getElementById('coopName2');if(nmEl){try{localStorage.setItem('as-name',cleanName(nmEl.value));}catch(e){}}
+    if(a==='host')hostGame();else if(a==='join')joinGame((document.getElementById('coopCode')||{}).value);else if(a==='joinc')joinGame(d.code);else if(a==='leave')leaveGame(false);};
+  openPanel(render,onAct);panelCtx.coop=true;getRoom().then(()=>refreshCoop());}
+panelEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='coopCode'){e.preventDefault();joinGame(e.target.value);}});
+$('#btnCoop').addEventListener('click',()=>{ensureAudio();if(titleOpen)return;if(buildMode)closeBuild();if(panelOpen)closePanel();coopPanel();});
+function drawPartner(){const p=NET.partner,pv=NET.pv,PS=NET.role==='guest'?SPR_P:SPR_P2,set=PS[p.f]||PS.down,spr=set[p.m?(p.fr|0)%2:0];
+  shadow(pv.x,pv.y,10);ctx.drawImage(spr,Math.round(pv.x-spr.width/2),Math.round(pv.y-spr.height));
+  const col=NET.role==='guest'?'#86e894':'#f6a8c4',x=Math.round(pv.x),y=Math.round(pv.y-spr.height-4)+(Math.sin(time*4)>0?0:1);fill(ctx,OUT,x-3,y-3,7,4);fill(ctx,col,x-2,y-2,5,2);fill(ctx,col,x-1,y,3,1);}
+function drawPartnerArrow(cx,cy){const pv=NET.pv,x=pv.x-cx,y=pv.y-8-cy;if(x>=0&&x<VW&&y>=0&&y<VH)return;const ax=clamp(x,8,VW-9),ay=clamp(y,8,VH-9),col=NET.role==='guest'?'#86e894':'#f6a8c4';
+  fill(ctx,OUT,ax-4,ay-4,9,9);fill(ctx,col,ax-3,ay-3,7,7);fill(ctx,'#ffffff',ax-1,ay-1,3,3);}
 
 /* ================= TITLE & LOOP ================= */
 function startGame(){if(!titleOpen)return;titleOpen=false;titleEl.hidden=true;ensureAudio();sfx('unlock');save();
@@ -1419,7 +1597,7 @@ function update(dt){
   if(!buildMode){const r=camRange(),tx=clamp(player.x-VW/2,r.x[0],r.x[1]),ty=clamp(player.y-8-VH/2,r.y[0],r.y[1]);
     const k=reduceMotion?1:Math.min(1,dt*8);camX+=(tx-camX)*k;camY+=(ty-camY)*k;}
   const showB=(scene==='zoo'||scene==='home')&&!titleOpen;if(btnBuild.hidden===showB)btnBuild.hidden=!showB;const bl=buildMode?'Done':scene==='home'?'Decorate':'Build';if(btnBuild.textContent!==bl)btnBuild.textContent=bl;
-  tutTick();updHint();updHUD();saveT-=dt;if(saveT<=0){saveT=4;if(!titleOpen)save();}}
+  netTick(dt);tutTick();updHint();updHUD();saveT-=dt;if(saveT<=0){saveT=4;if(!titleOpen)save();}}
 const btnBuild=$('#btnBuild');btnBuild.addEventListener('click',()=>{ensureAudio();if(buildMode)closeBuild();else openBuild();});
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;update(dt);draw();requestAnimationFrame(frame);}
 

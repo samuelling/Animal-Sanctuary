@@ -14,6 +14,10 @@ Explore magical wilds, befriend glowing creatures, bring them home to your sanct
 
 **Sanctuary Rank (★ to ★★★★★):** everything in the game gets fancier as you grow. Befriend more kinds of creatures, finish quests and welcome visitors to climb from Sprout Keeper to Cozy, Fancy, Legendary and finally Mythic Keeper. Each rank brings new, pricier and more amazing things to every shop: crystal trees, rainbow arches, golden fountains, star towers, a carousel, a golden dragon statue and an aurora beacon for the sanctuary; rainbow cakes, moon cakes and star fruit (a rare creature right away) in town; and for the cottage, sofas, telescopes, an arcade, a jukebox, a chandelier, a throne, a dragon's hoard, an aurora window and a cloud bed. Locked items show exactly what you need to do. Some trophies can never be bought and are only earned by befriending legendary creatures. Check your rank on the ranger board or in your journal.
 
+**The secret portal to Watertown:** once you reach Sanctuary Rank 2, a shimmering portal appears in a clearing in the trees east of Willowbrook's Town Hall. Step through and you arrive in the real Watertown, Massachusetts: Watertown Square, the Charles River and the neighborhoods around Irving Street, built street by street from the map data in [Townies](https://github.com/samuelling/Townies) (OpenStreetMap and MassGIS). Street and park names show as you walk, real shops have signs, and townsfolk stroll the sidewalks. Four creatures live only here: the Acornsprite, the Lampwisp, the Charlotter (a Charles River otter) and the legendary Glimmerheron. Seven townsfolk have quests worth thousands of coins in total. Finish them all to earn the Key to the City and plans for the Watertown Clock Tower, the grandest wonder in the game (+80 Charm). Treasure there is worth triple, and a chest under the bridge refills every day.
+
+**Pixel Palace Arcade:** the neon building in Willowbrook. Each cabinet plays one of our other games: Brick Ninja, Toilet Goalie, Townies, Decay Envelope, Bell Weathered and Mind Arcade. On the GitHub Pages site they open right inside the game; elsewhere they open in a new tab.
+
 **Giants:** Crystal Lake and Thunder Plains (unlocked through Professor Hoot's quests) are home to the Glimmerwhale, Mossback Titan and Skyhorn. Giants need a Grand habitat.
 
 **Play together (online co-op):** tap **Together**. One player taps *Host my sanctuary* and gets a 4-letter code; the other types the code to join. Both explore, build, shop, take on quests and befriend creatures in the host's sanctuary (coins, creatures and habitats are shared; the host's device keeps the save). When both are in the same wild area they see the same creatures. Inside the Claude app this uses the artifact's live room; on GitHub Pages it connects peer to peer with PeerJS.
@@ -25,3 +29,6 @@ Explore magical wilds, befriend glowing creatures, bring them home to your sanct
 **Play:** open `index.html`, or the GitHub Pages site for this repo.
 
 **Controls:** arrows/WASD to move, Space = A (act), X = B (journal / close). On phones, use the on-screen D-pad and A/B buttons.
+
+
+Watertown map data © OpenStreetMap contributors (ODbL) and MassGIS, via Townies.

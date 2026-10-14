@@ -719,13 +719,14 @@ const CABS=[
  {name:'Decay Envelope',url:'https://samuelling.github.io/Decay-Envelope/',col:'#b49af4',desc:'Roll through a giant synthesizer and patch it back to life, one module at a time.',i:7,art:'synth'},
  {name:'Bell Weathered',url:'https://samuelling.github.io/Bell-weathered/',col:'#7cc2f4',desc:"A musical instrument that plays today's weather, the time of day and the phase of the moon.",i:9,art:'bell'},
  {name:'Mind Arcade',url:'https://samuelling.github.io/Mind-Arcade/',col:'#ffd860',desc:'Quick brain games for memory, speed and focus that change as you play.',i:11,art:'mind'},
- {name:'Animal Sanctuary',url:null,col:'#f6a8c4',by:'By Maya & Sam.',desc:'Wait a second… you are already playing this one!',i:13,art:'self'}];
-const ARC_NPC=[{id:'joy',x:14*16+8,y:6*16+12}];
+ {name:'Crush Commando',url:'https://samuelling.github.io/crush-commando/',col:'#ff5a7a',desc:'A run-and-gun platformer in the style of Contra: blast your way down through one man\'s memories, all the way to the Heartbreak Core.',i:13,art:'run'},
+ {name:'Animal Sanctuary',url:null,col:'#f6a8c4',by:'By Maya & Sam.',desc:'Wait a second… you are already playing this one!',i:15,art:'self'}];
+const ARC_NPC=[{id:'joy',x:16*16+8,y:6*16+12}];
 let arcadeWorld=null,gameOpen=false;
-function buildArcade(){const w=16,h=10,m=new Uint8Array(w*h).fill(T.AFLOOR);
-  for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(j<=1||i===0||i===w-1||(j===h-1&&i!==7&&i!==8))m[j*w+i]=T.AWALL;
+function buildArcade(){const w=18,h=10,m=new Uint8Array(w*h).fill(T.AFLOOR);
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(j<=1||i===0||i===w-1||(j===h-1&&i!==8&&i!==9))m[j*w+i]=T.AWALL;
   const W={kind:'arcade',w,h,m,ground:T.AFLOOR,seed:31};W.solid=makeSolid(W);for(const c of CABS)W.solid[2*w+c.i]=1;renderMap(W);arcadeWorld=W;}
-function goArcade(){if(buildMode)closeBuild();if(!arcadeWorld)buildArcade();scene='arcade';world=arcadeWorld;ambient=[];player.x=8*16;player.y=8*16+12;player.face='up';snapCam();
+function goArcade(){if(buildMode)closeBuild();if(!arcadeWorld)buildArcade();scene='arcade';world=arcadeWorld;ambient=[];player.x=9*16;player.y=8*16+12;player.face='up';snapCam();
   if(!state.seenArcade){state.seenArcade=true;toast('Pixel Palace Arcade! Every cabinet is a real game. Walk up to one and press A.');}save();}
 function drawCabinet(c){const x=c.i*16+1,y=18,t=(time*3|0)%4,sx=x+3,sy=y+8;
   ctx.globalAlpha=.14+.08*Math.sin(time*3+c.i);fill(ctx,c.col,x-3,y+4,20,16);ctx.globalAlpha=1;
@@ -737,6 +738,7 @@ function drawCabinet(c){const x=c.i*16+1,y=18,t=(time*3|0)%4,sx=x+3,sy=y+8;
   else if(c.art==='townies'){S(0,0,8,7,'#5ab4f0');S(0,5,8,2,'#3f8a3a');S(1,2,2,3,'#e8d8b0');S(4,1,2,4,'#a4a4ae');S(6,3,2,2,'#c8503c');if(t<2)S(4,1,1,1,'#ffd860');}
   else if(c.art==='synth'){for(let k=0;k<8;k++)S(k,3+Math.round(Math.sin(k*.9+time*4)*2),1,1,'#b49af4');S(1,0,1,1,'#ffd860');S(4,0,1,1,'#7cf0b8');}
   else if(c.art==='bell'){S(0,0,8,7,'#2a3070');S(1,1,2,2,'#ffd860');S(4,2,3,2,'#e2ecff');S(5,4,1,2,'#c89a3a');if(t%2)S(2,5,1,1,'#9ef0f0');}
+  else if(c.art==='run'){S(0,6,8,1,'#5a3a6a');S(1,4-(t%2),2,2,'#ffd860');S(3,4-(t%2),1,1,'#e8e4f0');S(4+t%3,4,1,1,'#ff5a7a');S(6,1,2,2,'#ff5a7a');S(6,1,1,1,'#ffb0c0');}
   else if(c.art==='mind'){for(let k=0;k<4;k++)S(1+(k%2)*4,1+((k/2)|0)*3,2,2,k===t?'#ffd860':'#3a3060');}
   else{S(2,2,4,4,'#f6a8c4');S(3,3,1,1,'#1a1424');S(5,3,1,1,'#1a1424');S(1,1,1,2,'#f6a8c4');S(6,1,1,2,'#f6a8c4');}
   fill(ctx,'#3a3448',x+1,y+17,12,4);fill(ctx,'#e8553a',x+3,y+18,2,2);fill(ctx,'#ffd860',x+8,y+18,2,1);fill(ctx,'#5ab4f0',x+10,y+18,2,1);

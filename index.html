@@ -125,6 +125,13 @@ details .row{margin-top:8px}
 @keyframes shine{0%{background-position:130% 0}45%,100%{background-position:-30% 0}}
 .presents{position:absolute;left:0;right:0;top:40%;z-index:1;text-align:center;font:700 clamp(12px,3.6vw,18px)/1.6 var(--f-display);letter-spacing:.32em;color:#efe8ff;text-shadow:0 0 14px #b49af4,0 2px 0 #3a1e50;opacity:0;transition:opacity .6s;pointer-events:none}
 .presents.on{opacity:1}
+.gatesign{position:absolute;left:0;right:0;top:4%;z-index:1;text-align:center;font:700 clamp(18px,6vw,30px)/1 var(--f-display);letter-spacing:.08em;color:var(--gold);
+  text-shadow:0 3px 0 #8a4a10,0 6px 0 #2a1030,0 0 18px #ffd25a77;pointer-events:none;display:none}
+.taphint{position:absolute;left:0;right:0;bottom:7%;z-index:1;text-align:center;font:700 clamp(12px,3.6vw,16px)/1 var(--f-display);letter-spacing:.2em;color:#fff8e8;text-shadow:0 2px 0 #2a1030,0 0 12px #b49af4;pointer-events:none;display:none;animation:blink 1.1s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+#title.gate .gatesign,#title.gate .taphint{display:block}
+#title.gate{cursor:pointer}
+#title.gate .skip{display:none}
 .skip{position:absolute;right:12px;bottom:10px;z-index:1;font:400 10px var(--f-display);letter-spacing:.12em;color:#b8b0d8;opacity:.75;pointer-events:none}
 #title.ready .skip,#title.logo .skip{display:none}
 @media (prefers-reduced-motion:reduce){#title.logo .logo,#title.shake,.logo span::after{animation:none}}
@@ -229,10 +236,12 @@ details .row{margin-top:8px}
     <div id="tut" hidden></div>
     <div id="toast" aria-live="polite"></div>
     <div id="panel" hidden></div>
-    <div id="title">
+    <div id="title" class="gate" role="button" aria-label="Tap the gate to enter Animal Sanctuary">
       <canvas id="splash" width="208" height="240"></canvas>
       <div class="presents" id="presents" aria-hidden="true"></div>
       <div class="skip">TAP TO SKIP</div>
+      <div class="gatesign" aria-hidden="true">Animal Sanctuary</div>
+      <div class="taphint">Tap the gate to enter</div>
       <div class="tcard">
         <div class="logo" aria-label="Animal Sanctuary"><span data-t="Animal">Animal</span><span data-t="Sanctuary">Sanctuary</span></div>
         <div class="logo-sub">A magical creature adventure</div>
@@ -363,7 +372,7 @@ const SPECIES={
  skyhorn:{name:'Skyhorn',el:'light',rar:3,zone:'plains',appeal:80,nat:'S',needs:'light',huge:true,ab:{type:'none'},abName:'Gentle Giant',abText:'Far too big to come along, but visitors adore it.',desc:'Its horns crackle with friendly lightning.'},
 };
 const NEED_HINT={water:'Only surfaces for a water song.',light:'Only follows something that glows.',fire:'Only shows itself to a fire companion.',ice:'Only appears for a frosty song.'};
-const T={GRASS:0,PATH:1,WATER:2,TREE:3,FENCE:4,FLOWER:5,NIGHT:6,PINE:7,ASH:8,ROCK:9,LAVA:10,DIRT:11,BUSH:12,SHROOM:13,HEDGE:14,BED:15,BENCH:16,LAMP:17,FOUNTAIN:18,STAND:19,FROST:20,SNOWPINE:21,PRAIRIE:22,ICE:23,COBBLE:24,HWALL:25,HFLOOR:26,BRIDGE:27,TOPIARY:28,STATUE:29,WINDMILL:30,GIFT:31,CAFE:32,DOORMAT:33};
+const T={GRASS:0,PATH:1,WATER:2,TREE:3,FENCE:4,FLOWER:5,NIGHT:6,PINE:7,ASH:8,ROCK:9,LAVA:10,DIRT:11,BUSH:12,SHROOM:13,HEDGE:14,BED:15,BENCH:16,LAMP:17,FOUNTAIN:18,STAND:19,FROST:20,SNOWPINE:21,PRAIRIE:22,ICE:23,COBBLE:24,HWALL:25,HFLOOR:26,BRIDGE:27,TOPIARY:28,STATUE:29,WINDMILL:30,GIFT:31,CAFE:32,DOORMAT:33,CRYSTALT:34,RAINBOW:35,GOLDF:36,STARTOWER:37,CAROUSEL:38,DRAGONST:39,BEACON:40};
 const ZONES={
  meadow:{name:'Glimmer Meadow',cost:0,ground:T.GRASS,obst:T.TREE,liquid:T.WATER,deco:T.FLOWER,dark:false,tint:null,amb:'pollen',seed:11,blurb:'Sunny fields and lily ponds.'},
  woods:{name:'Moonlit Woods',cost:120,ground:T.NIGHT,obst:T.PINE,liquid:T.WATER,deco:T.SHROOM,dark:true,tint:null,amb:'firefly',seed:23,blurb:'Always night. A glowing friend helps.'},
@@ -415,7 +424,7 @@ function nextPenCost(){const n=state.pens.length-3;return n<0?0:60+n*50+n*n*10;}
 function countHoused(){let n=0;for(const p of state.pens){if(p.cid){const c=getC(p.cid);if(c&&!c.away)n++;}}return n;}
 function penValue(p){if(!p||!p.cid)return 0;const c=getC(p.cid);if(!c||c.away)return 0;const S=SPECIES[c.sp];
   return S.appeal*(0.4+0.6*c.happy/100)*(ELEM[S.el].home===p.biome?1.5:1);}
-const charmMult=()=>1+Math.min(.5,(zooWorld?zooWorld.charm:0)/100);
+const charmMult=()=>1+Math.min(1.5,(zooWorld?zooWorld.charm:0)/100);
 const TOOLS=[
  {id:'path',name:'Path',cost:2,tile:T.PATH,paint:true,info:'Drag to draw paths. Visitors only walk on paths.'},
  {id:'pen',name:'Habitat',size:'std',info:'Tap a grassy spot right next to a path.'},
@@ -433,11 +442,18 @@ const TOOLS=[
  {id:'windmill',name:'Windmill',cost:60,tile:T.WINDMILL,charm:10,lock:'windmill'},
  {id:'gift',name:'Gift shop',cost:80,tile:T.GIFT,charm:4,shop:5,lock:'gift',info:'Visitors walking by buy a souvenir for 5 coins.'},
  {id:'cafe',name:'Café',cost:120,tile:T.CAFE,charm:5,shop:8,lock:'cafe',info:'Visitors walking by buy cocoa for 8 coins.'},
+ {id:'crystal',name:'Crystal tree',cost:150,tile:T.CRYSTALT,charm:12,lock:'crystal'},
+ {id:'rainbow',name:'Rainbow arch',cost:250,tile:T.RAINBOW,charm:15,lock:'rainbow'},
+ {id:'goldf',name:'Gold fountain',cost:600,tile:T.GOLDF,charm:25,lock:'goldfount'},
+ {id:'startower',name:'Star tower',cost:900,tile:T.STARTOWER,charm:30,lock:'startower'},
+ {id:'carousel',name:'Carousel',cost:1200,tile:T.CAROUSEL,charm:20,shop:12,lock:'carousel',info:'Visitors take a ride for 12 coins.'},
+ {id:'dragonst',name:'Dragon statue',cost:1500,tile:T.DRAGONST,charm:40,lock:'dragon'},
+ {id:'beacon',name:'Aurora beacon',cost:3000,tile:T.BEACON,charm:60,lock:'beacon'},
  {id:'bulldoze',name:'Remove',info:'Tap anything you built to remove it. You get your coins back.'},
 ];const TOOL={};TOOLS.forEach(t=>TOOL[t.id]=t);
 
 /* ================= TILES & MAPS ================= */
-const SOL=new Uint8Array(64);[T.WATER,T.TREE,T.FENCE,T.PINE,T.ROCK,T.BUSH,T.HEDGE,T.BED,T.BENCH,T.LAMP,T.FOUNTAIN,T.STAND,T.SNOWPINE,T.TOPIARY,T.STATUE,T.WINDMILL,T.GIFT,T.CAFE,T.HWALL].forEach(t=>SOL[t]=1);SOL[T.LAVA]=2;
+const SOL=new Uint8Array(64);[T.WATER,T.TREE,T.FENCE,T.PINE,T.ROCK,T.BUSH,T.HEDGE,T.BED,T.BENCH,T.LAMP,T.FOUNTAIN,T.STAND,T.SNOWPINE,T.TOPIARY,T.STATUE,T.WINDMILL,T.GIFT,T.CAFE,T.HWALL,T.CRYSTALT,T.RAINBOW,T.GOLDF,T.STARTOWER,T.CAROUSEL,T.DRAGONST,T.BEACON].forEach(t=>SOL[t]=1);SOL[T.LAVA]=2;
 function makeSolid(W){const s=new Uint8Array(W.w*W.h);for(let k=0;k<s.length;k++)s[k]=SOL[W.m[k]];return s;}
 function speck(g,x,y,base,cols,n,r){fill(g,base,x,y,16,16);for(let k=0;k<n;k++){g.fillStyle=cols[(r()*cols.length)|0];g.fillRect(x+((r()*16)|0),y+((r()*16)|0),1,1);}}
 const GROUNDS={
@@ -488,6 +504,17 @@ function drawTile(g,W,i,j,r){
     case T.WINDMILL:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+3,y+14,10,2);fill(g,'#e8dcc8',x+5,y+6,6,9);fill(g,'#c8b8a0',x+9,y+6,2,9);fill(g,'#6a4228',x+7,y+11,2,4);fill(g,'#c8423a',x+4,y+4,8,3);fill(g,'#7a4a2a',x+7,y,2,9);fill(g,'#7a4a2a',x+2,y+3,12,2);fill(g,'#f4ecd8',x+8,y,1,3);fill(g,'#f4ecd8',x+2,y+4,4,1);fill(g,'#f4ecd8',x+11,y+3,3,1);fill(g,'#ffd860',x+7,y+3,2,2);break;
     case T.GIFT:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+1,y+13,14,2);fill(g,'#d8c8e8',x+2,y+7,12,7);fill(g,'#8a6aa8',x+2,y+7,12,1);for(let k=0;k<4;k++)fill(g,k%2?'#fff8e8':'#8a5ae0',x+1+((k*3.5)|0),y+2,4,4);fill(g,'#5a3aa0',x+1,y+6,14,1);fill(g,'#ff7aa8',x+4,y+9,3,3);fill(g,'#ffd860',x+5,y+9,1,3);fill(g,'#72c4ff',x+9,y+10,3,2);break;
     case T.CAFE:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+2,y+13,12,2);fill(g,'#e8e0d0',x+4,y+9,8,2);fill(g,'#8a8698',x+7,y+11,2,3);fill(g,'#7a4a2a',x+7,y+3,1,7);for(let k=0;k<5;k++)fill(g,k%2?'#fff8e8':'#3fa8a0',x+1+k*3,y+1,3,3);fill(g,'#2a7a74',x+1,y+4,15,1);fill(g,'#a8643a',x+5,y+8,2,1);fill(g,'#ffffff',x+9,y+8,2,1);break;
+    case T.CRYSTALT:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+3,y+14,10,2);fill(g,'#6a5aa0',x+7,y+9,2,6);shape(g,x,y-3,CANOPY,'#3a8aa8','#7cd8f0','#ffffff');fill(g,'#c8a0ff',x+4,y+1,2,2);fill(g,'#f6a8c4',x+10,y+3,2,2);fill(g,'#ffffff',x+7,y-2,1,2);fill(g,'#c8a0ff',x+12,y-1,1,1);break;
+    case T.RAINBOW:{GG(T.GRASS);const C=['#e8553a','#ff9a3a','#ffd860','#6cc24a','#5ab4f0','#8a6ad0'];C.forEach((c,k)=>{const r2=8-k;for(let a=-r2;a<=r2;a++)fill(g,c,x+8+a,y+12-Math.round(Math.sqrt(r2*r2-a*a))-2,1,2);});
+      fill(g,'#ffffff',x,y+11,5,4);fill(g,'#ffffff',x+11,y+11,5,4);fill(g,'#e2ecff',x+1,y+14,4,1);fill(g,'#e2ecff',x+12,y+14,4,1);break;}
+    case T.GOLDF:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x,y+13,16,3);fill(g,'#c89a3a',x,y+7,16,8);fill(g,'#ffd860',x,y+7,16,2);fill(g,'#3b86d4',x+2,y+9,12,4);fill(g,'#c89a3a',x+5,y+1,6,7);fill(g,'#ffd860',x+5,y+1,6,1);fill(g,'#7cc2f4',x+6,y+2,4,2);fill(g,'#c89a3a',x+7,y-4,2,6);fill(g,'#bfe6ff',x+6,y-6,4,2);fill(g,'#ffffff',x+7,y-7,2,1);fill(g,'#fff6c0',x+3,y+10,1,1);fill(g,'#fff6c0',x+12,y+11,1,1);break;
+    case T.STARTOWER:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+2,y+14,12,2);fill(g,'#8a8298',x+3,y+1,10,14);fill(g,'#a8a4b8',x+3,y+1,3,14);for(let r2=3;r2<15;r2+=4)fill(g,'#6a6280',x+3,y+r2,10,1);fill(g,'#ffe2a0',x+7,y+5,2,3);fill(g,'#2a2238',x+6,y+11,4,4);
+      for(let r2=0;r2<8;r2++)fill(g,'#4a5a9a',x+8-r2,y-8+r2,r2*2+1,1);fill(g,'#6a7ac0',x+8,y-8,1,8);fill(g,'#ffd860',x+7,y-12,3,3);fill(g,'#ffd860',x+8,y-13,1,5);fill(g,'#ffd860',x+6,y-11,5,1);break;
+    case T.CAROUSEL:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x,y+13,16,3);fill(g,'#e8d8c0',x,y+11,16,4);fill(g,'#c8a878',x,y+14,16,1);fill(g,'#c89a3a',x+7,y-6,2,17);for(let k=0;k<8;k++)fill(g,k%2?'#fff8e8':'#f6a8c4',x+k*2,y-6+Math.abs(k-3.5)|0,2,4);
+      fill(g,'#d0648c',x,y-2,16,1);fill(g,'#ffd860',x+7,y-9,2,3);fill(g,'#fff8e8',x+2,y+6,4,3);fill(g,'#ffd860',x+10,y+5,4,3);fill(g,'#c89a3a',x+3,y-1,1,7);fill(g,'#c89a3a',x+12,y-1,1,6);break;
+    case T.DRAGONST:{GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+1,y+14,14,2);fill(g,'#6a6280',x+1,y+10,14,5);fill(g,'#8a8698',x+1,y+10,14,1);const gs=goldSpr('emberwyrm');g.drawImage(gs,x+8-Math.floor(gs.width/2),y+11-gs.height);break;}
+    case T.BEACON:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+3,y+14,10,2);fill(g,'#3a3060',x+5,y-2,6,17);fill(g,'#5a4a90',x+5,y-2,2,17);fill(g,'#7cf0b8',x+5,y-8,6,6);fill(g,'#c8fff0',x+6,y-7,2,2);
+      g.globalAlpha=.45;for(let k=0;k<6;k++)fill(g,k%2?'#7cf0b8':'#c8a0ff',x+2+k*2,y-14+(k%3),2,6);g.globalAlpha=1;break;
     case T.FENCE:{GG(T.GRASS);const f=(a,b)=>at(a,b)===T.FENCE;
       if(f(i+1,j)){fill(g,'#9a6a3e',x+8,y+7,8,2);fill(g,'#9a6a3e',x+8,y+11,8,2);}
       if(f(i-1,j)){fill(g,'#9a6a3e',x,y+7,8,2);fill(g,'#9a6a3e',x,y+11,8,2);}
@@ -935,36 +962,58 @@ function npcBlock(id){const N=NPCINFO[id],{act,offer}=npcQuest(id);let say,extra
 function npcAct(a,d){const q=QUESTS.find(x=>x.id===d.q);if(!q)return false;
   if(NET.role==='guest'&&(a==='accept'||a==='turnin')){if(a==='turnin'&&!q.ready())return false;sendCmd('quest',{a,q:q.id});sfx(a==='turnin'?'unlock':'blip');toast(a==='accept'?`New quest: ${q.title}`:q.thanks);return true;}
   if(a==='accept'){state.quests[q.id]='active';sfx('blip');toast(`New quest: ${q.title}`);if(q.onAccept)q.onAccept();save();return true;}
-  if(a==='turnin'&&q.ready()){if(q.pay)q.pay();q.give();state.quests[q.id]='done';sfx('unlock');toast(q.thanks);toast(`Quest complete! You got ${q.reward}.`);buildZoo();save();return true;}return false;}
+  if(a==='turnin'&&q.ready()){if(q.pay)q.pay();q.give();state.quests[q.id]='done';sfx('unlock');toast(q.thanks);grantTrophies(false);toast(`Quest complete! You got ${q.reward}.`);buildZoo();save();return true;}return false;}
 function npcPanel(id){openPanel(()=>head(NPCINFO[id].name)+npcBlock(id),(a,d)=>{if(npcAct(a,d))refreshPanel(true);});}
 const BUILDS=[
- {key:'grand',name:'Grand habitat plans',cost:180,desc:'Build habitats big enough for giant creatures.'},
- {key:'garden',name:'Garden pack',cost:90,desc:'Topiaries and statues for your sanctuary.'},
- {key:'windmill',name:'Windmill',cost:140,desc:'A cheerful windmill. Lots of Charm.'},
- {key:'gift',name:'Gift shop',cost:160,desc:'Visitors buy souvenirs: +5 coins each.'},
- {key:'cafe',name:'Café',cost:240,desc:'Visitors buy cocoa: +8 coins each.'},
- {key:'land1',name:'More sanctuary land',cost:250,desc:'Clears 8 more columns of land to the east.',after:()=>expandZoo(8)},
- {key:'land2',name:'Even more land',cost:500,need:'land1',desc:'Another 8 columns of land.',after:()=>expandZoo(8)},
- {key:'bighome',name:'Cottage extension',cost:300,desc:'A much bigger room inside your cottage.',after:()=>{state.home.w=16;state.home.h=12;buildHome();}},
+ {key:'garden',name:'Garden pack',cost:90,r:1,desc:'Topiaries (+4 Charm) and statues (+6 Charm).'},
+ {key:'grand',name:'Grand habitat plans',cost:180,r:2,desc:'Build habitats big enough for giant creatures.'},
+ {key:'windmill',name:'Windmill',cost:140,r:2,desc:'A cheerful windmill: +10 Charm.'},
+ {key:'gift',name:'Gift shop',cost:160,r:2,desc:'Visitors buy souvenirs: +5 coins each.'},
+ {key:'land1',name:'More sanctuary land',cost:250,r:2,desc:'Clears 8 more columns of land to the east.',after:()=>expandZoo(8)},
+ {key:'cafe',name:'Café',cost:240,r:3,desc:'Visitors buy cocoa: +8 coins each.'},
+ {key:'crystal',name:'Crystal trees',cost:320,r:3,desc:'Glittering crystal trees: +12 Charm each.'},
+ {key:'land2',name:'Even more land',cost:500,r:3,need:'land1',desc:'Another 8 columns of land.',after:()=>expandZoo(8)},
+ {key:'bighome',name:'Cottage extension',cost:300,r:3,desc:'A much bigger room inside your cottage.',after:()=>{state.home.w=16;state.home.h=12;buildHome();}},
+ {key:'rainbow',name:'Rainbow arches',cost:650,r:4,desc:'A real rainbow for your paths: +15 Charm each.'},
+ {key:'goldfount',name:'Golden fountain',cost:950,r:4,desc:'Shimmering gold: +25 Charm each.'},
+ {key:'startower',name:'Star tower',cost:1300,r:4,desc:'A tower with a golden star: +30 Charm each.'},
+ {key:'land3',name:'Grand estate land',cost:1500,r:4,need:'land2',desc:'8 more columns: room for a true wonder park.',after:()=>expandZoo(8)},
+ {key:'carousel',name:'Creature carousel',cost:2200,r:5,desc:'Visitors take a ride: +12 coins each, +20 Charm.'},
+ {key:'dragon',name:'Golden dragon statue',cost:2800,r:5,desc:'A gleaming dragon: +40 Charm each.'},
+ {key:'beacon',name:'Aurora beacon',cost:4500,r:5,desc:'Lights the sky with an aurora: +60 Charm each.'},
 ];
+function rankList(list){return list.map(it=>Object.assign({sec:rankLabel(it.r),lock:it.lock||rankLock(it.r)},it));}
 function shopItems(id){
-  if(id==='market')return[
-    {name:'Berries ×5',cost:15,desc:'Food for your creatures.',buy:()=>{state.berries+=5;},icon:sprURL('berry4',SM.berry,8)},
-    {name:'Berry crate ×20',cost:50,desc:'A whole crate. Good value!',buy:()=>{state.berries+=20;},icon:sprURL('berry4',SM.berry,8)},
-    {name:'Golden apple',cost:25,desc:`Fills one creature with joy. You have ${state.inv.golden||0}.`,buy:()=>addInv('golden',1)},
-    {name:'Lucky clover',cost:40,desc:`Rare creatures show up more on your next trip. You have ${state.inv.clover||0}.`,buy:()=>addInv('clover',1)}];
-  if(id==='bakery')return[{name:'Creature cookies',cost:35,desc:`Share with everyone: +30 happiness each. You have ${state.inv.cookie||0}.`,buy:()=>addInv('cookie',1)}];
-  if(id==='builder')return BUILDS.map(b=>({name:b.name,cost:b.cost,desc:b.desc,owned:()=>!!state.unlocks[b.key],need:b.need,buy:()=>{state.unlocks[b.key]=true;if(b.after)b.after();}}));
-  if(id==='goods'){const L=[];for(const f in FURN){const Fu=FURN[f];if(Fu.quest)continue;L.push({name:Fu.name,cost:Fu.cost,desc:`${Fu.wall?'Hangs on the wall':'Furniture'} · you own ${state.inv['f:'+f]||0}`,icon:sprURL('fi-'+f,furnCanvas(f),2),buy:()=>addInv('f:'+f,1)});}
-    for(const k in WALLS)if(WALLS[k].cost)L.push({name:WALLS[k].name+' wallpaper',cost:WALLS[k].cost,desc:'New walls for your cottage.',owned:()=>state.home.styles.wall.includes(k),buy:()=>{state.home.styles.wall.push(k);state.home.wall=k;buildHome();}});
-    for(const k in FLOORS)if(FLOORS[k].cost)L.push({name:FLOORS[k].name,cost:FLOORS[k].cost,desc:'A new floor for your cottage.',owned:()=>state.home.styles.floor.includes(k),buy:()=>{state.home.styles.floor.push(k);state.home.floor=k;buildHome();}});return L;}
+  const n=k=>state.inv[k]||0;
+  if(id==='market')return rankList([
+    {r:1,name:'Berries ×5',cost:15,desc:'Food for your creatures.',buy:()=>{state.berries+=5;},icon:sprURL('berry4',SM.berry,8)},
+    {r:1,name:'Golden apple',cost:25,desc:`Fills one creature with joy. You have ${n('golden')}.`,buy:()=>addInv('golden',1)},
+    {r:2,name:'Berry crate ×20',cost:50,desc:'A whole crate. Good value!',buy:()=>{state.berries+=20;},icon:sprURL('berry4',SM.berry,8)},
+    {r:2,name:'Lucky clover',cost:40,desc:`Rare creatures show up more on your next trip. You have ${n('clover')}.`,buy:()=>addInv('clover',1)},
+    {r:4,name:'Star fruit',cost:260,desc:`On your next trip, a rare creature appears right away. You have ${n('starfruit')}.`,buy:()=>addInv('starfruit',1)}]);
+  if(id==='bakery')return rankList([
+    {r:1,name:'Creature cookies',cost:35,desc:`Share with everyone: +30 happiness each. You have ${n('cookie')}.`,buy:()=>addInv('cookie',1)},
+    {r:3,name:'Rainbow cake',cost:140,desc:`Share with everyone: +60 happiness each. You have ${n('cake')}.`,buy:()=>addInv('cake',1)},
+    {r:5,name:'Moon cake',cost:700,desc:`Every creature becomes perfectly happy. You have ${n('mooncake')}.`,buy:()=>addInv('mooncake',1)}]);
+  if(id==='builder')return rankList(BUILDS.map(b=>({r:b.r,name:b.name,cost:b.cost,desc:b.desc,owned:()=>!!state.unlocks[b.key],need:b.need,buy:()=>{state.unlocks[b.key]=true;if(b.after)b.after();}})));
+  if(id==='goods'){const L=[],sp=dailySpecial(),pt=pipTier(),inv=f=>state.inv['f:'+f]||0;
+    if(sp){const Fu=FURN[sp];L.push({sec:"Today's special · 30% off",name:Fu.name,cost:Math.floor(Fu.cost*.7),desc:`Usually ${Fu.cost} · you own ${inv(sp)}`,icon:sprURL('fi-'+sp,furnCanvas(sp),2),buy:()=>addInv('f:'+sp,1)});}
+    for(let t=1;t<=5;t++)for(const f in FURN){const Fu=FURN[f];if((Fu.tier||1)!==t||Fu.quest||Fu.trophy||f===sp)continue;
+      L.push({sec:rankLabel(t),name:Fu.name,cost:Fu.cost,lock:rankLock(t),desc:`${Fu.wall?'Hangs on the wall':Fu.use?'You can use it':'Furniture'} · +${COZ[t]} coziness · you own ${inv(f)}`,icon:sprURL('fi-'+f,furnCanvas(f),2),buy:()=>addInv('f:'+f,1)});}
+    for(const k in WALLS)if(WALLS[k].cost)L.push({sec:'Wallpaper & floors',name:WALLS[k].name+' wallpaper',cost:WALLS[k].cost,lock:rankLock(WALLS[k].tier||1),desc:'New walls for your cottage.',owned:()=>state.home.styles.wall.includes(k),buy:()=>{state.home.styles.wall.push(k);state.home.wall=k;buildHome();}});
+    for(const k in FLOORS)if(FLOORS[k].cost)L.push({sec:'Wallpaper & floors',name:FLOORS[k].name,cost:FLOORS[k].cost,lock:rankLock(FLOORS[k].tier||1),desc:'A new floor for your cottage.',owned:()=>state.home.styles.floor.includes(k),buy:()=>{state.home.styles.floor.push(k);state.home.floor=k;buildHome();}});
+    for(const f in FURN){const Fu=FURN[f];if(!Fu.trophy)continue;const got=inv(f)>0;L.push({sec:'Trophies · earned, never sold',name:Fu.name,cost:0,trophy:true,owned:()=>got,
+      lock:got?null:Fu.trophy==='quests'?'Earned by finishing every quest':`Earned by befriending a ${SPECIES[Fu.trophy].name}`,desc:'In your bag. Place it with Decorate.',icon:sprURL('fi-'+f,furnCanvas(f),2),buy:()=>{}});}
+    return L;}
   return[];}
 function shopPanel(id){const B=BUILDINGS.find(b=>b.id===id);
-  const render=()=>head(B.name)+npcBlock(HOST[id])+`<h3>For sale</h3><div class="list">${shopItems(id).map((it,k)=>{const own=it.owned&&it.owned(),blocked=it.need&&!state.unlocks[it.need],can=!own&&!blocked&&state.coins>=it.cost;
-    return`<button class="pbtn" type="button" data-act="buy" data-k="${k}" ${can?'':'disabled'}>${it.icon?`<img class="spr sm" src="${it.icon}" alt="">`:''}<span class="grow"><b>${it.name}</b><small>${own?'Owned':blocked?'Buy the one above first':it.desc}</small></span><span class="cost">${own?'✓':it.cost}</span></button>`;}).join('')}</div>`;
+  const render=()=>{let sec=null;return head(B.name)+npcBlock(HOST[id])+(id==='goods'?`<p class="muted" style="font-size:14px">Cottage coziness: <b>${coziness()}</b>. Cozier homes make naps give your creatures more happiness.</p>`:'')+`<div class="list">${shopItems(id).map((it,k)=>{
+    const own=it.owned&&it.owned(),blocked=(it.need&&!state.unlocks[it.need])||!!it.lock,can=!own&&!blocked&&!it.trophy&&state.coins>=it.cost,short=!own&&!blocked&&!it.trophy&&state.coins<it.cost;
+    const hd=(it.sec||'For sale')!==sec?(sec=it.sec||'For sale',`</div><h3>${sec}</h3><div class="list">`):'';
+    return hd+`<button class="pbtn" type="button" data-act="buy" data-k="${k}" ${can?'':'disabled'}>${it.icon?`<img class="spr sm" src="${it.icon}" alt="">`:''}<span class="grow"><b>${it.name}</b><small>${own?(it.trophy?'Earned! It is in your bag.':'Owned'):it.lock?'🔒 '+it.lock:blocked?'Buy the one above first':short?`${it.desc} · need ${it.cost-Math.floor(state.coins)} more coins`:it.desc}</small></span><span class="cost">${own?'✓':it.trophy?'★':it.cost}</span></button>`;}).join('')}</div>`;};
   openPanel(render,(a,d)=>{if(npcAct(a,d)){refreshPanel(true);return;}
     if(a==='buy'){if(G('buy',{shop:id,k:+d.k})){sfx('unlock');return;}shopBuy(id,+d.k);refreshPanel();}});}
-function shopBuy(id,k){const it=shopItems(id)[k];if(!it||state.coins<it.cost||(it.owned&&it.owned()))return;state.coins-=it.cost;it.buy();sfx('unlock');toast(`Bought ${it.name}!`);save();}
+function shopBuy(id,k){const it=shopItems(id)[k];if(!it||it.lock||it.trophy||state.coins<it.cost||(it.owned&&it.owned()))return;state.coins-=it.cost;it.buy();sfx('unlock');toast(`Bought ${it.name}!`);save();}
 function trailPanel(z){const Z=ZONES[z];if(state.unlocked[z]){gatePanel(z);return;}
   openPanel(()=>head(`Trail to ${Z.name}`)+`<p>The trail is overgrown and you don't know the way yet.</p><p class="muted">${Z.quest?'Professor Hoot in the town square might have a map.':`You can unlock it at the ranger board in your sanctuary for ${Z.cost} coins.`}</p><button class="pbtn go" type="button" data-act="close" data-autofocus>OK</button>`,()=>{});}
 function drawBuilding(b){const x=b.x*16,y=b.y*16,w=b.w*16,h=b.h*16,roofH=Math.round(h*.45),wy=y+roofH,wh=h-roofH;
@@ -997,25 +1046,96 @@ function drawArch(){ctx.save();ctx.translate(224,0);drawGate();ctx.restore();}
 
 /* ================= YOUR COTTAGE ================= */
 const FURN={
- bed:{name:'Cozy bed',w:2,h:2,cost:60,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+29,28,3);fill(g,'#6a4228',x+1,y,30,9);fill(g,'#8a5a34',x+2,y+1,28,6);fill(g,'#8a5a34',x+1,y+8,30,22);fill(g,'#fff8e8',x+4,y+6,24,7);fill(g,'#e2d6c2',x+4,y+12,24,1);fill(g,'#e86a8a',x+3,y+13,26,15);fill(g,'#ffb0c4',x+3,y+13,26,3);fill(g,'#c84a6a',x+3,y+27,26,1);for(let k=0;k<4;k++)fill(g,'#ffd0dc',x+6+k*6,y+19,2,2);}},
+ bed:{name:'Cozy bed',w:2,h:2,cost:60,tier:1,use:'bed',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+29,28,3);fill(g,'#6a4228',x+1,y,30,9);fill(g,'#8a5a34',x+2,y+1,28,6);fill(g,'#8a5a34',x+1,y+8,30,22);fill(g,'#fff8e8',x+4,y+6,24,7);fill(g,'#e2d6c2',x+4,y+12,24,1);fill(g,'#e86a8a',x+3,y+13,26,15);fill(g,'#ffb0c4',x+3,y+13,26,3);fill(g,'#c84a6a',x+3,y+27,26,1);for(let k=0;k<4;k++)fill(g,'#ffd0dc',x+6+k*6,y+19,2,2);}},
  rug:{name:'Round rug',w:3,h:2,cost:30,layer:0,draw(g,x,y){const rows=[[8,2,32],[4,4,40],[2,6,44],[2,8,44],[2,10,44],[2,12,44],[2,14,44],[2,16,44],[2,18,44],[2,20,44],[2,22,44],[4,24,40],[8,26,32]];for(const[a,b,w]of rows)fill(g,'#6a4cb8',x+a,y+b,w,2);for(const[a,b,w]of rows.slice(1,-1))fill(g,'#b49af4',x+a+2,y+b,w-4,2);fill(g,'#ffd860',x+18,y+12,12,4);fill(g,'#f6a8c4',x+10,y+13,4,2);fill(g,'#f6a8c4',x+34,y+13,4,2);}},
  table:{name:'Wooden table',w:2,h:1,cost:35,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,26,2);fill(g,'#8a5a34',x+3,y+6,26,6);fill(g,'#c08a52',x+2,y+2,28,5);fill(g,'#d8a46a',x+2,y+2,28,1);fill(g,'#6a4228',x+4,y+7,2,8);fill(g,'#6a4228',x+26,y+7,2,8);fill(g,'#72c4ff',x+13,y-3,5,5);fill(g,'#ff7aa8',x+13,y-6,2,3);fill(g,'#ffd860',x+16,y-5,2,2);}},
  chair:{name:'Chair',w:1,h:1,cost:15,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#8a5a34',x+3,y-2,10,9);fill(g,'#c08a52',x+4,y-1,8,2);fill(g,'#c08a52',x+3,y+7,10,3);fill(g,'#6a4228',x+3,y+10,2,5);fill(g,'#6a4228',x+11,y+10,2,5);}},
  shelf:{name:'Bookshelf',w:2,h:1,cost:45,draw(g,x,y){fill(g,'#6a4228',x+1,y-14,30,29);fill(g,'#8a5a34',x+2,y-13,28,27);for(let s2=0;s2<3;s2++){fill(g,'#5a3824',x+2,y-5+s2*8,28,1);for(let b=0;b<7;b++)fill(g,['#e8553a','#5ab4f0','#ffd860','#6cc24a','#b49af4','#f6a8c4'][(b+s2*2)%6],x+3+b*4,y-11+s2*8,3,6);}}},
  plant:{name:'Potted plant',w:1,h:1,cost:12,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+4,y+14,8,2);fill(g,'#c8643a',x+4,y+8,8,7);fill(g,'#a84a2a',x+4,y+8,8,1);shape(g,x,y-1,[[5,0,6],[3,1,10],[2,2,12],[2,3,12],[2,4,12],[3,5,10],[4,6,8],[5,7,6]],'#2f7a36','#46984a','#7cc85a');fill(g,'#3f8a32',x+7,y+7,2,2);}},
  lamp:{name:'Floor lamp',w:1,h:1,cost:20,draw(g,x,y){fill(g,'rgba(255,226,160,.25)',x-2,y-14,20,14);fill(g,'rgba(0,0,0,.2)',x+4,y+14,8,2);fill(g,'#3a3448',x+7,y-4,2,18);fill(g,'#3a3448',x+4,y+13,8,2);fill(g,'#ffe2a0',x+3,y-10,10,7);fill(g,'#f2c070',x+3,y-4,10,1);}},
- tank:{name:'Aquarium',w:2,h:1,cost:90,draw(g,x,y){fill(g,'#5a3824',x+2,y+8,28,7);fill(g,'#3a3448',x+2,y-8,28,17);fill(g,'#3b86d4',x+3,y-7,26,15);fill(g,'#6ab6f0',x+3,y-7,26,2);fill(g,'#3f8a3a',x+6,y+2,2,6);fill(g,'#3f8a3a',x+23,y,2,8);fill(g,'#d8c070',x+3,y+6,26,2);const t=(time*6)%20;fill(g,'#ff9a3a',x+5+Math.round(t),y-2,3,2);fill(g,'#ffd860',x+25-Math.round(t*.8),y+2,3,2);}},
- piano:{name:'Little piano',w:2,h:1,cost:150,play:true,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,28,2);fill(g,'#2a2230',x+1,y-12,30,26);fill(g,'#3a3040',x+2,y-11,28,10);fill(g,'#fff8e8',x+3,y,26,5);for(let k=0;k<8;k++)fill(g,'#2a2230',x+5+k*3,y,1,3);fill(g,'#ffd860',x+14,y-9,4,4);}},
+ tank:{name:'Aquarium',w:2,h:1,cost:120,tier:2,draw(g,x,y){fill(g,'#5a3824',x+2,y+8,28,7);fill(g,'#3a3448',x+2,y-8,28,17);fill(g,'#3b86d4',x+3,y-7,26,15);fill(g,'#6ab6f0',x+3,y-7,26,2);fill(g,'#3f8a3a',x+6,y+2,2,6);fill(g,'#3f8a3a',x+23,y,2,8);fill(g,'#d8c070',x+3,y+6,26,2);const t=(time*6)%20;fill(g,'#ff9a3a',x+5+Math.round(t),y-2,3,2);fill(g,'#ffd860',x+25-Math.round(t*.8),y+2,3,2);}},
+ piano:{name:'Little piano',w:2,h:1,cost:450,tier:3,use:'piano',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,28,2);fill(g,'#2a2230',x+1,y-12,30,26);fill(g,'#3a3040',x+2,y-11,28,10);fill(g,'#fff8e8',x+3,y,26,5);for(let k=0;k<8;k++)fill(g,'#2a2230',x+5+k*3,y,1,3);fill(g,'#ffd860',x+14,y-9,4,4);}},
  plush:{name:'Puffbun plush',w:1,h:1,cost:25,draw(g,x,y){const s2=BASE.puffbun;g.drawImage(s2,x+1,y+15-s2.height);}},
- whale:{name:'Giant whale plush',w:2,h:2,cost:0,quest:true,draw(g,x,y){const s2=BASE.glimmerwhale;g.drawImage(s2,x+3,y+30-s2.height);}},
+ whale:{name:'Giant whale plush',w:2,h:2,cost:0,quest:true,tier:4,draw(g,x,y){const s2=BASE.glimmerwhale;g.drawImage(s2,x+3,y+30-s2.height);}},
  window:{name:'Window',w:1,h:1,cost:25,wall:true,draw(g,x,y){fill(g,'#6a4228',x+1,y+1,14,11);fill(g,'#9ed8ff',x+2,y+2,12,9);fill(g,'#d8f0ff',x+3,y+3,4,3);fill(g,'#6a4228',x+7,y+2,2,9);fill(g,'#6a4228',x+2,y+6,12,1);fill(g,'#f6a8c4',x,y+1,2,11);fill(g,'#f6a8c4',x+14,y+1,2,11);}},
  painting:{name:'Meadow painting',w:1,h:1,cost:30,wall:true,draw(g,x,y){fill(g,'#c89a3a',x+1,y+1,14,11);fill(g,'#9ed8ff',x+2,y+2,12,5);fill(g,'#6cc24a',x+2,y+7,12,4);fill(g,'#ffd860',x+10,y+3,2,2);fill(g,'#fff8e8',x+4,y+7,3,2);}},
  clock:{name:'Wall clock',w:1,h:1,cost:30,wall:true,draw(g,x,y){fill(g,'#6a4228',x+3,y+1,10,11);fill(g,'#fff8e8',x+4,y+2,8,8);fill(g,'#1a1424',x+8,y+3,1,3);fill(g,'#1a1424',x+8,y+5,2,1);fill(g,'#c89a3a',x+7,y+10,2,2);}},
- hearth:{name:'Fireplace',w:2,h:1,cost:120,wall:true,draw(g,x,y){fill(g,'#8a8698',x+1,y-2,30,18);fill(g,'#a8a4b8',x+1,y-2,30,2);fill(g,'#2a1a14',x+7,y+4,18,12);const f2=(time*8|0)%2;fill(g,'#ff9a2a',x+10,y+9-f2,12,7+f2);fill(g,'#ffd860',x+13,y+11,6,5);fill(g,'#e8553a',x+11,y+13,10,3);}},
+ hearth:{name:'Fireplace',w:2,h:1,cost:160,tier:2,wall:true,draw(g,x,y){fill(g,'#8a8698',x+1,y-2,30,18);fill(g,'#a8a4b8',x+1,y-2,30,2);fill(g,'#2a1a14',x+7,y+4,18,12);const f2=(time*8|0)%2;fill(g,'#ff9a2a',x+10,y+9-f2,12,7+f2);fill(g,'#ffd860',x+13,y+11,6,5);fill(g,'#e8553a',x+11,y+13,10,3);}},
  garland:{name:'Star garland',w:2,h:1,cost:20,wall:true,draw(g,x,y){for(let k=0;k<8;k++){const yy=y+2+Math.round(Math.sin(k/7*Math.PI)*4);fill(g,'#3f8a3a',x+k*4,yy,4,1);fill(g,['#ffd860','#ff7aa8','#9ef0f0'][k%3],x+k*4+1,yy+1,2,2);}}},
+ stool:{name:'Little stool',w:1,h:1,cost:18,tier:1,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+4,y+14,8,2);fill(g,'#6a4228',x+5,y+9,1,6);fill(g,'#6a4228',x+10,y+9,1,6);fill(g,'#c08a52',x+4,y+6,8,3);fill(g,'#d8a46a',x+4,y+6,8,1);}},
+ vase:{name:'Flower stand',w:1,h:1,cost:22,tier:1,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+4,y+14,8,2);fill(g,'#d8a46a',x+2,y+6,12,3);fill(g,'#a8743e',x+2,y+8,12,1);fill(g,'#8a5a34',x+7,y+9,2,6);fill(g,'#8a5a34',x+5,y+14,6,1);fill(g,'#72c4ff',x+6,y+1,4,5);fill(g,'#a8dcff',x+6,y+1,1,4);fill(g,'#3f8a32',x+7,y-3,1,4);fill(g,'#3f8a32',x+9,y-2,1,3);fill(g,'#ff7aa8',x+6,y-5,3,2);fill(g,'#ffd860',x+9,y-4,2,2);fill(g,'#b49af4',x+4,y-3,2,2);}},
+ cushions:{name:'Floor cushions',w:1,h:1,cost:20,tier:1,layer:0,draw(g,x,y){fill(g,'#d0648c',x+1,y+6,8,6);fill(g,'#f6a8c4',x+1,y+6,8,4);fill(g,'#8a6ad0',x+7,y+3,8,6);fill(g,'#b49af4',x+7,y+3,8,4);fill(g,'#c8a030',x+4,y+9,8,5);fill(g,'#ffd860',x+4,y+9,8,3);}},
+ bunting:{name:'Party bunting',w:2,h:1,cost:15,tier:1,wall:true,draw(g,x,y){fill(g,'#5a3824',x,y+2,32,1);for(let k=0;k<8;k++){const c=['#e8553a','#ffd860','#6cc24a','#5ab4f0','#b49af4','#f6a8c4'][k%6];fill(g,c,x+k*4,y+3,4,1);fill(g,c,x+k*4+1,y+4,2,2);fill(g,c,x+k*4+1,y+6,1,1);}}},
+ shelfw:{name:'Wall shelf',w:1,h:1,cost:28,tier:1,wall:true,draw(g,x,y){fill(g,'#6a4228',x+1,y+10,14,2);fill(g,'#8a5a34',x+1,y+10,14,1);fill(g,'#5a3824',x+3,y+12,1,2);fill(g,'#5a3824',x+12,y+12,1,2);fill(g,'#c8643a',x+3,y+6,4,4);shape(g,x-1,y-2,[[4,2,6],[3,3,8],[4,4,6],[5,5,4]],'#2f7a36','#46984a','#7cc85a');fill(g,'#e8553a',x+9,y+4,2,6);fill(g,'#5ab4f0',x+11,y+5,2,5);fill(g,'#ffd860',x+13,y+6,1,4);}},
+ sofa:{name:'Comfy sofa',w:2,h:1,cost:140,tier:2,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,28,2);fill(g,'#3a6aa8',x+2,y-7,28,10);fill(g,'#5a8ac8',x+3,y-6,26,8);fill(g,'#6a9ad8',x+2,y+2,28,7);fill(g,'#88b4e8',x+3,y+2,12,2);fill(g,'#88b4e8',x+17,y+2,12,2);fill(g,'#3a6aa8',x+16,y+2,1,7);
+   fill(g,'#4a7ab8',x,y-3,4,13);fill(g,'#4a7ab8',x+28,y-3,4,13);fill(g,'#2a4a78',x+2,y+9,28,2);fill(g,'#5a3824',x+3,y+11,2,3);fill(g,'#5a3824',x+27,y+11,2,3);fill(g,'#ffd860',x+5,y-3,5,4);fill(g,'#ff7aa8',x+22,y-3,5,4);}},
+ armchair:{name:'Armchair',w:1,h:1,cost:80,tier:2,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,12,2);fill(g,'#a84a6a',x+2,y-7,12,10);fill(g,'#d0648c',x+3,y-6,10,8);fill(g,'#e88aac',x+2,y+2,12,7);fill(g,'#a84a6a',x,y-3,3,13);fill(g,'#a84a6a',x+13,y-3,3,13);fill(g,'#7a2a4a',x+2,y+9,12,2);fill(g,'#5a3824',x+3,y+11,2,3);fill(g,'#5a3824',x+11,y+11,2,3);}},
+ dresser:{name:'Dresser',w:2,h:1,cost:110,tier:2,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,28,2);fill(g,'#7a4a2a',x+1,y-7,30,21);fill(g,'#a8743e',x+2,y-6,28,19);for(const r of[-1,5])fill(g,'#7a4a2a',x+2,y+r,28,1);for(const r of[-4,2,8]){fill(g,'#ffd860',x+9,y+r,2,1);fill(g,'#ffd860',x+21,y+r,2,1);}
+   fill(g,'#c89a3a',x+11,y-17,10,10);fill(g,'#bfe6ff',x+12,y-16,8,8);fill(g,'#ffffff',x+13,y-15,2,3);fill(g,'#f6a8c4',x+4,y-10,3,3);}},
+ petbed:{name:'Creature bed',w:1,h:1,cost:70,tier:2,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+13,14,2);fill(g,'#c8423a',x+1,y+5,14,9);fill(g,'#e8553a',x+1,y+5,14,2);fill(g,'#fff8e8',x+3,y+7,10,5);fill(g,'#ff7aa8',x+6,y+8,1,1);fill(g,'#ff7aa8',x+8,y+8,1,1);fill(g,'#ff7aa8',x+6,y+9,3,1);fill(g,'#ff7aa8',x+7,y+10,1,1);}},
+ rainbow:{name:'Rainbow rug',w:3,h:2,cost:120,tier:2,layer:0,draw(g,x,y){const C=['#e8553a','#ff9a3a','#ffd860','#6cc24a','#5ab4f0','#8a6ad0'];C.forEach((c,k)=>{const ins=k===0||k===5?3:1;fill(g,c,x+2+ins,y+4+k*4,44-ins*2,4);});fill(g,'#fff8e8',x+5,y+3,38,1);fill(g,'#fff8e8',x+5,y+28,38,1);}},
+ terrarium:{name:'Glow terrarium',w:1,h:1,cost:95,tier:2,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,12,2);fill(g,'#8a5a34',x+2,y+10,12,5);fill(g,'#3a3448',x+2,y-4,12,14);fill(g,'#bfe6ff',x+3,y-3,10,13);fill(g,'#7a5030',x+3,y+7,10,3);fill(g,'#46984a',x+5,y+2,2,5);fill(g,'#46984a',x+4,y+3,4,1);
+   const b=.5+.5*Math.sin(time*3);g.globalAlpha=.4+b*.6;fill(g,'#7ff0e8',x+9,y+3,3,2);fill(g,'#d8fffa',x+10,y+3,1,1);g.globalAlpha=1;fill(g,'#e2ecff',x+10,y+5,1,2);fill(g,'#ffffff',x+4,y-2,1,4);}},
+ starlamp:{name:'Star lamp',w:1,h:1,cost:90,tier:2,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+4,y+14,8,2);fill(g,'#3a3448',x+7,y+1,2,13);fill(g,'#3a3448',x+5,y+13,6,2);const c=['#ffd860','#ff9ac0','#9ef0f0'][(time*1.5|0)%3];g.globalAlpha=.3;fill(g,c,x+1,y-11,14,13);g.globalAlpha=1;
+   fill(g,c,x+7,y-10,2,10);fill(g,c,x+3,y-6,10,2);fill(g,c,x+5,y-8,6,6);fill(g,'#ffffff',x+7,y-6,2,2);}},
+ canopy:{name:'Canopy bed',w:2,h:2,cost:480,tier:3,use:'bed',draw(g,x,y){FURN.bed.draw(g,x,y);fill(g,'#6a4228',x+1,y-14,2,40);fill(g,'#6a4228',x+29,y-14,2,40);fill(g,'#8a6ad0',x,y-16,32,5);fill(g,'#b49af4',x,y-16,32,2);
+   for(let k=0;k<8;k++)fill(g,'#b49af4',x+k*4,y-11,3,1+(k%2));fill(g,'#d8c8ff',x+3,y-10,3,14);fill(g,'#d8c8ff',x+26,y-10,3,14);fill(g,'#ffd860',x+15,y-15,2,2);}},
+ bookcase:{name:'Grand bookcase',w:3,h:1,cost:360,tier:3,draw(g,x,y){fill(g,'#5a3824',x+1,y-24,46,39);fill(g,'#8a5a34',x+2,y-23,44,37);fill(g,'#c89a3a',x+1,y-25,46,2);for(let s2=0;s2<4;s2++){fill(g,'#5a3824',x+2,y-15+s2*8,44,1);for(let b=0;b<11;b++)fill(g,['#e8553a','#5ab4f0','#ffd860','#6cc24a','#b49af4','#f6a8c4','#ff9a3a'][(b+s2*3)%7],x+3+b*4,y-21+s2*8,3,6);}}},
+ telescope:{name:'Telescope',w:1,h:1,cost:420,tier:3,use:'telescope',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,12,2);fill(g,'#5a3824',x+4,y+4,1,11);fill(g,'#5a3824',x+11,y+4,1,11);fill(g,'#5a3824',x+7,y+4,2,11);
+   for(let k=0;k<8;k++)fill(g,k<2?'#a8743e':'#c89a3a',x+2+k,y+4-k,4,3);fill(g,'#ffe2a0',x+11,y-4,2,2);fill(g,'#9ed8ff',x+10,y-3,1,1);}},
+ arcade:{name:'Arcade machine',w:1,h:1,cost:520,tier:3,use:'arcade',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+14,14,2);fill(g,'#2a2250',x+1,y-16,14,31);fill(g,'#ff7aa8',x+2,y-15,12,4);fill(g,'#ffd860',x+4,y-14,8,2);fill(g,'#1a1424',x+3,y-10,10,9);
+   const f=(time*6|0);for(let k=0;k<4;k++)fill(g,['#7cf0b8','#ff9ac0','#ffd860','#9ef0f0'][(k+f)%4],x+4+((k*3+f)%8),y-9+((k*5+f)%7),1,1);fill(g,'#5ab4f0',x+2,y,12,3);fill(g,'#e8553a',x+4,y,2,2);fill(g,'#ffd860',x+9,y+1,2,1);fill(g,'#6cc24a',x+12,y+1,1,1);}},
+ jukebox:{name:'Jukebox',w:1,h:1,cost:450,tier:3,use:'jukebox',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+14,14,2);fill(g,'#8a2a2a',x+1,y-12,14,27);fill(g,'#c8423a',x+2,y-14,12,4);fill(g,'#c8423a',x+3,y-15,10,1);const f=(time*4|0);
+   for(let k=0;k<5;k++)fill(g,['#ffd860','#7cf0b8','#ff9ac0','#9ef0f0','#ff9a3a'][(k+f)%5],x+2,y-11+k*4,1,3),fill(g,['#ffd860','#7cf0b8','#ff9ac0','#9ef0f0','#ff9a3a'][(k+f+2)%5],x+13,y-11+k*4,1,3);fill(g,'#ffe2a0',x+4,y-9,8,8);fill(g,'#c89a3a',x+5,y-8,6,6);fill(g,'#3a3448',x+4,y+2,8,8);for(let k=0;k<3;k++)fill(g,'#8a8698',x+5,y+3+k*2,6,1);}},
+ crystal:{name:'Crystal ball',w:1,h:1,cost:380,tier:3,use:'crystal',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#6a4228',x+4,y+9,8,6);fill(g,'#c89a3a',x+4,y+9,8,1);g.globalAlpha=.25;fill(g,'#c8a0ff',x+1,y-6,14,15);g.globalAlpha=1;
+   [[5,-4,6],[4,-3,8],[3,-2,10],[3,-1,10],[3,0,10],[3,1,10],[3,2,10],[4,3,8],[5,4,6],[6,5,4]].forEach(([a,b,w])=>fill(g,'#8a6ad0',x+a,y+b,w,1));const sw=Math.round(Math.sin(time*2)*2);fill(g,'#d8c8ff',x+7+sw,y-1,2,2);fill(g,'#9ef0f0',x+6-sw,y+2,2,1);fill(g,'#ffffff',x+5,y-3,1,2);}},
+ fishwall:{name:'Wall aquarium',w:2,h:1,cost:400,tier:3,wall:true,draw(g,x,y){fill(g,'#3a3448',x+1,y,30,14);fill(g,'#3b86d4',x+2,y+1,28,12);fill(g,'#6ab6f0',x+2,y+1,28,2);fill(g,'#3f8a3a',x+5,y+7,2,6);fill(g,'#3f8a3a',x+25,y+5,2,8);fill(g,'#d8c070',x+2,y+11,28,2);
+   const t=(time*7)%26;fill(g,'#ff9a3a',x+3+Math.round(t),y+5,3,2);fill(g,'#f6a8c4',x+27-Math.round(t*.7),y+8,3,2);fill(g,'#ffd860',x+3+Math.round((t*1.3)%24),y+3,2,1);}},
+ chandelier:{name:'Crystal chandelier',w:2,h:1,cost:950,tier:4,wall:true,draw(g,x,y){fill(g,'#c89a3a',x+15,y-14,2,10);fill(g,'#c89a3a',x+4,y-4,24,2);fill(g,'#ffd860',x+4,y-4,24,1);for(const a of[4,10,16,22,27]){fill(g,'#c89a3a',x+a,y-3,1,4);fill(g,'#fff8e8',x+a,y-7,1,3);g.globalAlpha=.6+.4*Math.sin(time*6+a);fill(g,'#ffd860',x+a,y-9,1,2);g.globalAlpha=1;}
+   for(let k=0;k<7;k++){const tw=Math.sin(time*4+k*1.7)>.6;fill(g,tw?'#ffffff':'#bfe6ff',x+6+k*3,y+1+(k%2)*2,1,2);}g.globalAlpha=.15;fill(g,'#ffe2a0',x-2,y-10,36,18);g.globalAlpha=1;}},
+ throne:{name:'Golden throne',w:2,h:2,cost:1600,tier:4,draw(g,x,y){fill(g,'rgba(0,0,0,.25)',x+3,y+29,26,3);fill(g,'#c89a3a',x+5,y-14,22,30);fill(g,'#ffd860',x+6,y-13,20,28);fill(g,'#c8423a',x+9,y-10,14,20);fill(g,'#e8553a',x+10,y-9,12,3);
+   for(const a of[6,15,24])fill(g,'#ffd860',x+a,y-18,3,4);fill(g,'#e8553a',x+15,y-17,2,2);fill(g,'#72c4ff',x+7,y-17,1,1);fill(g,'#72c4ff',x+25,y-17,1,1);fill(g,'#c89a3a',x+3,y+8,26,12);fill(g,'#ffd860',x+4,y+8,24,3);fill(g,'#c8423a',x+8,y+10,16,5);fill(g,'#c89a3a',x+5,y+20,3,9);fill(g,'#c89a3a',x+24,y+20,3,9);
+   if(Math.sin(time*3)>.7)fill(g,'#ffffff',x+20,y-8,1,1);}},
+ hoard:{name:"Dragon's hoard",w:2,h:1,cost:1200,tier:4,draw(g,x,y){const rows=[[10,2,12],[6,4,20],[3,6,26],[1,8,30],[1,10,30],[1,12,30]];for(const[a,b,w]of rows)fill(g,'#c89a3a',x+a,y+b,w,2);for(const[a,b,w]of rows)fill(g,'#ffd860',x+a+1,y+b,w-3,1);
+   for(let k=0;k<9;k++){const px=x+3+((k*11)%26),py=y+4+((k*7)%9);fill(g,'#fff6c0',px,py,1,1);}fill(g,'#e8553a',x+9,y+7,2,2);fill(g,'#72c4ff',x+20,y+9,2,2);fill(g,'#7cf0b8',x+14,y+5,2,2);fill(g,'#b49af4',x+25,y+11,2,2);
+   const tw=(time*3|0)%5;fill(g,'#ffffff',x+5+tw*5,y+6+(tw%2)*3,1,1);}},
+ mirror:{name:'Magic mirror',w:1,h:1,cost:1100,tier:4,wall:true,draw(g,x,y){[[5,0,6],[3,1,10],[2,2,12],[2,3,12],[2,4,12],[2,5,12],[2,6,12],[2,7,12],[2,8,12],[3,9,10],[5,10,6]].forEach(([a,b,w])=>fill(g,'#c89a3a',x+a,y+b,w,1));
+   const c=['#8a6ad0','#5ab4f0','#7cf0b8','#f6a8c4'],f=time*2;[[5,1,6],[4,2,8],[4,3,8],[4,4,8],[4,5,8],[4,6,8],[4,7,8],[4,8,8],[5,9,6]].forEach(([a,b,w],k)=>fill(g,c[((k+f)|0)%4],x+a,y+b,w,1));fill(g,'#ffffff',x+6,y+3,1,2);fill(g,'#ffd860',x+7,y-1,2,1);}},
+ ifountain:{name:'Rainbow fountain',w:2,h:2,cost:1400,tier:4,draw(g,x,y){fill(g,'rgba(0,0,0,.25)',x+1,y+28,30,4);fill(g,'#a8a4b8',x+1,y+16,30,13);fill(g,'#d8d4e8',x+1,y+16,30,2);fill(g,'#3b86d4',x+3,y+18,26,8);fill(g,'#7cc2f4',x+5,y+19,10,1);fill(g,'#a8a4b8',x+14,y+2,4,16);
+   const C=['#e8553a','#ff9a3a','#ffd860','#6cc24a','#5ab4f0','#8a6ad0'],ph=time*6;for(let k=0;k<6;k++){const a=(k/5-.5)*1.4;for(let s2=0;s2<6;s2++){const px=x+16+Math.round(Math.sin(a)*s2*2.2),py=y+1-Math.round(Math.cos(a)*s2*1.6-s2*s2*.25);fill(g,C[(k+((ph+s2)|0))%6],px,py,1,1);}}fill(g,'#ffffff',x+15,y,2,2);}},
+ aurorawin:{name:'Aurora window',w:2,h:1,cost:3200,tier:5,wall:true,draw(g,x,y){fill(g,'#3a2a20',x,y-1,32,15);fill(g,'#0b0620',x+2,y+1,28,11);for(let a=0;a<28;a++){const yy=y+3+Math.round(Math.sin(a*.35+time*2)*2);g.globalAlpha=.8;fill(g,a%3?'#7cf0b8':'#c8a0ff',x+2+a,yy,1,3);g.globalAlpha=1;}
+   fill(g,'#ffffff',x+6,y+2,1,1);fill(g,'#ffffff',x+22,y+3,1,1);fill(g,'#ffd860',x+15,y+1,1,1);fill(g,'#3a2a20',x+15,y,2,13);fill(g,'#c89a3a',x,y-2,32,2);}},
+ cloudbed:{name:'Cloud bed',w:2,h:2,cost:4800,tier:5,use:'bed',draw(g,x,y){fill(g,'rgba(0,0,0,.15)',x+2,y+29,28,3);const ph=Math.sin(time*2)*1.5;
+   [[4,6,24],[1,10,30],[0,14,32],[1,20,30],[3,24,26]].forEach(([a,b,w])=>fill(g,'#e8f6ff',x+a,y+b+ph,w,6));[[6,4,8],[16,2,10],[24,6,6]].forEach(([a,b,w])=>fill(g,'#ffffff',x+a,y+b+ph,w,5));
+   fill(g,'#ffd0e8',x+6,y+10+ph,20,4);fill(g,'#b49af4',x+4,y+16+ph,24,8);fill(g,'#d8c8ff',x+4,y+16+ph,24,2);for(let k=0;k<3;k++)fill(g,'#ffd860',x+8+k*8,y+19+ph,2,2);
+   if(Math.sin(time*3)>.5)fill(g,'#ffffff',x+27,y+3,1,1);}},
+ trwhale:{name:'Golden whale trophy',w:2,h:1,cost:0,trophy:'glimmerwhale',tier:5,draw(g,x,y){drawTrophy(g,x,y,'glimmerwhale');}},
+ trtitan:{name:'Golden titan trophy',w:2,h:1,cost:0,trophy:'mossback',tier:5,draw(g,x,y){drawTrophy(g,x,y,'mossback');}},
+ trsky:{name:'Golden Skyhorn trophy',w:2,h:1,cost:0,trophy:'skyhorn',tier:5,draw(g,x,y){drawTrophy(g,x,y,'skyhorn');}},
+ trdragon:{name:'Golden dragon trophy',w:2,h:1,cost:0,trophy:'emberwyrm',tier:5,draw(g,x,y){drawTrophy(g,x,y,'emberwyrm');}},
+ trstar:{name:'Sanctuary Star plaque',w:1,h:1,cost:0,trophy:'quests',tier:5,wall:true,draw(g,x,y){fill(g,'#6a4228',x+1,y,14,13);fill(g,'#8a5a34',x+2,y+1,12,11);fill(g,'#ffd860',x+7,y+2,2,9);fill(g,'#ffd860',x+3,y+5,10,2);fill(g,'#ffd860',x+5,y+3,6,6);fill(g,'#fff6c0',x+7,y+5,2,2);if(Math.sin(time*3)>.6)fill(g,'#ffffff',x+11,y+2,1,1);}},
 };
-const WALLS={cream:{name:'Cream',a:'#f0e2c8',b:'#e6d4b6',t:'#9a6a3e',cost:0},rose:{name:'Rose stripes',a:'#f6ccd6',b:'#eab4c2',t:'#a85a6a',cost:40},mint:{name:'Mint',a:'#cdeedc',b:'#b6e0c8',t:'#3f8a5a',cost:40},honey:{name:'Honey',a:'#ffe2a0',b:'#f4d084',t:'#b07a28',cost:40},starry:{name:'Starry night',a:'#2a3070',b:'#343c8a',t:'#ffd860',cost:80,stars:true}};
-const FLOORS={wood:{name:'Oak planks',a:'#c08a52',b:'#a8743e',cost:0},checker:{name:'Checkerboard',a:'#f0e8dc',b:'#c8b8a8',cost:40},moss:{name:'Moss carpet',a:'#7ab85a',b:'#68a84a',cost:50},stone:{name:'Stone tiles',a:'#bcb8c8',b:'#a4a0b4',cost:50},rose:{name:'Rose carpet',a:'#e8b8c4',b:'#d8a0b0',cost:50}};
+const GOLD={};const goldSpr=sp=>GOLD[sp]||(GOLD[sp]=makeSprite(ROWS[sp],null,true,false,'#e8b830'));
+function drawTrophy(g,x,y,sp){fill(g,'rgba(0,0,0,.2)',x+3,y+14,26,2);fill(g,'#5c5a74',x+4,y+7,24,8);fill(g,'#8a8698',x+4,y+7,24,2);fill(g,'#ffd860',x+12,y+10,8,3);const s2=goldSpr(sp);g.drawImage(s2,x+16-Math.floor(s2.width/2),y+8-s2.height);
+  const tw=(time*2|0)%4;fill(g,'#fff6c0',x+16-Math.floor(s2.width/2)+3+tw*3,y+10-s2.height+(tw%2)*2,1,1);}
+const RANKS={1:{name:'Sprout Keeper',req:null},2:{name:'Cozy Keeper',req:{kinds:4}},3:{name:'Fancy Keeper',req:{kinds:8,quests:2}},4:{name:'Legendary Keeper',req:{kinds:12,quests:5}},5:{name:'Mythic Keeper',req:{kinds:16,quests:8,visitors:300}}};const TIERS=RANKS;
+const rankLabel=r=>`Rank ${r} · ${RANKS[r].name}`;const rankStars=r=>'★'.repeat(r)+'☆'.repeat(5-r);
+const COZ={1:2,2:5,3:10,4:20,5:40};
+const questsDone=()=>QUESTS.filter(q=>state.quests[q.id]==='done').length;
+const reqMet=r=>!r||((!r.kinds||caughtKinds()>=r.kinds)&&(!r.quests||questsDone()>=r.quests)&&(!r.visitors||state.stats.visitors>=r.visitors));
+const reqText=r=>!r?'':[r.kinds?`befriend ${r.kinds} kinds of creatures (${Math.min(caughtKinds(),r.kinds)}/${r.kinds})`:'',r.quests?`finish ${r.quests} quests (${Math.min(questsDone(),r.quests)}/${r.quests})`:'',r.visitors?`welcome ${r.visitors} visitors (${Math.min(state.stats.visitors,r.visitors)}/${r.visitors})`:''].filter(Boolean).join(', ');
+function pipTier(){let t=1;for(let k=2;k<=5;k++){if(reqMet(RANKS[k].req))t=k;else break;}return t;}const sanctRank=pipTier;
+const rankLock=r=>r>sanctRank()?`Arrives at ${rankLabel(r)}: ${reqText(RANKS[r].req)}`:null;
+const coziness=()=>state.home.items.reduce((n,it)=>{const Fu=FURN[it.f];return n+(!Fu?0:Fu.trophy?15:COZ[Fu.tier||1]);},0);
+const TROPHY_OF={glimmerwhale:'trwhale',mossback:'trtitan',skyhorn:'trsky',emberwyrm:'trdragon'};
+function grantTrophies(quiet){for(const sp in TROPHY_OF){const f=TROPHY_OF[sp];if(state.dex[sp]===2&&!(state.inv['f:'+f]>0)){addInv('f:'+f,1);if(!quiet)toast(`Trophy earned: ${FURN[f].name}! Place it in your cottage with Decorate.`);}}
+  if(questsDone()>=QUESTS.length&&!(state.inv['f:trstar']>0)){addInv('f:trstar',1);if(!quiet)toast('Every quest done! You earned the Sanctuary Star plaque for your cottage.');}}
+function dailySpecial(){const day=Math.floor(Date.now()/86400000),t=pipTier(),c=Object.keys(FURN).filter(f=>FURN[f].cost>0&&(FURN[f].tier||1)<=t&&!FURN[f].quest&&!FURN[f].trophy);return c.length?c[day%c.length]:null;}
+const WALLS={cream:{name:'Cream',a:'#f0e2c8',b:'#e6d4b6',t:'#9a6a3e',cost:0},rose:{name:'Rose stripes',a:'#f6ccd6',b:'#eab4c2',t:'#a85a6a',cost:40},mint:{name:'Mint',a:'#cdeedc',b:'#b6e0c8',t:'#3f8a5a',cost:40},honey:{name:'Honey',a:'#ffe2a0',b:'#f4d084',t:'#b07a28',cost:40},
+  ocean:{name:'Ocean waves',a:'#7ab8e8',b:'#68a6d8',t:'#2c6cb4',cost:150,tier:2},starry:{name:'Starry night',a:'#2a3070',b:'#343c8a',t:'#ffd860',cost:220,stars:true,tier:2},castle:{name:'Castle stone',a:'#aaa6ba',b:'#96929f',t:'#5c5a74',cost:320,tier:3},royal:{name:'Royal gold',a:'#f4e2a0',b:'#e8cc78',t:'#a8281e',cost:900,stars:true,tier:4}};
+const FLOORS={wood:{name:'Oak planks',a:'#c08a52',b:'#a8743e',cost:0},checker:{name:'Checkerboard',a:'#f0e8dc',b:'#c8b8a8',cost:40},moss:{name:'Moss carpet',a:'#7ab85a',b:'#68a84a',cost:50},stone:{name:'Stone tiles',a:'#bcb8c8',b:'#a4a0b4',cost:50},rose:{name:'Rose carpet',a:'#e8b8c4',b:'#d8a0b0',cost:120,tier:2},
+  marble:{name:'Marble',a:'#f6f2fa',b:'#dcd6e6',cost:320,tier:3},cloud:{name:'Cloud carpet',a:'#bfe6ff',b:'#ffffff',cost:900,tier:4}};
+
 function drawWall(g,W,i,j,x,y){const S=WALLS[state.home.wall]||WALLS.cream,inner=j<=1&&i>0&&i<W.w-1;
   if(!inner){fill(g,'#5a3a2a',x,y,16,16);fill(g,'#6a4a36',x,y,16,1);return;}
   if(j===0){fill(g,'#4a3428',x,y,16,6);fill(g,S.a,x,y+6,16,10);}else fill(g,S.a,x,y,16,16);
@@ -1024,7 +1144,7 @@ function drawWall(g,W,i,j,x,y){const S=WALLS[state.home.wall]||WALLS.cream,inner
   if(j===1){fill(g,S.t,x,y+12,16,4);fill(g,'rgba(0,0,0,.15)',x,y+15,16,1);}}
 function drawFloor(g,i,j,x,y,r){const F2=FLOORS[state.home.floor]||FLOORS.wood,k=state.home.floor;fill(g,F2.a,x,y,16,16);
   if(k==='wood'){for(let b=0;b<16;b+=4)fill(g,F2.b,x,y+b,16,1);fill(g,F2.b,x+((i*5+j*3)%14),y+1,1,3);fill(g,F2.b,x+((i*9+j*7)%14),y+9,1,3);}
-  else if(k==='checker'){if((i+j)%2)fill(g,F2.b,x,y,16,16);}
+  else if(k==='checker'||k==='marble'){if((i+j)%2)fill(g,F2.b,x,y,16,16);if(k==='marble'&&(i*7+j*3)%5===0)fill(g,'#c8c0d8',x+3,y+5,8,1);}
   else if(k==='stone'){fill(g,F2.b,x,y,16,1);fill(g,F2.b,x,y,1,16);fill(g,'#d0ccdc',x+1,y+1,14,1);}
   else{for(let n=0;n<10;n++)fill(g,F2.b,x+((r()*16)|0),y+((r()*16)|0),1,1);}
   if(j===2)fill(g,'rgba(0,0,0,.12)',x,y,16,3);}
@@ -1052,14 +1172,21 @@ function homeApply(t,i,j,quiet){
   if(t.id==='bulldoze'){const it=homeItemAt(i,j);if(!it){if(!quiet)toast('Nothing to put away there.');return false;}state.home.items.splice(state.home.items.indexOf(it),1);poof(i*16+8,j*16+8);sfx('miss');buildHome();save();renderBuildbar();return true;}
   const why=homeProblem(t,i,j);if(why){if(!quiet)toast(why);return false;}
   state.home.items.push({f:t.furn,i,j});sfx('blip');sparks((i+FURN[t.furn].w/2)*16,(j+FURN[t.furn].h/2)*16,8,'#fff6b0');buildHome();save();renderBuildbar();return true;}
-function homeInfo(t){if(!t)return'';if(t.id==='bulldoze')return t.info;const Fu=FURN[t.furn];return`<b>${Fu.name}</b> · ${homeAvail(t.furn)} left to place${Fu.wall?' · goes on the wall':''}`;}
+function homeInfo(t){if(!t)return'';if(t.id==='bulldoze')return t.info+` · Coziness ${coziness()}`;const Fu=FURN[t.furn];return`<b>${Fu.name}</b> · ${homeAvail(t.furn)} left to place${Fu.wall?' · goes on the wall':''} · Coziness ${coziness()}`;}
 function cycleStyle(kind){if(G('style',{k:kind}))return;const H=state.home,list=H.styles[kind];if(list.length<2){toast(`Buy more ${kind==='wall'?'wallpaper':'floors'} at Pip's Home Goods in town.`);return;}
   H[kind]=list[(list.indexOf(H[kind])+1)%list.length];sfx('blip');buildHome();save();renderBuildbar();}
 function furnCanvas(f){const Fu=FURN[f],c=document.createElement('canvas');c.width=Fu.w*16;c.height=Fu.h*16+16;Fu.draw(c.getContext('2d'),0,16);return c;}
 function drawFurn(it){const Fu=FURN[it.f];if(Fu)Fu.draw(ctx,it.i*16,it.j*16);}
 function rest(remote){if(G('rest',{})){sleepFx=2.4;sfx('pet');toast('What a cozy nap!');return;}const now=Date.now();if(now-(state.restAt||0)<90000){toast("You're not sleepy yet. Come back in a little while.");return;}state.restAt=now;if(!remote)sleepFx=2.4;
-  let n=0;for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c){c.happy=Math.min(100,c.happy+25);n++;}}
-  toast(`What a cozy nap! ${n} creature${n===1?'':'s'} feel happier too.`);sfx('pet');save();}
+  const boost=15+Math.min(45,Math.floor(coziness()/4));let n=0;for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c){c.happy=Math.min(100,c.happy+boost);n++;}}
+  toast(`What a cozy nap! ${n} creature${n===1?'':'s'} feel happier too (+${boost}).`);sfx('pet');save();}
+function useFurn(u,it){if(u==='bed')rest();else if(u==='piano')playPiano(it);
+  else if(u==='arcade'){ensureAudio();if(AC&&!muted){let t=AC.currentTime+.02;for(const n of[72,76,79,84,79,84,88]){const o=AC.createOscillator(),gn=AC.createGain();o.type='square';o.frequency.value=mtof(n);gn.gain.setValueAtTime(.04,t);gn.gain.exponentialRampToValueAtTime(.0001,t+.09);o.connect(gn).connect(AC.destination);o.start(t);o.stop(t+.1);t+=.08;}}
+    const sc=(1000+((R()*98)|0)*100);toast(sc>state.hiscore||!state.hiscore?`NEW HIGH SCORE: ${sc.toLocaleString()}!`:`Score: ${sc.toLocaleString()} · best ${state.hiscore.toLocaleString()}`);if(!state.hiscore||sc>state.hiscore)state.hiscore=sc;sparks((it.i+.5)*16,it.j*16-8,8,'#7cf0b8');}
+  else if(u==='jukebox'){ensureAudio();if(AC&&!muted){const sc=[0,4,7,9,12,7,4,9];let t=AC.currentTime+.02;for(let k=0;k<8;k++){INST.kalimba(t,mtof(62+sc[k]),.07,.3,AC.destination);t+=.16;}}
+    for(let k=0;k<5;k++)addP({x:(it.i+.5)*16+(R()-.5)*12,y:it.j*16-12,vx:(R()-.5)*14,vy:-18-R()*10,life:1.3,max:1.3,kind:'spark',col:['#ffd860','#ff9ac0','#9ef0f0'][k%3]});toast('♪ The jukebox plays a happy tune!');}
+  else if(u==='telescope'){const S=['You spot a constellation shaped like a Skyhorn!','A shooting star zips past. Make a wish!','You can see the glow of Crystal Lake from here.','The moon looks close enough to touch.','Was that a dragon flying over Ember Peaks?'];toast(S[(R()*S.length)|0]);sparks((it.i+.8)*16,it.j*16-6,6,'#fff6c0');sfx('pet');}
+  else if(u==='crystal'){toast('The crystal ball swirls… '+rumor().replace(/^(Rumor|Tip): /,''));sparks((it.i+.5)*16,it.j*16,10,'#c8a0ff');sfx('treasure');}}
 function playPiano(it){ensureAudio();if(AC&&!muted){const sc=[0,2,4,7,9,12,14,16];let t=AC.currentTime+.02;for(let k=0;k<6;k++){INST.musicbox(t,mtof(64+sc[(R()*sc.length)|0]),.09,.4,AC.destination);t+=.18;}}
   for(let k=0;k<4;k++)addP({x:(it.i+1)*16+(R()-.5)*20,y:it.j*16-6,vx:(R()-.5)*10,vy:-20-R()*10,life:1.2,max:1.2,kind:'spark',col:['#ffd860','#ff7aa8','#9ef0f0'][k%3]});}
 
@@ -1075,6 +1202,7 @@ function startExpedition(zk,cid,opts={}){
   companion=null;if(cid){const c=getC(cid);if(c){c.away=true;sendCmd('away',{cid,v:1});companion={cid,sp:c.sp,x:gen.spawn.x-14,y:gen.spawn.y+18,face:1,moving:false,trail:[],fx:0};}}
   world=gen.W;scene='wild';ambient=[];player.x=gen.spawn.x;player.y=gen.spawn.y+20;player.face='down';snapCam();
   for(let k=0;k<3;k++)spawnWildCr(true);
+  if(opts.star&&(state.inv.starfruit||0)>0){state.inv.starfruit--;sendCmd('inv',{k:'starfruit',n:-1});const before=wild.crs.length;spawnWildCr(true,2);if(wild.crs.length===before)spawnWildCr(true,1);toast('The star fruit glows… something rare is drawn near!');}
   updCompChip();toast(ZONES[zk].name+(companion?` with ${SPECIES[companion.sp].name}`:'')+(clover?' · lucky clover!':''));sfx('unlock');
 }
 function returnHome(){
@@ -1086,9 +1214,9 @@ function returnHome(){
   snapCam();save();
   if(n&&burrowList().length)toast(burrowList().some(c=>SPECIES[c.sp].huge)&&!state.pens.some(p=>p.size==='grand'&&!p.cid)?'A giant friend is waiting by the burrow. It needs a Grand habitat (Bram\'s Builders sells the plans).':'Some new friends are waiting in the burrow. Tap Build to make a habitat for them.');
 }
-function spawnWildCr(first){
+function spawnWildCr(first,minRar=0){
   const zk=wild.zone,le=lureEl(),lucky=has('lucky')||wild.clover;const cands=[];let tot=0;
-  for(const k in SPECIES){const S=SPECIES[k];if(S.zone!==zk)continue;if(S.needs&&S.needs!==le)continue;
+  for(const k in SPECIES){const S=SPECIES[k];if(S.zone!==zk||S.rar<minRar)continue;if(S.needs&&S.needs!==le)continue;
     if((S.rar===3||S.huge)&&wild.crs.some(c=>SPECIES[c.sp].rar===3||SPECIES[c.sp].huge))continue;if(S.swim&&!wild.water.length)continue;
     let w=RAR[S.rar].w;if(le&&S.el===le)w*=3;if(lucky&&S.rar>=2)w*=3;if(S.needs)w*=2.2;if((state.dex[k]||0)<2)w*=1.4;cands.push([k,w]);tot+=w;}
   if(!cands.length)return;let r=R()*tot,k=cands[0][0];for(const[kk,w]of cands){if((r-=w)<=0){k=kk;break;}}
@@ -1126,7 +1254,7 @@ function updWild(dt){
     if(tg){const dx=tg[0]-companion.x,dy=tg[1]-companion.y;companion.moving=Math.hypot(dx,dy)>1;companion.x+=dx*Math.min(1,dt*8);companion.y+=dy*Math.min(1,dt*8);if(Math.abs(dx)>.3)companion.face=dx>0?1:-1;}
     companion.fx-=dt;if(companion.fx<=0){companion.fx=.45;const S=SPECIES[companion.sp];sparks(companion.x+(R()-.5)*8,companion.y-8,1,ELEM[S.el].col);}}
 }
-function addCreature(sp){const c={id:state.nextId++,sp,happy:70,petT:0};state.owned.push(c);state.dex[sp]=2;
+function addCreature(sp){const c={id:state.nextId++,sp,happy:70,petT:0};state.owned.push(c);state.dex[sp]=2;grantTrophies(false);
   let best=-1;state.pens.forEach((p,i)=>{if(p.cid||!fits(c,p))return;if(best<0)best=i;if(p.biome===ELEM[SPECIES[sp].el].home&&state.pens[best].biome!==p.biome)best=i;});
   if(best>=0)state.pens[best].cid=c.id;return best;}
 
@@ -1155,8 +1283,8 @@ function findTarget(){const L=[];
     for(const n of NPC_POS){const d=Math.hypot(player.x-n.x,player.y-n.y);if(d<20)L.push([d,{type:'npc',id:n.id}]);}
     for(const t of TRAILS){const d=Math.hypot(player.x-t.x,player.y-t.y);if(d<28)L.push([d+4,{type:'trail',t}]);}
   }else if(scene==='home'){
-    for(const it of state.home.items){const Fu=FURN[it.f];if(!Fu||!(it.f==='bed'||Fu.play))continue;const cx=(it.i+Fu.w/2)*16,cy=(it.j+Fu.h)*16+4;
-      const d=Math.hypot(Math.max(0,Math.abs(player.x-cx)-Fu.w*6),player.y-cy);if(d<12)L.push([d,{type:it.f==='bed'?'bed':'piano',it}]);}
+    for(const it of state.home.items){const Fu=FURN[it.f];if(!Fu||!Fu.use)continue;const cx=(it.i+Fu.w/2)*16,cy=(it.j+Fu.h)*16+4;
+      const d=Math.hypot(Math.max(0,Math.abs(player.x-cx)-Fu.w*6),player.y-cy);if(d<12)L.push([d,{type:'furn',use:Fu.use,it}]);}
   }else if(wild){
     for(const c of wild.crs){const S=SPECIES[c.sp],d=Math.hypot(c.x-player.x,c.y-player.y);if(d<(S.huge?50:24))L.push([d-(S.huge?24:6),{type:'cr',c}]);}
     for(const b of wild.bushes){if(!b.has)continue;const d=Math.hypot(b.i*16+8-player.x,b.j*16+8-player.y);if(d<20)L.push([d,{type:'bush',b}]);}
@@ -1170,7 +1298,7 @@ function label(t){switch(t.type){
   case'door':return t.b.id==='cottage'?`${KA} Go inside your cottage`:`${KA} Go into ${t.b.name}`;
   case'npc':return`${KA} Talk to ${NPCINFO[t.id].short}`;
   case'trail':return`${KA} Trail to ${ZONES[t.t.zone].name}${state.unlocked[t.t.zone]?'':' (locked)'}`;
-  case'bed':return`${KA} Take a cozy nap`;case'piano':return`${KA} Play the piano`;
+  case'furn':return`${KA} `+({bed:'Take a cozy nap',piano:'Play the piano',arcade:'Play the arcade game',jukebox:'Play the jukebox',telescope:'Look through the telescope',crystal:'Gaze into the crystal ball'}[t.use]||'Use it');
   case'cr':return`${KA} Befriend ${SPECIES[t.c.sp].name}`;case'bush':return`${KA} Pick berries`;case'spark':return t.s.locket?`${KA} Pick up the pink glint`:`${KA} Dig up treasure`;case'portal':return`${KA} Return home`;}}
 function idleHint(){if(scene==='zoo')return state.pens.some(p=>!zooWorld.penReach.has(p.id))?'Some habitats need a path next to them':countHoused()?'Gate to the wilds at the top · town through the bottom entrance':'Visit an empty habitat to give a creature a home';
   if(scene==='town')return'Willowbrook · the sanctuary is up the north road';
@@ -1186,7 +1314,7 @@ function pressA(){if(titleOpen){startGame();return;}if(catchG){catchPress();retu
     case'gate':gatePanel();break;case'board':boardPanel();break;case'burrow':burrowPanel();break;case'pen':penPanel(t.i);break;
     case'door':if(t.b.id==='cottage')goHome();else if(t.b.id==='hall')npcPanel('mayor');else shopPanel(t.b.id);break;
     case'npc':npcPanel(t.id);break;case'trail':trailPanel(t.t.zone);break;
-    case'bed':rest();break;case'piano':playPiano(t.it);break;
+    case'furn':useFurn(t.use,t.it);break;
     case'cr':startCatch(t.c);break;case'bush':pickBush(t.b);break;case'spark':digSpark(t.s);break;
     case'portal':returnHome();break;}}
 function pressB(){if(titleOpen||catchG)return;if(panelOpen){closePanel();return;}if(buildMode){closeBuild();return;}journalPanel();}
@@ -1218,7 +1346,7 @@ function penPanel(i){
     if(c){const S=SPECIES[c.sp],love=ELEM[S.el].home===p.biome,tip=Math.max(1,Math.round(penValue(p)*.5*charmMult()));
       return head(`${p.size==='grand'?'Grand ':''}${BIOMES[p.biome].name} habitat`)+card(c)+noPath+`<p class="${love?'good':'muted'}">${love?'Loves this habitat: +50% coins.':`Would rather live in a ${BIOMES[ELEM[S.el].home].name} habitat.`} Each visitor tips about ${tip}.</p>
         <div class="row"><button class="pbtn" type="button" data-act="feed" data-autofocus ${state.berries<1||c.happy>=99.5?'disabled':''}>Feed · 1 berry</button><button class="pbtn" type="button" data-act="pet">Pet</button></div>
-        ${(state.inv.golden||0)>0||(state.inv.cookie||0)>0?`<div class="row">${(state.inv.golden||0)>0?`<button class="pbtn" type="button" data-act="golden">Golden apple ×${state.inv.golden}</button>`:''}${(state.inv.cookie||0)>0?`<button class="pbtn" type="button" data-act="cookie">Cookies for everyone ×${state.inv.cookie}</button>`:''}</div>`:''}
+        ${['golden','cookie','cake','mooncake'].some(k=>state.inv[k]>0)?`<div class="row">${[['golden','Golden apple'],['cookie','Cookies for all'],['cake','Rainbow cake for all'],['mooncake','Moon cake for all']].filter(([k])=>state.inv[k]>0).map(([k,l])=>`<button class="pbtn" type="button" data-act="${k}">${l} ×${state.inv[k]}</button>`).join('')}</div>`:''}
         <div class="row"><button class="pbtn" type="button" data-act="burrow">Move to the burrow</button></div>${rebuild}`;}
     const bur=burrowList();
     return head(`${BIOMES[p.biome].name} habitat`)+noPath+(bur.length?`<p>Who should live here?</p><div class="list">${bur.map(b=>{const S=SPECIES[b.sp],love=ELEM[S.el].home===p.biome;
@@ -1231,13 +1359,13 @@ function penAct(p,a,d){const c=p.cid&&getC(p.cid),m=c&&penMot[c.id],hx=m?m.x:(p.
     if(a==='feed'&&c){if(state.berries<1)return;state.berries--;c.happy=Math.min(100,c.happy+40);hearts(hx,hy,5);sfx('berry');tutEv.fed=true;}
     else if(a==='pet'&&c){tutEv.fed=true;if(Date.now()-(c.petT||0)<15000){toast(`${SPECIES[c.sp].name} is still glowing from the last pet.`);}else{c.petT=Date.now();c.happy=Math.min(100,c.happy+10);hearts(hx,hy,3);sfx('pet');}}
     else if(a==='golden'&&c&&state.inv.golden>0){state.inv.golden--;c.happy=100;hearts(hx,hy,8);sparks(hx,hy,10,'#ffd860');sfx('unlock');tutEv.fed=true;}
-    else if(a==='cookie'&&state.inv.cookie>0){state.inv.cookie--;for(const q of state.pens){const cc=q.cid&&getC(q.cid);if(cc){cc.happy=Math.min(100,cc.happy+30);const mm=penMot[cc.id];if(mm)hearts(mm.x,mm.y-12,2,'zoo');}}toast('Everyone loved the cookies!');sfx('berry');}
+    else if((a==='cookie'||a==='cake'||a==='mooncake')&&state.inv[a]>0){state.inv[a]--;const add={cookie:30,cake:60,mooncake:100}[a];for(const q of state.pens){const cc=q.cid&&getC(q.cid);if(cc){cc.happy=Math.min(100,cc.happy+add);const mm=penMot[cc.id];if(mm)hearts(mm.x,mm.y-12,a==='cookie'?2:4,'zoo');}}toast({cookie:'Everyone loved the cookies!',cake:'Rainbow cake for everyone! So happy!',mooncake:'Moon cake magic! Every creature is perfectly happy.'}[a]);sfx(a==='cookie'?'berry':'unlock');}
     else if(a==='burrow'&&c){p.cid=null;delete penMot[c.id];}
     else if(a==='place'){p.cid=+d.id;delete penMot[p.cid];sfx('blip');}
     else if(a==='rebuild'){if(state.coins<25)return;state.coins-=25;p.biome=d.b;buildZoo();sfx('unlock');}
     save();}
 
-let gateSel={zone:'meadow',cid:0,clover:false};
+let gateSel={zone:'meadow',cid:0,clover:false,star:false};
 function gatePanel(fixed){
   if(fixed)gateSel.zone=fixed;if(!state.unlocked[gateSel.zone])gateSel.zone='meadow';if(gateSel.cid&&!getC(gateSel.cid))gateSel.cid=0;
   const render=()=>{const own=[...state.owned].filter(c=>!SPECIES[c.sp].huge).sort((a,b)=>SPECIES[b.sp].rar-SPECIES[a.sp].rar),nc=state.inv.clover||0;
@@ -1247,10 +1375,12 @@ function gatePanel(fixed){
       <div class="list"><button class="pbtn" type="button" data-act="comp" data-id="0" aria-pressed="${!gateSel.cid}"><span class="grow"><b>Go alone</b><small>Everyone stays home and keeps earning</small></span></button>
       ${own.map(c=>{const S=SPECIES[c.sp];return`<button class="pbtn" type="button" data-act="comp" data-id="${c.id}" aria-pressed="${gateSel.cid===c.id}">${img(c.sp,'spr sm')}<span class="grow"><b>${S.name} · ${S.abName}</b><small>${S.abText}</small></span></button>`;}).join('')}</div>
       ${nc?`<button class="pbtn" type="button" data-act="clover" aria-pressed="${gateSel.clover}"><span class="grow"><b>Use a lucky clover</b><small>Rare creatures show up more this trip · you have ${nc}</small></span></button>`:''}
+      ${(state.inv.starfruit||0)>0?`<button class="pbtn" type="button" data-act="star" aria-pressed="${gateSel.star}"><span class="grow"><b>Bring a star fruit</b><small>A rare creature appears right away · you have ${state.inv.starfruit}</small></span></button>`:''}
       <button class="pbtn go" type="button" data-act="go" data-autofocus>Set off to ${ZONES[gateSel.zone].name}</button>`;};
   const onAct=(a,d)=>{if(a==='zone'){gateSel.zone=d.z;sfx('blip');refreshPanel();}else if(a==='comp'){gateSel.cid=+d.id;sfx('blip');refreshPanel();}
     else if(a==='clover'){gateSel.clover=!gateSel.clover;sfx('blip');refreshPanel();}
-    else if(a==='go'){closePanel();startExpedition(gateSel.zone,gateSel.cid,{clover:gateSel.clover});gateSel.clover=false;}};
+    else if(a==='star'){gateSel.star=!gateSel.star;sfx('blip');refreshPanel();}
+    else if(a==='go'){closePanel();startExpedition(gateSel.zone,gateSel.cid,{clover:gateSel.clover,star:gateSel.star});gateSel.clover=false;gateSel.star=false;}};
   openPanel(render,onAct);}
 
 function rumor(){const d=state.dex,u=state.unlocked,q=state.quests;
@@ -1266,14 +1396,14 @@ function rumor(){const d=state.dex,u=state.unlocked,q=state.quests;
   if(d.skyhorn!==2)return'Rumor: a thunder giant on the plains follows only things that glow.';
   return'Every creature in the journal has been befriended. The sanctuary is legendary!';}
 function boardPanel(){
-  const render=()=>`${head('Ranger board')}<p class="ab"><b>${rumor()}</b></p>
+  const render=()=>{const rk=sanctRank();return`${head('Ranger board')}<p class="ab"><b>${rankStars(rk)} ${rankLabel(rk)}</b>${rk<5?`<br><small class="muted">Next rank: ${reqText(RANKS[rk+1].req)}. Each rank brings fancier things to every shop.</small>`:'<br><small class="muted">The highest rank there is!</small>'}</p><p class="ab"><b>${rumor()}</b></p>
     <h3>Supplies</h3><div class="list"><button class="pbtn" type="button" data-act="berries" ${state.coins<15?'disabled':''}>${`<img class="spr sm" src="${sprURL('berry4',SM.berry,8)}" alt="">`}<span class="grow"><b>5 berries</b><small>Feed creatures to keep them happy</small></span><span class="cost">15</span></button></div>
     <h3>Maps</h3><div class="list">${Object.keys(ZONES).filter(z=>ZONES[z].cost).map(z=>{const Z=ZONES[z],ok=state.unlocked[z];
       return`<button class="pbtn" type="button" data-act="unlock" data-z="${z}" ${ok||state.coins<Z.cost?'disabled':''}><span class="grow"><b>${Z.name}</b><small>${ok?'Unlocked':Z.blurb}</small></span><span class="cost">${ok?'✓':Z.cost}</span></button>`;}).join('')}</div>
     <h3>Sanctuary</h3><div class="stat"><span>Visitors so far</span><b>${state.stats.visitors}</b></div><div class="stat"><span>Coins from visitors</span><b>${state.stats.earned}</b></div>
     <div class="stat"><span>Creatures befriended</span><b>${state.owned.length}</b></div><div class="stat"><span>Charm (flowers, trees, benches…)</span><b>${zooWorld.charm} · tips +${Math.round((charmMult()-1)*100)}%</b></div>
     <div class="stat"><span>Next habitat costs</span><b>${nextPenCost()}</b></div>
-    <div class="row"><button class="pbtn" type="button" data-act="tut">Replay the tutorial</button></div>`;
+    <div class="row"><button class="pbtn" type="button" data-act="tut">Replay the tutorial</button></div>`;};
   const onAct=(a,d)=>{if(a==='tut'){closePanel();tutStart();return;}if(G('board',{a,z:d.z})){sfx('blip');return;}boardAct(a,d.z);refreshPanel();};
   openPanel(render,onAct);}
 function boardAct(a,z){if(a==='berries'&&state.coins>=15){state.coins-=15;state.berries+=5;sfx('berry');}
@@ -1285,8 +1415,8 @@ function burrowPanel(){const render=()=>{const b=burrowList();return head('The b
 function journalPanel(){const render=()=>{const ks=Object.keys(SPECIES),got=ks.filter(k=>state.dex[k]===2).length;
   const act=QUESTS.filter(q=>state.quests[q.id]==='active'),done=QUESTS.filter(q=>state.quests[q.id]==='done').length;
   const quests=`<h3>Quests · ${done}/${QUESTS.length} done</h3>`+(act.length?`<div class="list">${act.map(q=>{const ok=q.ready();return`<div class="qrow${ok?' ok':''}"><b>${q.title}</b><small>${q.goal} · from ${NPCINFO[q.npc].short}${ok?' · <span class="good">ready to hand in!</span>':''}</small></div>`;}).join('')}</div>`:`<p class="muted" style="font-size:14px">No quests right now. Townsfolk with a yellow “!” have something to ask.</p>`);
-  const bag=[['golden','Golden apples'],['cookie','Creature cookies'],['clover','Lucky clovers']].filter(([k])=>state.inv[k]>0).map(([k,n])=>`${n} ×${state.inv[k]}`).join(' · ');
-  return head(`Field journal · ${got}/${ks.length}`)+quests+(bag?`<p class="muted" style="font-size:14px">Bag: ${bag}</p>`:'')+`<h3>Creatures</h3><div class="dex">${ks.map(k=>{const S=SPECIES[k],st=state.dex[k]||0,n=state.owned.filter(c=>c.sp===k).length;
+  const bag=[['golden','Golden apples'],['cookie','Creature cookies'],['cake','Rainbow cakes'],['mooncake','Moon cakes'],['clover','Lucky clovers'],['starfruit','Star fruits']].filter(([k])=>state.inv[k]>0).map(([k,n])=>`${n} ×${state.inv[k]}`).join(' · ');
+  const rk=sanctRank();return head(`Field journal · ${got}/${ks.length}`)+`<p class="ab"><b>${rankStars(rk)} ${rankLabel(rk)}</b>${rk<5?`<br><small class="muted">Next: ${reqText(RANKS[rk+1].req)}</small>`:''}</p>`+quests+(bag?`<p class="muted" style="font-size:14px">Bag: ${bag}</p>`:'')+`<h3>Creatures</h3><div class="dex">${ks.map(k=>{const S=SPECIES[k],st=state.dex[k]||0,n=state.owned.filter(c=>c.sp===k).length;
     if(st===2)return`<div><div class="top">${img(k,'spr sm')}<div><b>${S.name}</b><br><small>${n} in the sanctuary${S.huge?' · giant':''}</small></div></div>${tags(S)}<small><b style="color:var(--gold)">${S.abName}.</b> ${S.abText}</small><small>${S.desc}</small></div>`;
     return`<div><div class="top"><img class="spr sm" src="${sprURL('sil-'+k,SIL[k])}" alt=""><div><b>${st?S.name:'???'}</b><br><small>${st?'Seen, not befriended':'Not yet seen'}</small></div></div>
       <small>Lives in ${ZONES[S.zone].name}. ${RAR[S.rar].name}${S.huge?', giant':''}.${S.needs?` ${NEED_HINT[S.needs]}`:''}</small></div>`;}).join('')}</div>`;};openPanel(render,()=>{});}
@@ -1411,7 +1541,7 @@ let lastTouchEnd=0;document.addEventListener('touchend',e=>{const now=Date.now()
    anywhere else (GitHub Pages) it falls back to PeerJS (WebRTC). */
 let NET={role:null,mode:null,code:null,r:null,roomApi:undefined,peer:null,conn:null,partner:null,partnerId:null,pv:null,pc:null,lastSnap:'',snapT:0,posT:0,wT:0,rx:{},solo:null,lastPos:0,gotState:false};
 let crSeq=0;
-const SHARED=['coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
+const SHARED=['pipSeen','hiscore','coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
 const PJ_URL='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function myName(){let n='';try{n=localStorage.getItem('as-name')||'';}catch(e){}return n||'Friend';}
@@ -1469,7 +1599,7 @@ function hostRun(c,a){const sv={scene,tool,biomeSel},num=v=>typeof v==='number'&
     case'wcatch':if(SPECIES[a.sp]){if(wild){const cr=wild.crs.find(x=>x.u===a.u);if(cr)cr.gone=true;}addCreature(a.sp);toast(`${partnerName()} befriended a ${SPECIES[a.sp].name}!`);}break;
     case'wflee':case'hold':if(wild){const cr=wild.crs.find(x=>x.u===a.u);if(cr){if(c==='wflee')cr.gone=true;else cr.hold=time+12;}}break;
     case'gain':if(num(a.coins)&&a.coins>=0&&a.coins<=200)state.coins+=a.coins;if(num(a.berries)&&a.berries>=0&&a.berries<=8)state.berries+=a.berries;break;
-    case'inv':if((a.k==='locket'||a.k==='clover')&&(a.n===1||a.n===-1))state.inv[a.k]=Math.max(0,(state.inv[a.k]||0)+a.n);break;
+    case'inv':if(['locket','clover','starfruit'].includes(a.k)&&(a.n===1||a.n===-1))state.inv[a.k]=Math.max(0,(state.inv[a.k]||0)+a.n);break;
     case'dex':if(SPECIES[a.sp]&&(a.st===1||a.st===2)&&(state.dex[a.sp]||0)<a.st)state.dex[a.sp]=a.st;break;
     case'away':{const cc=getC(a.cid);if(cc)cc.away=!!a.v;break;}
     case'rest':rest(true);break;}}
@@ -1559,7 +1689,7 @@ function drawPartnerArrow(cx,cy){const pv=NET.pv,x=pv.x-cx,y=pv.y-8-cy;if(x>=0&&
   fill(ctx,OUT,ax-4,ay-4,9,9);fill(ctx,col,ax-3,ay-3,7,7);fill(ctx,'#ffffff',ax-1,ay-1,3,3);}
 
 /* ================= EPIC SPLASH ================= */
-const SPL={t:0,phase:'intro',W:208,H:240,sky:null,land:null,moon:null,stars:[],fx:[],flies:[],parade:[],paradeT:0,shoot:null,whaleT0:3.4,fan:false,ridge:null};
+const SPL={t:0,at:0,ot:0,phase:'gate',W:208,H:240,sky:null,land:null,moon:null,stars:[],fx:[],flies:[],parade:[],paradeT:0,shoot:null,whaleT0:3.4,fan:false,ridge:null};
 const spc=$('#splash'),spg=spc.getContext('2d'),presEl=$('#presents');
 const HORN=upscale(makeSprite(ROWS.skyhorn,{v:'#140a2a',V:'#140a2a',l:'#1a0e34',k:'#140a2a'},false),2);
 const TITAN=makeSprite(ROWS.mossback,{g:'#1b2a30',G:'#1b2a30',n:'#120a26',N:'#120a26',e:'#120a26',E:'#120a26',k:'#9ef0f0'},false);
@@ -1597,13 +1727,39 @@ function splashPhase(p){if(SPL.phase===p)return;SPL.phase=p;
   if(p==='logo'){presEl.classList.remove('on');titleEl.classList.add('logo');if(!reduceMotion){titleEl.classList.add('shake');setTimeout(()=>titleEl.classList.remove('shake'),600);}
     SPL.flash=1;const cx=SPL.W/2,cy=SPL.H*.2;for(let k=0;k<60;k++){const a=R()*6.28,v=30+R()*110;SPL.fx.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:40,life:1+R()*.8,col:['#ffd860','#fff6c0','#9ef0f0','#f6a8c4'][k%4]});}}
   if(p==='ready'){titleEl.classList.add('ready');const b=$('#tStart');if(b)b.focus({preventScroll:true});}}
-function skipIntro(){if(SPL.phase==='intro'){SPL.t=Math.max(SPL.t,4.98);presEl.textContent='';}}
-titleEl.addEventListener('pointerdown',e=>{if(SPL.phase==='intro'&&!e.target.closest('button'))skipIntro();});
+function skipIntro(){if(SPL.phase==='gate'){openGate();return;}if(SPL.phase==='intro'){SPL.t=Math.max(SPL.t,4.98);presEl.textContent='';}}
+titleEl.addEventListener('pointerdown',e=>{if((SPL.phase==='intro'||SPL.phase==='gate')&&!e.target.closest('button'))skipIntro();});
+function openGate(){if(SPL.phase!=='gate')return;ensureAudio();SPL.phase='opening';SPL.ot=0;titleEl.classList.remove('gate');titleEl.removeAttribute('role');gateSfx();
+  for(let k=0;k<40;k++){const a=R()*6.28,v=20+R()*80;SPL.fx.push({x:SPL.W/2,y:SPL.H*.5,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:20,life:.8+R()*.8,col:['#ffd860','#fff6c0','#9ef0f0'][k%3]});}}
+function gateSfx(){if(!AC||muted)return;const t0=AC.currentTime+.02;
+  const o=AC.createOscillator(),bp=AC.createBiquadFilter(),g=AC.createGain();o.type='sawtooth';o.frequency.setValueAtTime(85,t0);o.frequency.linearRampToValueAtTime(150,t0+.45);o.frequency.linearRampToValueAtTime(70,t0+1.2);
+  bp.type='bandpass';bp.frequency.value=800;bp.Q.value=7;g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(.06,t0+.12);g.gain.exponentialRampToValueAtTime(.0001,t0+1.3);o.connect(bp);bp.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+1.35);
+  mKick(t0+.05,.3,AC.destination);[67,71,74,79,83,86,91,95].forEach((n,i)=>INST.celesta(t0+.45+i*.075,mtof(n),.05,.7,AC.destination));}
+function drawGateSplash(op){const W=SPL.W,H=SPL.H,g=spg,t=SPL.at,e=op*op,pw=Math.round(W*.17),top=Math.round(H*.24),gy=H-14,shift=Math.round(e*pw*1.8),mid=top+Math.round((gy-top)*.45);
+  if(op>0){g.globalAlpha=Math.min(.7,op);const w=Math.round((W-2*pw)*op);fill(g,'#fff6c0',Math.round(W/2-w/2),top,w,gy-top);g.globalAlpha=1;}
+  const span=(W-2*pw)/2,cw=span*Math.cos(op*Math.PI/2);
+  if(cw>1)for(const dir of[1,-1]){const hinge=dir>0?pw-shift:W-pw+shift,x0=dir>0?hinge:hinge-cw,shade=1-op*.6;g.globalAlpha=shade;
+    for(const ry of[top+4,mid,gy-8]){fill(g,'#241c34',Math.round(x0),ry,Math.round(cw),3);fill(g,'#4e4268',Math.round(x0),ry,Math.round(cw),1);}
+    const nb=8;for(let k=0;k<=nb;k++){const bx=Math.round(hinge+dir*(k/nb)*cw);fill(g,'#241c34',bx-1,top,2,gy-top);fill(g,'#4e4268',bx-1,top,1,gy-top);fill(g,'#c89a3a',bx-1,top-3,2,3);fill(g,'#ffd860',bx,top-5,1,2);}
+    if(cw>span*.45)for(let k=0;k<nb;k++){const cx=Math.round(hinge+dir*((k+.5)/nb)*cw),cy=mid-7;fill(g,'#3a2e50',cx-2,cy-2,5,1);fill(g,'#3a2e50',cx-2,cy+2,5,1);fill(g,'#3a2e50',cx-2,cy-1,1,3);fill(g,'#3a2e50',cx+2,cy-1,1,3);fill(g,'#ffd860',cx,cy,1,1);}
+    g.globalAlpha=1;}
+  if(op<.08){const cx=W/2,cy=mid+1,R2=10;for(let y=-R2;y<=R2;y++)for(let x=-R2;x<=R2;x++){const d=x*x+y*y;if(d<=R2*R2)fill(g,d>(R2-2)*(R2-2)?'#c89a3a':'#ffd860',cx+x,cy+y,1,1);}
+    fill(g,'#e8553a',cx-3,cy-1,2,2);fill(g,'#e8553a',cx+1,cy-1,2,2);fill(g,'#e8553a',cx-3,cy,6,2);fill(g,'#e8553a',cx-2,cy+2,4,1);fill(g,'#e8553a',cx-1,cy+3,2,1);
+    if(Math.sin(t*3)>.4)fill(g,'#ffffff',cx-5,cy-6,2,1);fill(g,'#8a6a20',cx,cy-R2,1,R2*2+1);}
+  for(const side of[-1,1]){const x=side<0?-shift:W-pw+shift;g.globalAlpha=1-op*.5;
+    for(let y=top-12,r2=0;y<gy;y+=6,r2++)for(let xx=-(r2%2)*4;xx<pw;xx+=8){const a=Math.max(0,xx),b=Math.min(pw,xx+7);if(b>a)fill(g,(((xx+8)/8+r2)|0)%2?'#6a6280':'#5c5672',x+a,y,b-a,5);}
+    fill(g,'#3a3448',side<0?x+pw-2:x,top-12,2,gy-top+12);fill(g,'#8a8298',x-2,top-18,pw+4,6);fill(g,'#a8a4b8',x-2,top-18,pw+4,1);
+    const lx=x+Math.round(pw/2),fl=.6+.4*Math.sin(t*9+side);fill(g,'#2a2238',lx-1,top-26,3,8);g.globalAlpha=.3*fl;fill(g,'#ffd860',lx-6,top-34,13,13);g.globalAlpha=1-op*.5;fill(g,'#ffd860',lx-2,top-31,5,5);fill(g,'#fff6c0',lx-1,top-30,3,3);
+    for(let y=top-6;y<gy;y+=5){const vx=side<0?x+pw-3-((y*7)%3):x+1+((y*7)%3);fill(g,'#3f8a3a',vx,y,2,3);if((y*13)%4===0)fill(g,['#ff7aa8','#ffd860','#b49af4'][(y>>2)%3],vx,y,2,2);}
+    g.globalAlpha=1;}
+  const ay=top-20-Math.round(e*70);g.globalAlpha=1-op;for(let x=pw-shift;x<W-pw+shift;x++){const u=(x-pw)/(W-2*pw),h=Math.round(Math.sin(Math.max(0,Math.min(1,u))*Math.PI)*12);fill(g,'#5c5672',x,ay-h,1,8);fill(g,'#8a8298',x,ay-h,1,1);}
+  fill(g,'#ffd860',Math.round(W/2)-3,ay-16,6,6);fill(g,'#fff6c0',Math.round(W/2)-1,ay-15,2,2);g.globalAlpha=1;}
 function splashBreach(t0){const W=SPL.W;SPL.whale={t0,x0:W*(.18+R()*.15),x1:W*(.55+R()*.2),dur:2.3,up:false,down:false};}
-function drawSplash(dt){SPL.t+=dt;const t=SPL.t,W=SPL.W,H=SPL.H,hz=SPL.hz,g=spg;if(!SPL.sky)return;
-  if(t<1.9){const msg='MAYA & SAM PRESENT',n=Math.max(0,Math.min(msg.length,Math.floor((t-.3)*16)));if(presEl.textContent.length!==n)presEl.textContent=msg.slice(0,n);presEl.classList.toggle('on',t>.2&&t<1.75);}
-  if(t>=5&&SPL.phase==='intro')splashPhase('logo');if(t>=5.9&&SPL.phase==='logo')splashPhase('ready');
-  if(t>=5&&!SPL.fan&&AC&&AC.state==='running'){SPL.fan=true;playFanfare();}
+function drawSplash(dt){SPL.at+=dt;const gated=SPL.phase==='gate'||SPL.phase==='opening';if(!gated)SPL.t+=dt;else if(SPL.phase==='opening'){SPL.ot+=dt;if(SPL.ot>=1.5){SPL.phase='intro';SPL.t=reduceMotion?5.9:0;}}
+  const t=SPL.at,tl=SPL.t,W=SPL.W,H=SPL.H,hz=SPL.hz,g=spg;if(!SPL.sky)return;
+  if(!gated&&tl<2.4){const msg='MAYA & SAM PRESENT',n=Math.max(0,Math.min(msg.length,Math.floor((tl-.3)*16)));if(presEl.textContent.length!==n)presEl.textContent=msg.slice(0,n);presEl.classList.toggle('on',tl>.2&&tl<2.2);}
+  if(!gated&&tl>=5&&SPL.phase==='intro')splashPhase('logo');if(tl>=5.9&&SPL.phase==='logo')splashPhase('ready');
+  if(!gated&&tl>=5&&!SPL.fan&&AC&&AC.state==='running'){SPL.fan=true;playFanfare();}
   g.drawImage(SPL.sky,0,0);
   for(const st of SPL.stars){const a=.5+.5*Math.sin(t*st.sp+st.ph);g.globalAlpha=a*st.b;fill(g,'#ffffff',st.x,st.y,1,1);if(st.big&&a>.75){fill(g,'#ffffff',st.x-1,st.y,3,1);fill(g,'#ffffff',st.x,st.y-1,1,3);}}g.globalAlpha=1;
   for(let x=0;x<W;x++){const y0=Math.round(hz*.2+Math.sin(x*.045+t*.6)*7+Math.sin(x*.017-t*.35)*10),it=.5+.5*Math.sin(x*.03+t*.8),col=x%3===0?'#a8ffd8':'#7cf0b8';
@@ -1618,8 +1774,8 @@ function drawSplash(dt){SPL.t+=dt;const t=SPL.t,W=SPL.W,H=SPL.H,hz=SPL.hz,g=spg;
   fill(g,'#0d1430',0,hz,W,H-hz);for(let y=hz;y<H;y+=2){const sh=Math.round(Math.sin(y*.7+t*2)*3);g.globalAlpha=.25;fill(g,'#2a3a7a',(((y*37+t*20)%W)|0)+sh,y,18,1);fill(g,'#3a4e9a',((y*53-t*14+W)%W)|0,y,10,1);}g.globalAlpha=1;
   const mx=Math.round(W*.76);for(let y=hz+2;y<H-14;y+=2){const w=Math.max(1,10-((y-hz)>>2)),o=Math.round(Math.sin(y*.9+t*4)*2);g.globalAlpha=.55-(y-hz)/(H-hz)*.4;fill(g,'#fff4d4',mx-w+o,y,w*2,1);}g.globalAlpha=1;
   for(const f of SPL.flies){const b=(Math.sin(t*3+f.ph)+1)/2;f.x+=Math.sin(t*f.sp+f.ph)*.15;g.globalAlpha=b*.4;fill(g,'#d8ff7a',Math.round(f.x)-1,Math.round(f.y+Math.sin(t+f.ph)*2)-1,3,3);g.globalAlpha=b;fill(g,'#f0ffb0',Math.round(f.x),Math.round(f.y+Math.sin(t+f.ph)*2),1,1);}g.globalAlpha=1;
-  if(!SPL.whale&&t>=SPL.whaleT0)splashBreach(t);
-  const wh=SPL.whale;if(wh){const p=(t-wh.t0)/wh.dur;if(p>=1){SPL.whale=null;SPL.whaleT0=t+7+R()*4;}else{
+  if(!gated&&!SPL.whale&&tl>=SPL.whaleT0)splashBreach(tl);
+  const wh=SPL.whale;if(wh){const p=(tl-wh.t0)/wh.dur;if(p>=1){SPL.whale=null;SPL.whaleT0=tl+7+R()*4;}else{
     const x=wh.x0+(wh.x1-wh.x0)*p,y=hz+16-Math.sin(p*Math.PI)*hz*.5,ang=Math.cos(p*Math.PI)*.55,spr=SPR.glimmerwhale[1];
     if(!wh.up&&p>.06){wh.up=true;splashBurst(x-10,hz);}if(!wh.down&&p>.9){wh.down=true;splashBurst(x+12,hz);}
     g.save();g.beginPath();g.rect(0,0,W,hz+1);g.clip();g.translate(Math.round(x),Math.round(y));g.rotate(-ang);g.drawImage(spr,-Math.round(spr.width/2),-Math.round(spr.height/2));g.restore();
@@ -1632,12 +1788,13 @@ function drawSplash(dt){SPL.t+=dt;const t=SPL.t,W=SPL.W,H=SPL.H,hz=SPL.hz,g=spg;
     if(R()<dt*2&&SPECIES[c.sp].el==='light'||SPECIES[c.sp].rar>=2&&R()<dt*3)SPL.fx.push({x:c.x+(R()-.5)*8,y:H-10-R()*10,vx:0,vy:-12,g:0,life:.7,col:'#fff6c0'});}
   SPL.parade=SPL.parade.filter(c=>c.x>-20);
   for(const p of SPL.fx){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.g*dt;p.life-=dt;g.globalAlpha=Math.max(0,Math.min(1,p.life*1.5));fill(g,p.col,Math.round(p.x),Math.round(p.y),p.big?2:1,p.big?2:1);}g.globalAlpha=1;SPL.fx=SPL.fx.filter(p=>p.life>0);
-  if(t<2.5){g.globalAlpha=Math.max(0,Math.min(1,(2.5-t)/1));fill(g,'#000000',0,0,W,H);g.globalAlpha=1;}
+  if(gated)drawGateSplash(SPL.phase==='opening'?Math.min(1,SPL.ot/1.3):0);
+  else if(tl<2.6){g.globalAlpha=Math.max(0,Math.min(.55,(2.6-tl)/1.2));fill(g,'#000000',0,0,W,H);g.globalAlpha=1;}
   if(SPL.flash>0){g.globalAlpha=Math.min(1,SPL.flash);fill(g,'#ffffff',0,0,W,H);g.globalAlpha=1;SPL.flash-=dt*2.2;}}
 function splashBurst(x,y){for(let k=0;k<26;k++){const a=-Math.PI/2+(R()-.5)*1.6,v=40+R()*70;SPL.fx.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:160,life:.9+R()*.4,col:R()<.5?'#bfe6ff':'#ffffff',big:R()<.3});}}
 
 /* ================= TITLE & LOOP ================= */
-function startGame(){if(!titleOpen)return;if(SPL.phase!=='ready'){skipIntro();return;}titleOpen=false;titleEl.hidden=true;ensureAudio();sfx('unlock');save();
+function startGame(){if(!titleOpen)return;if(SPL.phase==='opening')return;if(SPL.phase!=='ready'){skipIntro();return;}titleOpen=false;titleEl.hidden=true;ensureAudio();sfx('unlock');save();
   if(!state.tutDone){tutShow();return;}
   if(state.newTown){delete state.newTown;toast('New! Walk out the bottom entrance to explore Willowbrook town: shops, quests, your own cottage, and new wild places with GIANT creatures.');save();}
   if(state.newBuild){delete state.newBuild;toast('New! Tap Build at the top to design your sanctuary: habitats, paths, flowers and more.');toast('Visitors now follow your paths, so connect every habitat to one.');save();}
@@ -1703,16 +1860,17 @@ function update(dt){
   if(!buildMode){const r=camRange(),tx=clamp(player.x-VW/2,r.x[0],r.x[1]),ty=clamp(player.y-8-VH/2,r.y[0],r.y[1]);
     const k=reduceMotion?1:Math.min(1,dt*8);camX+=(tx-camX)*k;camY+=(ty-camY)*k;}
   const showB=(scene==='zoo'||scene==='home')&&!titleOpen;if(btnBuild.hidden===showB)btnBuild.hidden=!showB;const bl=buildMode?'Done':scene==='home'?'Decorate':'Build';if(btnBuild.textContent!==bl)btnBuild.textContent=bl;
-  netTick(dt);tutTick();updHint();updHUD();saveT-=dt;if(saveT<=0){saveT=4;if(!titleOpen)save();}}
+  netTick(dt);tutTick();updHint();updHUD();
+  if(!titleOpen&&NET.role!=='guest'&&(time%3)<dt){const pt=sanctRank();if(pt>(state.pipSeen||1)){state.pipSeen=pt;playFanfare();sparks(player.x,player.y-20,30,'#ffd860');toast(`SANCTUARY RANK UP! ${rankStars(pt)} You're a ${RANKS[pt].name} now!`);toast('Brand-new things just arrived in every shop in Willowbrook!');save();}}saveT-=dt;if(saveT<=0){saveT=4;if(!titleOpen)save();}}
 const btnBuild=$('#btnBuild');btnBuild.addEventListener('click',()=>{ensureAudio();if(buildMode)closeBuild();else openBuild();});
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;update(dt);if(titleOpen)drawSplash(dt);else draw();requestAnimationFrame(frame);}
 
 function boot(data){
   const saved=load();state=migrate(data&&data.state)||saved||defaultState();if(!state.zoo)state=saved||defaultState();state.owned.forEach(c=>c.away=false);
-  buildZoo();buildTown();buildHome();world=zooWorld;scene='zoo';player.x=208;player.y=40;snapCam();
+  grantTrophies(true);buildZoo();buildTown();buildHome();world=zooWorld;scene='zoo';player.x=208;player.y=40;snapCam();
   if(saved){$('#tStart').textContent='Continue';$('#tNew').hidden=false;}
   for(let k=0;k<300;k++)simHome(.1);
-  resize();splashResize();if(reduceMotion)SPL.t=5.9;requestAnimationFrame(t=>{last=t;frame(t);});
+  resize();splashResize();requestAnimationFrame(t=>{last=t;frame(t);});
   try{window.claude&&window.claude.hot&&window.claude.hot.snapshot&&window.claude.hot.snapshot(()=>({state}));}catch(e){}
 }
 const hot=window.claude&&window.claude.hot;

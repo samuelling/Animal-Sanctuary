@@ -1,4 +1,4 @@
-# Glimmerwild Sanctuary
+# Animal Sanctuary
 
 A 16-bit style creature sanctuary game, dreamed up by Maya & Sam.
 

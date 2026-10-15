@@ -1112,7 +1112,7 @@ function setPath(i,j,v){const k=j*ZW+i,s=state.zoo.path;state.zoo.path=s.slice(0
 function applyTool(i,j,quiet){const t=toolDef(tool);if(!t)return false;
   if(NET.role==='guest'){if(t.id!=='bulldoze'){if(scene==='zoo'&&locked(t)){if(!quiet)toast(`Get the ${t.name} at Bram's Builders in town.`);return false;}
       const why=placeProblem(t,i,j);if(why){if(!quiet)toast(why);return false;}if(scene==='zoo'&&state.coins<toolCost(t)){if(!quiet)toast(`You need ${toolCost(t)} coins for that.`);return false;}}
-    sendCmd('tool',{sc:scene,tool,b:biomeSel,i,j});sfx('blip');sparks(i*16+8,j*16+8,4,'#fff6b0');return true;}
+    sendCmd('tool',{sc:scene,tool,b:biomeSel,i,j,h:curHouse});sfx('blip');sparks(i*16+8,j*16+8,4,'#fff6b0');return true;}
   if(scene==='home')return homeApply(t,i,j,quiet);
   if(t.id==='bulldoze')return bulldoze(i,j,quiet);
   if(locked(t)){if(!quiet)toast(`Get the ${t.name} at Bram's Builders in town.`);return false;}
@@ -1150,7 +1150,7 @@ function renderBuildbar(){if(!buildMode)return;const sc=bb.querySelector('.tools
   bb.innerHTML=`<div class="bb-top"><span class="bb-info">${bbInfo()}</span><button class="pbtn done" type="button" data-bb="done">Done</button></div>
   <div class="tools">${tl.map(btn).join('')}</div>
   ${scene==='zoo'&&sel&&sel.size?`<div class="biomes">${Object.keys(BIOMES).map(b=>`<button class="pbtn" type="button" data-biome="${b}" aria-pressed="${biomeSel===b}"><span class="sw sw-${b}"></span>${BIOMES[b].name}</button>`).join('')}</div>`:''}
-  ${scene==='home'?`<div class="biomes"><button class="pbtn" type="button" data-style="wall"><span class="sw" style="background:${WALLS[state.home.wall].a}"></span>Wallpaper: ${WALLS[state.home.wall].name} ▸</button><button class="pbtn" type="button" data-style="floor"><span class="sw" style="background:${FLOORS[state.home.floor].a}"></span>Floor: ${FLOORS[state.home.floor].name} ▸</button></div>`:''}`;
+  ${scene==='home'?`<div class="biomes"><button class="pbtn" type="button" data-style="wall"><span class="sw" style="background:${WALLS[HOME().wall].a}"></span>Wallpaper: ${WALLS[HOME().wall].name} ▸</button><button class="pbtn" type="button" data-style="floor"><span class="sw" style="background:${FLOORS[HOME().floor].a}"></span>Floor: ${FLOORS[HOME().floor].name} ▸</button></div>`:''}`;
   bb.querySelector('.tools').scrollLeft=sc;stage.style.setProperty('--bbh',bb.offsetHeight+'px');}
 bb.addEventListener('click',e=>{const el=e.target.closest('button');if(!el)return;ensureAudio();
   if(el.dataset.bb==='done'){closeBuild();return;}
@@ -1208,11 +1208,11 @@ const BUILDINGS=[
  {id:'arcade',name:'Pixel Palace Arcade',x:15,y:25,w:6,h:6,door:17,wall:'#3a2e5a',roof:'#e8553a',trim:'#ff5ab4',icon:'joy',awn:'#5af0ff'},
  {id:'cottage',name:'Your cottage',x:3,y:3,w:6,h:5,door:5,wall:'#f8ecd8',roof:'#b49af4',trim:'#6a4cb8',icon:'heart'},
 ];
-const TRAILS=[{zone:'meadow',x:46*16+8,y:18*16+4},{zone:'woods',x:46*16+8,y:5*16+4},{zone:'peaks',x:46*16+8,y:32*16+4},{zone:'lake',x:24*16,y:39*16+4},{zone:'plains',x:1*16+8,y:32*16+4}];
+const TRAILS=[{zone:'meadow',x:46*16+8,y:18*16+4},{zone:'woods',x:46*16+8,y:5*16+4},{zone:'peaks',x:46*16+8,y:32*16+4},{zone:'lake',x:24*16,y:47*16+4},{zone:'plains',x:1*16+8,y:32*16+4}];
 const NPCINFO={
  mabel:{short:'Mabel',name:"Mabel's Market",pal:{H:'#e8c060',T:'#e8553a',D:'#5a3824'},idle:['Fresh berries every morning!','Golden apples make any creature beam.','A lucky clover helps you find rare creatures.']},
  rosa:{short:'Rosa',name:"Rosa's Bakery",pal:{H:'#3a2418',T:'#fff8e8',D:'#d0648c'},idle:['Creatures go wild for my cookies.','Smell that? Cinnamon swirls!']},
- bram:{short:'Bram',name:"Bram's Builders",pal:{H:'#9a3a20',T:'#6a8a3a',D:'#3a4a8a'},idle:['Need more room? I can clear the land east of your sanctuary.','Giants need grand habitats. Trust me.']},
+ bram:{short:'Bram',name:"Bram's Builders",pal:{H:'#9a3a20',T:'#6a8a3a',D:'#3a4a8a'},idle:['Need more room? I can clear the land east of your sanctuary.','Giants need grand habitats. Trust me.','Want a house of your own? The lots on Maple Lane, down past the shops, are for sale!']},
  pip:{short:'Pip',name:"Pip's Home Goods",pal:{H:'#6a3a8a',T:'#5ab4f0',D:'#2a2a3a'},idle:['A cozy home makes a happy keeper!','New wallpaper changes everything.']},
  mayor:{short:'Mayor Oakley',name:'Town Hall',pal:{H:'#5a3824',T:'#4a5a9a',D:'#2a2a3a'},idle:['Willowbrook is proud of your sanctuary!','Have you met Professor Hoot? Brilliant, if a little odd.']},
  theo:{short:'Theo',name:'Theo',pal:{H:'#e8c060',T:'#5ab4f0',D:'#3a4a8a'},idle:['When I grow up I want to be a sanctuary keeper!','Grown-ups say the giant whale is just a story.']},
@@ -1279,21 +1279,21 @@ const QUESTS=[
  {id:'wtkey',npc:'manager',after:'wtsurvey',title:'The Key to the City',ask:"You've helped so many people in Watertown! Finish every job in town and the council will give you its highest honor.",goal:'Finish every other Watertown quest.',ready:()=>WT_QUESTS.every(k=>k==='wtkey'||state.quests[k]==='done'),reward:'3,000 coins, the Golden Key and plans for a Watertown Clock Tower (+80 Charm)',give:()=>{state.coins+=3000;addInv('f:wtkey',1);state.unlocks.clocktower=true;},thanks:'By unanimous vote (a first!), Watertown presents you with the Key to the City!'},
 ];
 const WT_QUESTS=['wtpumpkins','wtbooks','wthamster','wtmuffin','wtball','wtotter','wtheron','wtsurvey','wtkey'];
-function buildTown(){const w=48,h=40,m=new Uint8Array(w*h).fill(T.GRASS),gm=new Uint8Array(w*h).fill(255),r=rng(91);
+function buildTown(){const w=48,h=48,m=new Uint8Array(w*h).fill(T.GRASS),gm=new Uint8Array(w*h).fill(255),r=rng(91);
   const set=(i,j,t)=>{if(i>=0&&j>=0&&i<w&&j<h)m[j*w+i]=t;},rect=(x,y,ww,hh,t)=>{for(let j=y;j<y+hh;j++)for(let i=x;i<x+ww;i++)set(i,j,t);},on=(i,j,t,g)=>{set(i,j,t);gm[j*w+i]=g;};
   for(let i=0;i<w;i++){set(i,0,T.TREE);set(i,h-1,T.TREE);}for(let j=0;j<h;j++){set(0,j,T.TREE);set(w-1,j,T.TREE);}
   rect(44,1,2,h-2,T.WATER);
   rect(23,0,2,h,T.PATH);rect(25,4,19,2,T.PATH);rect(35,17,9,2,T.PATH);rect(1,31,2,2,T.PATH);
   rect(46,4,1,2,T.PATH);rect(46,17,1,2,T.PATH);rect(46,31,1,2,T.PATH);
   rect(44,4,2,2,T.BRIDGE);rect(44,17,2,2,T.BRIDGE);rect(44,31,2,2,T.BRIDGE);
-  rect(13,14,22,8,T.COBBLE);rect(3,31,41,2,T.COBBLE);
+  rect(13,14,22,8,T.COBBLE);rect(3,31,41,2,T.COBBLE);rect(3,44,41,2,T.COBBLE);
   rect(5,8,1,8,T.PATH);rect(5,15,8,1,T.PATH);
   for(let i=2;i<=10;i++){set(i,2,T.FENCE);if(i!==5)set(i,10,T.FENCE);}for(let j=2;j<=10;j++){set(2,j,T.FENCE);set(10,j,T.FENCE);}
   [[9,4],[9,5],[3,9],[4,9],[7,9],[8,9],[9,9]].forEach(([i,j])=>set(i,j,T.BED));set(9,7,T.WATER);
-  [[13,14],[34,14],[13,21],[34,21],[3,31],[43,31]].forEach(([i,j])=>on(i,j,T.LAMP,T.COBBLE));
+  [[13,14],[34,14],[13,21],[34,21],[3,31],[43,31],[3,44],[43,44],[20,44],[26,44]].forEach(([i,j])=>on(i,j,T.LAMP,T.COBBLE));
   [[15,20],[31,20]].forEach(([i,j])=>on(i,j,T.BENCH,T.COBBLE));
   [[12,15],[12,20],[35,15],[35,20],[25,3],[22,3]].forEach(([i,j])=>{if(m[j*w+i]===T.GRASS)set(i,j,T.BED);});
-  const busy=(i,j)=>{for(const b of BUILDINGS)if(i>=b.x-1&&i<=b.x+b.w&&j>=b.y-1&&j<=b.y+b.h+1)return true;if(i>=1&&i<=11&&j>=1&&j<=11)return true;
+  const busy=(i,j)=>{for(const b of BUILDINGS)if(i>=b.x-1&&i<=b.x+b.w&&j>=b.y-1&&j<=b.y+b.h+1)return true;for(const l of LOTS)if(i>=l.x-1&&i<=l.x+6&&j>=l.y-1&&j<=l.y+7)return true;if(i>=1&&i<=11&&j>=1&&j<=11)return true;
     for(let b=-1;b<=1;b++)for(let a=-1;a<=1;a++){const t=m[(j+b)*w+i+a];if(t!==T.GRASS&&t!==T.TREE&&t!==T.FLOWER)return true;}
     for(const n of NPC_POS)if(Math.abs(n.x/16-i)<2&&Math.abs(n.y/16-j)<2)return true;for(const t of TRAILS)if(Math.abs(t.x/16-i)<3&&Math.abs(t.y/16-j)<3)return true;return false;};
   for(let k=0;k<420;k++){const i=1+((r()*(w-2))|0),j=1+((r()*(h-2))|0);if(m[j*w+i]!==T.GRASS||busy(i,j))continue;const edge=Math.min(i,j,w-1-i,h-1-j);if(r()<(edge<5?.8:.25))set(i,j,T.TREE);}
@@ -1301,6 +1301,7 @@ function buildTown(){const w=48,h=40,m=new Uint8Array(w*h).fill(T.GRASS),gm=new 
   for(let j=7;j<=13;j++)for(let i=37;i<=43;i++){const d=Math.abs(i-40)+Math.abs(j-10);if(d<=2)set(i,j,T.GRASS);else if(d===3)set(i,j,T.FLOWER);}
   const W={kind:'town',w,h,m,gmap:gm,ground:T.GRASS,seed:91};W.solid=makeSolid(W);
   for(const b of BUILDINGS)for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)W.solid[j*w+i]=1;
+  (state.houses||[]).forEach((hh,k)=>{const b=houseBuilding(k);for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)W.solid[j*w+i]=1;});
   [[23,17],[24,17],[23,18],[24,18]].forEach(([i,j])=>W.solid[j*w+i]=1);
   renderMap(W);townWorld=W;
   const roads=[];for(let k=0;k<w*h;k++){const t=m[k];if((t===T.PATH||t===T.COBBLE)&&!W.solid[k]){const i=k%w,j=(k/w)|0;if(j>1&&j<h-2&&i>1&&i<w-2)roads.push(k);}}
@@ -1310,12 +1311,47 @@ function updTown(dt){for(const v of townies){if(v.pause>0){v.pause-=dt;continue;
   if(d<=s){v.x=tx;v.y=ty;v.i=v.ti;v.j=v.tj;const nb=[[1,0],[-1,0],[0,1],[0,-1]].map(([a,b])=>[v.i+a,v.j+b]).filter(([a,b])=>townRoad(a,b));
     let o=nb.filter(([a,b])=>!(a===v.pi&&b===v.pj));if(!o.length)o=nb;if(!o.length)continue;const n=o[(R()*o.length)|0];v.pi=v.i;v.pj=v.j;v.ti=n[0];v.tj=n[1];if(R()<.04)v.pause=1+R()*3;}
   else{v.x+=dx/d*s;v.y+=dy/d*s;}}}
-function goTown(from,x,y){if(buildMode)closeBuild();scene='town';world=townWorld;ambient=[];
-  if(from==='zoo'){player.x=24*16;player.y=2*16+8;player.face='down';}else if(from==='arcade'){player.x=x;player.y=y;player.face='down';}else if(from==='home'){player.x=5*16+8;player.y=8*16+12;player.face='down';}else{player.x=x;player.y=y;}
-  snapCam();if(!state.seenTown){state.seenTown=true;toast('Welcome to Willowbrook! Shops, friendly townsfolk, and trails to the wilds.');}save();}
+function goTown(from,x,y){if(buildMode)closeBuild();const leftHouse=from==='home'?curHouse:0;scene='town';world=townWorld;ambient=[];
+  if(from==='zoo'){player.x=24*16;player.y=2*16+8;player.face='down';}else if(from==='arcade'){player.x=x;player.y=y;player.face='down';}else if(from==='home'&&curHouse&&state.houses[curHouse-1]){const l=LOTS[state.houses[curHouse-1].lot];player.x=(l.x+2)*16+8;player.y=(l.y+6)*16+12;player.face='down';}else if(from==='home'){player.x=5*16+8;player.y=8*16+12;player.face='down';}else{player.x=x;player.y=y;}
+  curHouse=0;snapCam();if(leftHouse)buildHome();if(!state.seenTown){state.seenTown=true;toast('Welcome to Willowbrook! Shops, friendly townsfolk, and trails to the wilds.');}save();}
 function goZoo(){if(buildMode)closeBuild();scene='zoo';world=zooWorld;ambient=[];player.x=208;player.y=(ZH-2)*16+4;player.face='up';snapCam();save();}
-function goHome(){if(buildMode)closeBuild();buildHome();scene='home';world=homeWorld;ambient=[];player.x=(homeWorld.door+1)*16;player.y=(homeWorld.h-2)*16+12;player.face='up';snapCam();
-  if(!state.seenHome){state.seenHome=true;toast('Your cottage! Tap Decorate to arrange furniture. Buy more at Pip\'s Home Goods.');}save();}
+/* ================= HOUSES ON MAPLE LANE =================
+   Four lots at the bottom of Willowbrook. Build a house on one and it gets its own inside to decorate,
+   with a bed. In co-op each player can name a house as their own and sleep there. */
+const HOUSES={
+ guest:{name:'Guest cottage',cost:400,r:1,iw:10,ih:8,wall:'#f8e8d8',roof:'#6cb4e8',trim:'#2c6cb4',icon:'heart',desc:'A snug little cottage with a bed. Perfect for a friend.'},
+ bunk:{name:'Bunkhouse',cost:700,r:2,iw:12,ih:9,wall:'#e8d0a8',roof:'#8a5a3c',trim:'#5a3824',icon:'heart',desc:'Room for bunk beds and sleepovers.'},
+ tree:{name:'Treehouse',cost:1100,r:2,iw:10,ih:9,wall:'#c08a52',roof:'#3f8a3a',trim:'#6a4228',icon:'berry',desc:'A cozy house up in the leaves.'},
+ cabin:{name:'Lakeside cabin',cost:1600,r:3,iw:12,ih:10,wall:'#a8743e',roof:'#4a5a6a',trim:'#4a2e1e',icon:'heart',desc:'A log cabin with lots of space to decorate.'},
+ manor:{name:'Grand manor',cost:3200,r:4,iw:16,ih:12,wall:'#f4f0e6',roof:'#a8281e',trim:'#7a1a14',icon:'flag',desc:'A huge house with room for everything.'},
+ castle:{name:'Castle tower',cost:6500,r:5,iw:14,ih:13,wall:'#b4b0c4',roof:'#6a4cb8',trim:'#4a4660',icon:'flag',desc:'Your very own castle. The fanciest home in the valley.'}};
+const LOTS=[{x:4,y:38},{x:12,y:38},{x:27,y:38},{x:35,y:38}];
+let curHouse=0;
+const allHomes=()=>[state.home,...(state.houses||[]).map(h=>h.home)];
+const houseOk=k=>k===0||(Number.isInteger(k)&&k>0&&!!(state.houses||[])[k-1]);
+function HOME(){return curHouse&&state.houses&&state.houses[curHouse-1]?state.houses[curHouse-1].home:state.home;}
+const houseOnLot=l=>(state.houses||[]).findIndex(h=>h.lot===l);
+function houseBuilding(k){const h=state.houses[k],K=HOUSES[h.kind],l=LOTS[h.lot];return{id:'house'+k,name:h.name||K.name,x:l.x,y:l.y,w:6,h:6,door:l.x+2,wall:K.wall,roof:K.roof,trim:K.trim,icon:K.icon,awn:h.kind==='tree'?'#6cc24a':null};}
+function buildHouseAt(lot,kind){const K=HOUSES[kind];if(!K||houseOnLot(lot)>=0||!LOTS[lot]||state.coins<K.cost||rankLock(K.r))return false;
+  state.coins-=K.cost;state.houses=state.houses||[];const w=K.iw,h=K.ih;
+  state.houses.push({kind,lot,name:'',home:{w,h,wall:'cream',floor:'wood',items:[{f:'bed',i:1,j:2},{f:'window',i:Math.floor(w/2)-1,j:1},{f:'rug',i:Math.floor(w/2)-1,j:Math.floor(h/2)}],styles:{wall:['cream'],floor:['wood']}}});
+  addInv('f:bed',1);addInv('f:window',1);addInv('f:rug',1);buildTown();if(scene==='town')world=townWorld;
+  const l=LOTS[lot];sparks((l.x+3)*16,(l.y+3)*16,40,'#ffd860');playFanfare();toast(`Your ${K.name} is built! It comes with a bed. Go inside to decorate.`);save();return true;}
+function lotPanel(lot){const render=()=>head('Lot for sale')+`<p class="muted">Build a house here. Each house has its own inside to decorate and a bed to sleep in. Playing together? Give your friend a house of their own!</p><div class="list">`+
+  Object.keys(HOUSES).map(k=>{const K=HOUSES[k],lk=rankLock(K.r),can=!lk&&state.coins>=K.cost;return`<button class="pbtn" type="button" data-act="build" data-k="${k}" ${can?'':'disabled'}><span class="grow"><b>${K.name}</b><small>${lk?'🔒 '+lk:state.coins<K.cost?`${K.desc} · need ${K.cost-Math.floor(state.coins)} more coins`:`${K.desc} · ${K.iw}×${K.ih} rooms`}</small></span><span class="cost">${K.cost}</span></button>`;}).join('')+'</div>';
+  openPanel(render,(a,d)=>{if(a!=='build')return;if(G('buildHouse',{lot,kind:d.k})){closePanel();toast('Building…');return;}if(buildHouseAt(lot,d.k))closePanel();else refreshPanel();});}
+function namePanel(){const k=curHouse;if(!k)return;const H=state.houses[k-1],K=HOUSES[H.kind];
+  const opts=['My house',NET.partner?`${partnerName()}'s house`:"Friend's house",'Guest house','Sleepover house'];
+  openPanel(()=>head('Name this house')+`<p class="muted">Right now it's called <b>${H.name||K.name}</b>. The name shows on the door in town.</p><div class="list">${opts.map(o=>`<button class="pbtn" type="button" data-act="pick" data-n="${o}">${o}</button>`).join('')}</div>
+    <h3>Or type a name</h3><div class="row"><input id="houseName" maxlength="24" placeholder="${K.name}" style="flex:1;font:inherit;padding:8px;border-radius:8px;border:2px solid #3a3060"><button class="pbtn go" type="button" data-act="type">Save</button></div>`,
+    (a,d)=>{let n=a==='pick'?d.n:a==='type'?(document.querySelector('#houseName')||{}).value||'':null;if(n==null)return;n=String(n).trim().slice(0,24);if(!n)return;
+      if(!G('nameHouse',{h:k,n}))H.name=n;else H.name=n;toast(`This is now "${n}"!`);sfx('unlock');save();closePanel();});}
+function drawLotSign(l){const x=(l.x+3)*16,y=(l.y+5)*16+10;fill(ctx,'rgba(0,0,0,.25)',x-6,y,12,2);fill(ctx,'#6a4228',x-1,y-12,2,12);fill(ctx,OUT,x-9,y-21,18,11);fill(ctx,'#f4ecd8',x-8,y-20,16,9);fill(ctx,'#e8553a',x-8,y-20,16,2);
+  const ic=SM.coin;ctx.drawImage(ic,x-2,y-17);for(const[a,b]of[[-6,-6],[4,-8],[-4,-28]])if(Math.sin(time*3+a)>.6)fill(ctx,'#fff6b0',x+a,y+b,1,1);
+  fill(ctx,'#c8b898',l.x*16+4,l.y*16+20,6*16-8,1);fill(ctx,'#c8b898',l.x*16+4,(l.y+6)*16-6,6*16-8,1);fill(ctx,'#c8b898',l.x*16+4,l.y*16+20,1,6*16-26);fill(ctx,'#c8b898',(l.x+6)*16-5,l.y*16+20,1,6*16-26);}
+function goHome(k=0){if(buildMode)closeBuild();curHouse=houseOk(k)?k:0;buildHome();scene='home';world=homeWorld;ambient=[];player.x=(homeWorld.door+1)*16;player.y=(homeWorld.h-2)*16+12;player.face='up';snapCam();
+  if(curHouse){const H=state.houses[curHouse-1];toast(`${H.name||HOUSES[H.kind].name}${H.name?'':' · walk to the nameplate by the door to name it'}`);}
+  else if(!state.seenHome){state.seenHome=true;toast('Your cottage! Tap Decorate to arrange furniture. Buy more at Pip\'s Home Goods.');}save();}
 function npcQuest(id){const qs=QUESTS.filter(q=>q.npc===id);return{act:qs.find(q=>state.quests[q.id]==='active'),offer:(()=>{const ok=q=>!state.quests[q.id]&&(!q.after||state.quests[q.after]==='done')&&(q.season==null||q.season===SEASON);return qs.find(q=>q.season!=null&&ok(q))||qs.find(ok);})()};}
 function npcMark(id){const{act,offer}=npcQuest(id);if(act&&act.ready())return'ready';if(offer)return'offer';if(act)return'wait';return null;}
 function npcBlock(id){const N=NPCINFO[id],{act,offer}=npcQuest(id);let say,extra='';
@@ -1542,7 +1578,7 @@ const reqMet=r=>!r||((!r.kinds||caughtKinds()>=r.kinds)&&(!r.quests||questsDone(
 const reqText=r=>!r?'':[r.kinds?`befriend ${r.kinds} kinds of creatures (${Math.min(caughtKinds(),r.kinds)}/${r.kinds})`:'',r.quests?`finish ${r.quests} quests (${Math.min(questsDone(),r.quests)}/${r.quests})`:'',r.visitors?`welcome ${r.visitors} visitors (${Math.min(state.stats.visitors,r.visitors)}/${r.visitors})`:''].filter(Boolean).join(', ');
 function pipTier(){let t=1;for(let k=2;k<=5;k++){if(reqMet(RANKS[k].req))t=k;else break;}return t;}const sanctRank=pipTier;
 const rankLock=r=>r>sanctRank()?`Arrives at ${rankLabel(r)}: ${reqText(RANKS[r].req)}`:null;
-const coziness=()=>state.home.items.reduce((n,it)=>{const Fu=FURN[it.f];return n+(!Fu?0:Fu.trophy?15:COZ[Fu.tier||1]);},0);
+const coziness=()=>HOME().items.reduce((n,it)=>{const Fu=FURN[it.f];return n+(!Fu?0:Fu.trophy?15:COZ[Fu.tier||1]);},0);
 const TROPHY_OF={glimmerwhale:'trwhale',mossback:'trtitan',skyhorn:'trsky',emberwyrm:'trdragon'};
 function grantTrophies(quiet){for(const sp in TROPHY_OF){const f=TROPHY_OF[sp];if(state.dex[sp]===2&&!(state.inv['f:'+f]>0)){addInv('f:'+f,1);if(!quiet)toast(`Trophy earned: ${FURN[f].name}! Place it in your cottage with Decorate.`);}}
   if(questsDone()>=QUESTS.length&&!(state.inv['f:trstar']>0)){addInv('f:trstar',1);if(!quiet)toast('Every quest done! You earned the Sanctuary Star plaque for your cottage.');}}
@@ -1552,30 +1588,30 @@ const WALLS={cream:{name:'Cream',a:'#f0e2c8',b:'#e6d4b6',t:'#9a6a3e',cost:0},ros
 const FLOORS={wood:{name:'Oak planks',a:'#c08a52',b:'#a8743e',cost:0},checker:{name:'Checkerboard',a:'#f0e8dc',b:'#c8b8a8',cost:40},moss:{name:'Moss carpet',a:'#7ab85a',b:'#68a84a',cost:50},stone:{name:'Stone tiles',a:'#bcb8c8',b:'#a4a0b4',cost:50},rose:{name:'Rose carpet',a:'#e8b8c4',b:'#d8a0b0',cost:120,tier:2},
   marble:{name:'Marble',a:'#f6f2fa',b:'#dcd6e6',cost:320,tier:3},cloud:{name:'Cloud carpet',a:'#bfe6ff',b:'#ffffff',cost:900,tier:4}};
 
-function drawWall(g,W,i,j,x,y){const S=WALLS[state.home.wall]||WALLS.cream,inner=j<=1&&i>0&&i<W.w-1;
+function drawWall(g,W,i,j,x,y){const S=WALLS[HOME().wall]||WALLS.cream,inner=j<=1&&i>0&&i<W.w-1;
   if(!inner){fill(g,'#5a3a2a',x,y,16,16);fill(g,'#6a4a36',x,y,16,1);return;}
   if(j===0){fill(g,'#4a3428',x,y,16,6);fill(g,S.a,x,y+6,16,10);}else fill(g,S.a,x,y,16,16);
   for(let a=0;a<16;a+=8)fill(g,S.b,x+a+4,j===0?y+6:y,2,j===0?10:16);
   if(S.stars){fill(g,'#ffd860',x+((i*7)%13)+1,y+(j===0?8:2)+((i*5)%5),1,1);fill(g,'#fff8e8',x+((i*11)%14)+1,y+(j===0?11:7)+((i*3)%4),1,1);}
   if(j===1){fill(g,S.t,x,y+12,16,4);fill(g,'rgba(0,0,0,.15)',x,y+15,16,1);}}
-function drawFloor(g,i,j,x,y,r){const F2=FLOORS[state.home.floor]||FLOORS.wood,k=state.home.floor;fill(g,F2.a,x,y,16,16);
+function drawFloor(g,i,j,x,y,r){const F2=FLOORS[HOME().floor]||FLOORS.wood,k=HOME().floor;fill(g,F2.a,x,y,16,16);
   if(k==='wood'){for(let b=0;b<16;b+=4)fill(g,F2.b,x,y+b,16,1);fill(g,F2.b,x+((i*5+j*3)%14),y+1,1,3);fill(g,F2.b,x+((i*9+j*7)%14),y+9,1,3);}
   else if(k==='checker'||k==='marble'){if((i+j)%2)fill(g,F2.b,x,y,16,16);if(k==='marble'&&(i*7+j*3)%5===0)fill(g,'#c8c0d8',x+3,y+5,8,1);}
   else if(k==='stone'){fill(g,F2.b,x,y,16,1);fill(g,F2.b,x,y,1,16);fill(g,'#d0ccdc',x+1,y+1,14,1);}
   else{for(let n=0;n<10;n++)fill(g,F2.b,x+((r()*16)|0),y+((r()*16)|0),1,1);}
   if(j===2)fill(g,'rgba(0,0,0,.12)',x,y,16,3);}
-function buildHome(){const H=state.home,w=H.w,h=H.h,m=new Uint8Array(w*h).fill(T.HFLOOR);
+function buildHome(){const H=HOME(),w=H.w,h=H.h,m=new Uint8Array(w*h).fill(T.HFLOOR);
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(j<=1||i===0||i===w-1||j===h-1)m[j*w+i]=T.HWALL;
   const di=Math.floor(w/2)-1;m[(h-1)*w+di]=T.DOORMAT;m[(h-1)*w+di+1]=T.DOORMAT;
   const W={kind:'home',w,h,m,ground:T.HFLOOR,seed:13,door:di};W.solid=makeSolid(W);
   for(const it of H.items){const Fu=FURN[it.f];if(!Fu||Fu.wall||Fu.layer===0)continue;for(let y=it.j;y<it.j+Fu.h;y++)for(let x=it.i;x<it.i+Fu.w;x++)if(y<h&&x<w)W.solid[y*w+x]=1;}
   renderMap(W);homeWorld=W;if(scene==='home')world=W;}
-function homeAvail(f){return(state.inv['f:'+f]||0)-state.home.items.filter(it=>it.f===f).length;}
+function homeAvail(f){return(state.inv['f:'+f]||0)-allHomes().reduce((n,H)=>n+H.items.filter(it=>it.f===f).length,0);}
 function homeToolDef(id){if(id==='bulldoze')return{id,name:'Put away',info:'Tap furniture to put it back in your bag.'};if(!id||!id.startsWith('f:'))return null;const f=id.slice(2),Fu=FURN[f];if(!Fu)return null;return{id,name:Fu.name,furn:f,wall:!!Fu.wall};}
 function homeTools(){const L=[];for(const f in FURN)if((state.inv['f:'+f]||0)>0)L.push(homeToolDef('f:'+f));L.push(homeToolDef('bulldoze'));return L;}
-function homeItemsAt(i,j){return state.home.items.filter(it=>{const Fu=FURN[it.f];return Fu&&i>=it.i&&i<it.i+Fu.w&&j>=it.j&&j<it.j+Fu.h;});}
+function homeItemsAt(i,j){return HOME().items.filter(it=>{const Fu=FURN[it.f];return Fu&&i>=it.i&&i<it.i+Fu.w&&j>=it.j&&j<it.j+Fu.h;});}
 function homeItemAt(i,j){const L=homeItemsAt(i,j);return L.find(it=>!FURN[it.f].wall&&FURN[it.f].layer!==0)||L.find(it=>FURN[it.f].layer===0)||L[0]||null;}
-function homeProblem(t,i,j){const H=state.home,Fu=FURN[t.furn];if(!Fu)return'Pick something to place.';if(homeAvail(t.furn)<=0)return"You've placed all of those. Buy more at Pip's Home Goods.";
+function homeProblem(t,i,j){const H=HOME(),Fu=FURN[t.furn];if(!Fu)return'Pick something to place.';if(homeAvail(t.furn)<=0)return"You've placed all of those. Buy more at Pip's Home Goods.";
   if(Fu.wall){if(j!==1)return'Wall decorations go on the wall.';if(i<1||i+Fu.w>H.w-1)return"That doesn't fit there.";
     for(let x=i;x<i+Fu.w;x++)if(homeItemsAt(x,1).some(it=>FURN[it.f].wall))return'Something is already hanging there.';return null;}
   if(i<1||j<2||i+Fu.w>H.w-1||j+Fu.h>H.h-1)return"That doesn't fit there.";
@@ -1585,11 +1621,11 @@ function homeProblem(t,i,j){const H=state.home,Fu=FURN[t.furn];if(!Fu)return'Pic
   if(lay===1){const pt=playerTile();if(pt.i>=i&&pt.i<i+Fu.w&&pt.j>=j&&pt.j<j+Fu.h)return'You are standing there!';}
   return null;}
 function homeApply(t,i,j,quiet){
-  if(t.id==='bulldoze'){const it=homeItemAt(i,j);if(!it){if(!quiet)toast('Nothing to put away there.');return false;}state.home.items.splice(state.home.items.indexOf(it),1);poof(i*16+8,j*16+8);sfx('miss');buildHome();save();renderBuildbar();return true;}
+  if(t.id==='bulldoze'){const it=homeItemAt(i,j);if(!it){if(!quiet)toast('Nothing to put away there.');return false;}HOME().items.splice(HOME().items.indexOf(it),1);poof(i*16+8,j*16+8);sfx('miss');buildHome();save();renderBuildbar();return true;}
   const why=homeProblem(t,i,j);if(why){if(!quiet)toast(why);return false;}
-  state.home.items.push({f:t.furn,i,j});sfx('blip');sparks((i+FURN[t.furn].w/2)*16,(j+FURN[t.furn].h/2)*16,8,'#fff6b0');buildHome();save();renderBuildbar();return true;}
+  HOME().items.push({f:t.furn,i,j});sfx('blip');sparks((i+FURN[t.furn].w/2)*16,(j+FURN[t.furn].h/2)*16,8,'#fff6b0');buildHome();save();renderBuildbar();return true;}
 function homeInfo(t){if(!t)return'';if(t.id==='bulldoze')return t.info+` · Coziness ${coziness()}`;const Fu=FURN[t.furn];return`<b>${Fu.name}</b> · ${homeAvail(t.furn)} left to place${Fu.wall?' · goes on the wall':''} · Coziness ${coziness()}`;}
-function cycleStyle(kind){if(G('style',{k:kind}))return;const H=state.home,list=H.styles[kind];if(list.length<2){toast(`Buy more ${kind==='wall'?'wallpaper':'floors'} at Pip's Home Goods in town.`);return;}
+function cycleStyle(kind){if(G('style',{k:kind,h:curHouse}))return;const H=HOME(),list=state.home.styles[kind];if(list.length<2){toast(`Buy more ${kind==='wall'?'wallpaper':'floors'} at Pip's Home Goods in town.`);return;}
   H[kind]=list[(list.indexOf(H[kind])+1)%list.length];sfx('blip');buildHome();save();renderBuildbar();}
 function furnCanvas(f){const Fu=FURN[f],c=document.createElement('canvas');c.width=Fu.w*16;c.height=Fu.h*16+16;Fu.draw(c.getContext('2d'),0,16);return c;}
 function drawFurn(it){const Fu=FURN[it.f];if(Fu)Fu.draw(ctx,it.i*16,it.j*16);}
@@ -1707,6 +1743,8 @@ function findTarget(){const L=[];
     state.pens.forEach((p,i)=>{const rx=p.i*16,ry=p.j*16,rw=p.w*16,rh=p.h*16,py=player.y-4;const d=Math.hypot(player.x-clamp(player.x,rx,rx+rw),py-clamp(py,ry,ry+rh));if(d<10)L.push([d,{type:'pen',i}]);});
   }else if(scene==='town'){
     for(const b of BUILDINGS){const d=Math.hypot(player.x-(b.door*16+8),player.y-((b.y+b.h)*16+8));if(d<18)L.push([d,{type:'door',b}]);}
+    LOTS.forEach((l,n)=>{const k=houseOnLot(n);if(k>=0){const b=houseBuilding(k),d=Math.hypot(player.x-(b.door*16+8),player.y-((b.y+b.h)*16+8));if(d<18)L.push([d,{type:'hdoor',k,b}]);}
+      else{const d=Math.hypot(player.x-(l.x+3)*16,player.y-((l.y+5)*16+14));if(d<20)L.push([d,{type:'lot',lot:n}]);}});
     for(const n of NPC_POS){const d=Math.hypot(player.x-n.x,player.y-n.y);if(d<20)L.push([d,{type:'npc',id:n.id}]);}
     for(const t of TRAILS){const d=Math.hypot(player.x-t.x,player.y-t.y);if(d<28)L.push([d+4,{type:'trail',t}]);}
     if(sanctRank()>=2){const d=Math.hypot(player.x-WTP.x,player.y-WTP.y);if(d<20)L.push([d,{type:'wtportal'}]);}
@@ -1714,7 +1752,8 @@ function findTarget(){const L=[];
     for(const c of CABS){const d=Math.hypot(player.x-(c.i*16+8),player.y-(3*16+10));if(d<14)L.push([d,{type:'cab',c}]);}
     for(const n of ARC_NPC){const d=Math.hypot(player.x-n.x,player.y-n.y);if(d<20)L.push([d,{type:'npc',id:n.id}]);}
   }else if(scene==='home'){
-    for(const it of state.home.items){const Fu=FURN[it.f];if(!Fu||!Fu.use)continue;const cx=(it.i+Fu.w/2)*16,cy=(it.j+Fu.h)*16+4;
+    if(curHouse){const d=Math.hypot(player.x-(homeWorld.door*16+8),player.y-((homeWorld.h-2)*16+12));if(d<14)L.push([d+6,{type:'nameplate'}]);}
+    for(const it of HOME().items){const Fu=FURN[it.f];if(!Fu||!Fu.use)continue;const cx=(it.i+Fu.w/2)*16,cy=(it.j+Fu.h)*16+4;
       const d=Math.hypot(Math.max(0,Math.abs(player.x-cx)-Fu.w*6),player.y-cy);if(d<12)L.push([d,{type:'furn',use:Fu.use,it}]);}
   }else if(wild){
     for(const c of wild.crs){const S=SPECIES[c.sp],d=Math.hypot(c.x-player.x,c.y-player.y);if(d<(S.huge?50:24))L.push([d-(S.huge?24:6),{type:'cr',c}]);}
@@ -1733,6 +1772,7 @@ function label(t){switch(t.type){
   case'pen':{const p=state.pens[t.i];const c=p.cid&&getC(p.cid);return c?`${KA} Visit ${SPECIES[c.sp].name}`:`${KA} Choose who lives here`;}
   case'door':return t.b.id==='cottage'?`${KA} Go inside your cottage`:`${KA} Go into ${t.b.name}`;
   case'npc':return`${KA} Talk to ${NPCINFO[t.id].short}`;
+  case'hdoor':return`${KA} Go into ${t.b.name}`;case'lot':return`${KA} Lot for sale · build a house`;case'nameplate':return`${KA} Name this house`;
   case'trail':return`${KA} Trail to ${ZONES[t.t.zone].name}${state.unlocked[t.t.zone]?'':' (locked)'}`;
   case'furn':return`${KA} `+({bed:'Take a cozy nap',piano:'Play the piano',arcade:'Play the arcade game',jukebox:'Play the jukebox',telescope:'Look through the telescope',crystal:'Gaze into the crystal ball'}[t.use]||'Use it');
   case'cr':return`${KA} Befriend ${SPECIES[t.c.sp].name}`;case'bush':return`${KA} Pick berries`;case'spark':return t.s.locket?`${KA} Pick up the pink glint`:t.s.item?`${KA} Pick up ${WT_ITEM[t.s.item].name}`:`${KA} Dig up treasure`;case'portal':return`${KA} Return home`;
@@ -1740,7 +1780,7 @@ function label(t){switch(t.type){
   case'place':return`${KA} ${WT_EMO[t.p.cat]||'📍'} ${t.p.name}`;}}
 function idleHint(){if(scene==='zoo')return state.pens.some(p=>!zooWorld.penReach.has(p.id))?'Some habitats need a path next to them':countHoused()?'Gate to the wilds at the top · town through the bottom entrance':'Visit an empty habitat to give a creature a home';
   if(scene==='town')return'Willowbrook · the sanctuary is up the north road';
-  if(scene==='home')return'Your cottage · tap Decorate to arrange things · door at the bottom';
+  if(scene==='home')return curHouse?`${state.houses[curHouse-1].name||HOUSES[state.houses[curHouse-1].kind].name} · tap Decorate · door at the bottom`:'Your cottage · tap Decorate to arrange things · door at the bottom';
   if(scene==='arcade')return'Pixel Palace Arcade · walk up to a cabinet to play · door at the bottom';
   const Z=ZONES[wild.zone],S=comp();
   if(wild.zone==='watertown'){const W=wild.W,k=Math.floor((player.y-4)/16)*W.w+Math.floor(player.x/16),n=W.nm[k],h=W.homeFX,hh=h&&Math.abs(player.x-h.cx)<72&&Math.abs(player.y-h.cy-40)<64;return`${hh?'🎃 The Halloween House on Irving Street':'📍 '+(n?WT_DATA.names[n]:'Watertown')}${S?` · ${S.name}: ${S.abName}`:' · portals home in the parks'}`;}return S?`${Z.name} · ${S.name}: ${S.abName}`:`${Z.name} · step on the portal to go home`;}
@@ -1753,7 +1793,7 @@ function pressA(){if(titleOpen){startGame();return;}if(catchG){catchPress();retu
   switch(t.type){
     case'gate':gatePanel();break;case'board':boardPanel();break;case'burrow':burrowPanel();break;case'pen':penPanel(t.i);break;
     case'door':if(t.b.id==='cottage')goHome();else if(t.b.id==='arcade')goArcade();else if(t.b.id==='hall')npcPanel('mayor');else shopPanel(t.b.id);break;
-    case'npc':npcPanel(t.id);break;case'trail':trailPanel(t.t.zone);break;
+    case'npc':npcPanel(t.id);break;case'hdoor':goHome(t.k+1);break;case'lot':lotPanel(t.lot);break;case'nameplate':namePanel();break;case'trail':trailPanel(t.t.zone);break;
     case'furn':useFurn(t.use,t.it);break;
     case'cr':startCatch(t.c);break;case'bush':pickBush(t.b);break;case'spark':digSpark(t.s);break;
     case'portal':returnHome();break;
@@ -1923,9 +1963,10 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;fi
       if(!zooWorld.penReach.has(p.id))L.push({y:(p.j+p.h)*16+1,d:()=>drawNoPath(p)});}
     for(const v of visitors)L.push({y:v.y,d:()=>drawVisitor(v)});}
   else if(scene==='town'){L.push({y:20,d:drawArch},{y:19*16,d:drawPlazaFountain});for(const b of BUILDINGS)L.push({y:(b.y+b.h)*16,d:()=>drawBuilding(b)});
+    LOTS.forEach((l,n)=>{const k=houseOnLot(n);if(k>=0){const b=houseBuilding(k);L.push({y:(b.y+b.h)*16,d:()=>drawBuilding(b)});}else L.push({y:(l.y+5)*16+10,d:()=>drawLotSign(l)});});
     for(const n of NPC_POS)L.push({y:n.y,d:()=>drawNPC(n)});for(const v of townies)L.push({y:v.y,d:()=>drawTownie(v)});for(const t of TRAILS)L.push({y:t.y,d:()=>drawTrailSign(t)});L.push({y:WTP.y,d:drawWtPortal});}
   else if(scene==='arcade'){for(const c of CABS)L.push({y:3*16,d:()=>drawCabinet(c)});for(const n of ARC_NPC)L.push({y:n.y,d:()=>drawNPC(n)});}
-  else if(scene==='home'){for(const it of state.home.items){const Fu=FURN[it.f];if(!Fu)continue;L.push({y:Fu.wall?-10:Fu.layer===0?-5:(it.j+Fu.h)*16-1,d:()=>drawFurn(it)});}}
+  else if(scene==='home'){for(const it of HOME().items){const Fu=FURN[it.f];if(!Fu)continue;L.push({y:Fu.wall?-10:Fu.layer===0?-5:(it.j+Fu.h)*16-1,d:()=>drawFurn(it)});}}
   else{L.push({y:wild.spawn.y,d:drawPortal});for(const b of wild.bushes)if(b.has)L.push({y:b.j*16+15,d:()=>drawBerries(b)});
     for(const s of wild.sparks)L.push({y:s.y,d:()=>drawSparkle(s)});
     for(const c of wild.crs)L.push({y:c.y,d:()=>{drawCr(c.sp,c.x,c.y,c.face,c.moving,!!SPECIES[c.sp].swim);if(catchG&&catchG.cr===c)drawBang(c);}});
@@ -1991,7 +2032,7 @@ let lastTouchEnd=0;document.addEventListener('touchend',e=>{const now=Date.now()
    anywhere else (GitHub Pages) it falls back to PeerJS (WebRTC). */
 let NET={role:null,mode:null,code:null,r:null,roomApi:undefined,peer:null,conn:null,partner:null,partnerId:null,pv:null,pc:null,lastSnap:'',snapT:0,posT:0,wT:0,rx:{},solo:null,lastPos:0,gotState:false};
 let crSeq=0;
-const SHARED=['cal','qBase','pipSeen','hiscore','coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
+const SHARED=['houses','cal','qBase','pipSeen','hiscore','coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
 const PJ_URL='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function myName(){let n='';try{n=localStorage.getItem('as-name')||'';}catch(e){}return n||'Friend';}
@@ -2000,8 +2041,8 @@ const partnerName=()=>cleanName(NET.partner&&NET.partner.n);
 function sendCmd(c,a){if(NET.role==='guest')netSend({t:'cmd',c,a});}
 function G(c,a){if(NET.role!=='guest')return false;sendCmd(c,a);return true;}
 function netGain(coins,berries){if(NET.role==='guest')sendCmd('gain',{coins,berries});}
-function fixWorld(){world=scene==='zoo'?zooWorld:scene==='town'?townWorld:scene==='home'?homeWorld:(wild?wild.W:zooWorld);}
-function partnerHere(){const p=NET.partner;if(!p||!NET.pv||p.s!==scene)return false;if(scene==='wild')return !!wild&&p.z===wild.zone;return true;}
+function fixWorld(){world=scene==='zoo'?zooWorld:scene==='town'?townWorld:scene==='home'?homeWorld:scene==='arcade'?arcadeWorld:(wild?wild.W:zooWorld);}
+function partnerHere(){const p=NET.partner;if(!p||!NET.pv||p.s!==scene)return false;if(scene==='wild')return !!wild&&p.z===wild.zone;if(scene==='home')return(p.z||0)===curHouse;return true;}
 function snapStr(){const o={};for(const k of SHARED)o[k]=state[k];return JSON.stringify(o);}
 async function getRoom(){if(NET.roomApi!==undefined)return NET.roomApi;
   try{NET.roomApi=window.claude&&window.claude.use?await window.claude.use('room'):null;}catch(e){NET.roomApi=null;}
@@ -2027,20 +2068,20 @@ function onNet(m){try{switch(m.t){
   case'bye':partnerLeft();break;}}catch(e){console.error('net',e);}}
 function applySnap(s){const o=JSON.parse(s);if(!o||!o.zoo||!o.pens||!o.owned)return;
   const zc=JSON.stringify(o.zoo)!==JSON.stringify(state.zoo)||JSON.stringify(o.pens.map(p=>[p.id,p.i,p.j,p.w,p.biome]))!==JSON.stringify(state.pens.map(p=>[p.id,p.i,p.j,p.w,p.biome]));
-  const hc=JSON.stringify(o.home)!==JSON.stringify(state.home),mine=companion?companion.cid:null;
+  const hc=JSON.stringify([o.home,o.houses])!==JSON.stringify([state.home,state.houses]),mine=companion?companion.cid:null;
   for(const k of SHARED)if(o[k]!==undefined)state[k]=o[k];
   if(mine){const c=getC(mine);if(c)c.away=true;}
-  if(zc)buildZoo();if(hc)buildHome();fixWorld();if(panelOpen&&panelCtx&&!panelCtx.coop)refreshPanel();if(buildMode)renderBuildbar();
+  if(zc)buildZoo();if(hc){if(curHouse&&!houseOk(curHouse))curHouse=0;buildHome();buildTown();}fixWorld();if(panelOpen&&panelCtx&&!panelCtx.coop)refreshPanel();if(buildMode)renderBuildbar();
   if(!NET.gotState){NET.gotState=true;toast(`You're in ${partnerName()}'s sanctuary! Coins, creatures and habitats are shared.`);updCoopChip();}}
 function applyWcr(m){if(scene!=='wild'||!wild||wild.zone!==m.z||!Array.isArray(m.l))return;
   if(!wild.follow){wild.follow=true;wild.crs=wild.crs.filter(c=>catchG&&catchG.cr===c);}wild.followT=time;const seen=new Set();
   for(const e of m.l){if(!Array.isArray(e))continue;const[u,sp,x,y,f]=e;if(!SPECIES[sp]||typeof x!=='number'||typeof y!=='number')continue;seen.add(u);
     let c=wild.crs.find(q=>q.u===u);if(!c){c={u,sp,x,y,vx:0,vy:0,t:9,face:f>0?1:-1,moving:false,fx:R()};wild.crs.push(c);}c.tx=x;c.ty=y;}
   wild.crs=wild.crs.filter(c=>seen.has(c.u)||(catchG&&catchG.cr===c));}
-function hostRun(c,a){const sv={scene,tool,biomeSel},num=v=>typeof v==='number'&&isFinite(v);
+function hostRun(c,a){const sv={scene,tool,biomeSel,curHouse},num=v=>typeof v==='number'&&isFinite(v);
   try{switch(c){
-    case'tool':if((a.sc!=='zoo'&&a.sc!=='home')||!num(a.i)||!num(a.j))break;scene=a.sc;tool=String(a.tool);if(BIOMES[a.b])biomeSel=a.b;if(toolDef(tool))applyTool(a.i|0,a.j|0,true);break;
-    case'style':if(a.k==='wall'||a.k==='floor'){scene='home';const H=state.home,list=H.styles[a.k];if(list.length>1){H[a.k]=list[(list.indexOf(H[a.k])+1)%list.length];buildHome();}}break;
+    case'tool':if((a.sc!=='zoo'&&a.sc!=='home')||!num(a.i)||!num(a.j))break;scene=a.sc;if(a.sc==='home')curHouse=houseOk(a.h)?a.h:0;tool=String(a.tool);if(BIOMES[a.b])biomeSel=a.b;if(toolDef(tool))applyTool(a.i|0,a.j|0,true);break;
+    case'style':if(a.k==='wall'||a.k==='floor'){scene='home';curHouse=houseOk(a.h)?a.h:0;const H=HOME(),list=state.home.styles[a.k];if(list.length>1){H[a.k]=list[(list.indexOf(H[a.k])+1)%list.length];buildHome();}}break;
     case'pen':{const p=penById(a.pid);if(p&&typeof a.a==='string')penAct(p,a.a,a.d||{});break;}
     case'buy':if(['market','bakery','builder','goods','trinkets'].includes(a.shop)&&num(a.k))shopBuy(a.shop,a.k);break;
     case'quest':{const q=QUESTS.find(x=>x.id===a.q);if(q&&(a.a==='accept'||a.a==='turnin'))npcAct(a.a,{q:q.id});break;}
@@ -2052,11 +2093,13 @@ function hostRun(c,a){const sv={scene,tool,biomeSel},num=v=>typeof v==='number'&
     case'inv':if((['locket','clover','starfruit','book','hamster','ball','pumpkin'].includes(a.k)||/^f:wt_/.test(a.k))&&(a.n===1||a.n===-1))state.inv[a.k]=Math.max(0,(state.inv[a.k]||0)+a.n);break;
     case'dex':if(SPECIES[a.sp]&&(a.st===1||a.st===2)&&(state.dex[a.sp]||0)<a.st)state.dex[a.sp]=a.st;break;
     case'away':{const cc=getC(a.cid);if(cc)cc.away=!!a.v;break;}
-    case'rest':rest(true);break;}}
+    case'rest':rest(true);break;
+    case'buildHouse':if(num(a.lot)&&HOUSES[a.kind])buildHouseAt(a.lot,a.kind);break;
+    case'nameHouse':if(houseOk(a.h)&&a.h>0&&typeof a.n==='string')state.houses[a.h-1].name=a.n.slice(0,24);break;}}
   catch(e){console.error('cmd',c,e);}
-  finally{scene=sv.scene;tool=sv.tool;biomeSel=sv.biomeSel;fixWorld();if(buildMode)renderBuildbar();if(panelOpen&&panelCtx&&!panelCtx.coop)refreshPanel();}
+  finally{scene=sv.scene;tool=sv.tool;biomeSel=sv.biomeSel;if(curHouse!==sv.curHouse){curHouse=sv.curHouse;if(scene==='home')buildHome();}fixWorld();if(buildMode)renderBuildbar();if(panelOpen&&panelCtx&&!panelCtx.coop)refreshPanel();}
   NET.snapT=0;save();}
-function myPos(){return{s:scene,z:scene==='wild'&&wild?wild.zone:null,x:Math.round(player.x),y:Math.round(player.y),f:player.face,m:player.moving?1:0,fr:player.frame,
+function myPos(){return{s:scene,z:scene==='wild'&&wild?wild.zone:scene==='home'?curHouse:null,x:Math.round(player.x),y:Math.round(player.y),f:player.face,m:player.moving?1:0,fr:player.frame,
   c:companion?companion.sp:null,cx:companion?Math.round(companion.x):0,cy:companion?Math.round(companion.y):0,cf:companion?companion.face:1,n:myName(),role:NET.role};}
 function onPos(p){if(!p||typeof p!=='object'||typeof p.x!=='number'||typeof p.y!=='number')return;const first=!NET.partner;NET.partner=p;NET.lastPos=time;
   if(!NET.pv||first||Math.hypot(p.x-NET.pv.x,p.y-NET.pv.y)>120)NET.pv={x:p.x,y:p.y};if(p.c&&(!NET.pc||first))NET.pc={x:p.cx,y:p.cy,f:p.cf};

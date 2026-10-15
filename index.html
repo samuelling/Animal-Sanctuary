@@ -128,7 +128,7 @@ details .row{margin-top:8px}
 #gameov{--cab:#ff5ab4;position:fixed;inset:0;z-index:60;display:flex;justify-content:center;
   background:radial-gradient(ellipse at 50% 30%,#2a1f4a 0%,#120c24 60%,#07050f 100%);
   padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left))}
-#gameov[hidden]{display:none}
+#gameov[hidden]{display:none}[hidden]{display:none!important}
 #gameov .cab{flex:1;max-width:1100px;display:flex;flex-direction:column;border-radius:14px 14px 6px 6px;
   background:linear-gradient(90deg,color-mix(in srgb,var(--cab) 55%,#000) 0,var(--cab) 14px,color-mix(in srgb,var(--cab) 70%,#000) 22px,#15102a 22px,#15102a calc(100% - 22px),color-mix(in srgb,var(--cab) 70%,#000) calc(100% - 22px),var(--cab) calc(100% - 14px),color-mix(in srgb,var(--cab) 55%,#000) 100%);
   box-shadow:0 0 40px color-mix(in srgb,var(--cab) 35%,transparent),0 0 0 2px #000}
@@ -1192,8 +1192,11 @@ function curTileFrom(e){const r=cvs.getBoundingClientRect(),x=(e.clientX-r.left)
 function touchesPath(i,j,w,h){for(let y=j-1;y<=j+h;y++)for(let x=i-1;x<=i+w;x++)if((x<i||x>=i+w||y<j||y>=j+h)&&isPath(x,y))return true;return false;}
 function snapPen(i,j,t){const[w,h]=PSZ[t.size];let best=null,bs=1e9;for(let dj=-3;dj<=3;dj++)for(let di=-3;di<=3;di++){const a=i+di,b=j+dj;if(placeProblem(t,a,b))continue;
   const sc=Math.abs(di)+Math.abs(dj)+(touchesPath(a,b,w,h)?0:5);if(sc<bs){bs=sc;best={i:a,j:b};}}return best||{i,j};}
-function camRange(){const ww=world.w*16,hh=world.h*16,extra=buildMode?Math.round((bb.offsetHeight||0)/((cvs.getBoundingClientRect().height/VH)||1)):0,H2=hh+extra;
-  return{x:ww<=VW?[(ww-VW)/2,(ww-VW)/2]:[0,ww-VW],y:H2<=VH?[(H2-VH)/2,(H2-VH)/2]:[0,H2-VH]};}
+/* While Ranger Fern's tutorial box covers the top of the screen, aim the camera at the space below it so the player is never hidden. */
+function tutPad(){if(typeof tutEl==='undefined'||tutEl.hidden)return 0;const r=cvs.getBoundingClientRect(),b=tutEl.getBoundingClientRect();if(!r.height||!b.height)return 0;return clamp(Math.round((b.bottom-r.top+4)/(r.height/VH)),0,Math.round(VH*.6));}
+function camRange(){const pad=buildMode?0:tutPad(),ww=world.w*16,hh=world.h*16,extra=buildMode?Math.round((bb.offsetHeight||0)/((cvs.getBoundingClientRect().height/VH)||1)):0,H2=hh+extra;
+  const y=H2<=VH-pad?[(H2-VH-pad)/2,(H2-VH-pad)/2]:[-pad,Math.max(-pad,H2-VH)];
+  return{x:ww<=VW?[(ww-VW)/2,(ww-VW)/2]:[0,ww-VW],y};}
 function clampCam(){const r=camRange();camX=clamp(camX,r.x[0],r.x[1]);camY=clamp(camY,r.y[0],r.y[1]);}
 function keepCurVisible(){const[tw,th]=toolSize(toolDef(tool)),w=tw*16,h=th*16,x=cur.i*16,y=cur.j*16,bot=(bb.offsetHeight||0)/((cvs.getBoundingClientRect().height/VH)||1);
   if(x<camX+12)camX=x-12;if(x+w>camX+VW-12)camX=x+w-VW+12;if(y<camY+12)camY=y-12;if(y+h>camY+VH-bot-8)camY=y+h-VH+bot+8;clampCam();}
@@ -2079,7 +2082,7 @@ function journalPanel(){const render=()=>{const ks=Object.keys(SPECIES),got=ks.f
       <small>Lives in ${ZONES[S.zone].hidden&&!state.unlocked[S.zone]?'a secret place…':ZONES[S.zone].name}.${S.season!=null?` ${SEAS[S.season].icon} ${SEAS[S.season].name} only.`:''} ${RAR[S.rar].name}${S.huge?', giant':''}.${S.needs?` ${NEED_HINT[S.needs]}`:''}</small></div>`;}).join('')}</div>`;};openPanel(render,()=>{});}
 
 /* ================= DRAWING ================= */
-function snapCam(){camX=player.x-VW/2;camY=player.y-8-VH/2;clampCam();}
+function snapCam(){camX=player.x-VW/2;camY=player.y-8-(VH+(buildMode?0:tutPad()))/2;clampCam();}
 function shadow(x,y,w){fill(ctx,'rgba(20,10,30,.28)',Math.round(x-w/2),Math.round(y-2),w,2);}
 function drawCr(sp,x,y,face,moving,swim){const S=SPECIES[sp];const right=face>=0;const flip=S.nat==='S'?0:(right===(S.nat==='R')?0:1);const spr=SPR[sp][flip];
   const bob=reduceMotion?0:moving?Math.abs(Math.sin(time*10))*2:Math.sin(time*2+x)*.6;
@@ -2525,7 +2528,7 @@ function update(dt){
   else updWild(dt);
   if(sleepFx>0)sleepFx=Math.max(0,sleepFx-dt);
   updParts(dt);updAmbient(dt);
-  if(!buildMode){const r=camRange(),tx=clamp(player.x-VW/2,r.x[0],r.x[1]),ty=clamp(player.y-8-VH/2,r.y[0],r.y[1]);
+  if(!buildMode){const r=camRange(),tx=clamp(player.x-VW/2,r.x[0],r.x[1]),ty=clamp(player.y-8-(VH+tutPad())/2,r.y[0],r.y[1]);
     const k=reduceMotion?1:Math.min(1,dt*8);camX+=(tx-camX)*k;camY+=(ty-camY)*k;}
   const showB=(scene==='zoo'||scene==='home')&&!titleOpen;if(btnBuild.hidden===showB)btnBuild.hidden=!showB;const bl=buildMode?'Done':scene==='home'?'Decorate':'Build';if(btnBuild.textContent!==bl)btnBuild.textContent=bl;
   netTick(dt);tutTick();updHint();updHUD();

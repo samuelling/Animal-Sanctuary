@@ -730,7 +730,7 @@ function buildWatertown(){
     const ch=near(LM.square[0],LM.square[1]+6,(t,k)=>R2(t,k)&&green(t)&&[1,-1,w,-w,2,-2].some(o=>m[k+o]===T.WATER));W.chest=at(ch);
     W.exits=[LM.delta,LM.saltonstall,LM.farren,LM.charlesbank,LM.casey].map(q=>at(near(q[0]+5,q[1]+4,(t,k)=>reach[k]&&green(t))));
     const yt=[];for(let j=Y.j0;j<=Y.j1;j++)for(let i=Y.i0;i<=Y.i1;i++){const k=j*w+i;if(m[k]===T.GRASS&&!W.solid[k]&&reach[k]&&!(i===sp[0]&&j===sp[1]))yt.push([i,j]);}W.yardTiles=yt;
-    W.family=['baba','emma','maya','emmy','everett'].map((id,n)=>{const q=yt[(n*5+2)%yt.length]||sp;return{id,x:q[0]*16+8,y:q[1]*16+12,tx:q[0]*16+8,ty:q[1]*16+12,t:R()*3};});
+    W.family=['bones','gemma','mara','remy','rhett'].map((id,n)=>{const q=yt[(n*5+2)%yt.length]||sp;return{id,x:q[0]*16+8,y:q[1]*16+12,tx:q[0]*16+8,ty:q[1]*16+12,t:R()*3};});
     W.places=D.places.map(p=>({x:p[0]*16+8,y:(p[1]+1)*16+10,name:D.names[p[2]],cat:p[3]}));
     WTW=W;}
   const W=WTW;return{W,water:[],bushes:W.bushes.map(b=>({...b,has:true,t:0})),islands:[],reach:W.reachList,spawn:W.spawn};}
@@ -1174,11 +1174,11 @@ const NPCINFO={
  ripley:{short:'Ranger Ripley',name:'Ranger Ripley',pal:{H:'#5a3824',T:'#3f8a3a',D:'#5a3824'},idle:['The Charles River flows all the way to Boston Harbor.','Keep the river clean and the critters will thank you.']},
  wren:{short:'Birdwatcher Wren',name:'Birdwatcher Wren',pal:{H:'#d8d4e8',T:'#6cc24a',D:'#5a3824'},idle:["I've counted forty kinds of birds on the Charles.",'Herons stand so still. Very patient birds.']},
  manager:{short:'The City Manager',name:'Watertown City Hall',pal:{H:'#5a3824',T:'#4a5a9a',D:'#2a2a3a'},idle:['The council argued about parking for three hours last night.','Everybody has an opinion about the Square!','Running a town is like running a sanctuary: keep everyone happy.']},
- baba:{short:'Baba',name:'Baba',pal:{H:'#3a2418',T:'#1a1424',D:'#1a1424'},idle:['I put up every one of these skeletons myself. It took all of September!','The red lights make the skulls glow just right.','Welcome to the Halloween House!']},
- emma:{short:'Emma',name:'Emma',pal:{H:'#7a4a2a',T:'#f29a3a',D:'#3a6a3a'},idle:['Happy Halloween! Grab a treat for the road.',"Don't let Baba add any more skeletons. Okay… maybe one more."]},
- maya:{short:'Maya',name:'Maya',pal:{H:'#3a2418',T:'#6a4cb8',D:'#2a2a3a'},idle:['Welcome to my game! Do you like the sanctuary?',"I'm a witch this year. Hee hee!"]},
- emmy:{short:'Emmy',name:'Emmy',pal:{H:'#1a1424',T:'#1a1424',D:'#1a1424'},idle:["Meow! I'm a black cat this year.",'The spiderwebs are my favorite part.']},
- everett:{short:'Everett',name:'Everett',pal:{H:'#1a1424',T:'#1a1424',D:'#1a1424'},idle:["Hi-yah! I'm a ninja!","Have you played Toilet Goalie? It's at the arcade!",'Brick Ninja is the best game ever. I made it up!']},
+ bones:{short:'Papa Bones',name:'Papa Bones',pal:{H:'#3a2418',T:'#1a1424',D:'#1a1424'},idle:['I put up every one of these skeletons myself. It took all of September!','The red lights make the skulls glow just right.','Welcome to the Halloween House!']},
+ gemma:{short:'Gemma',name:'Gemma',pal:{H:'#7a4a2a',T:'#f29a3a',D:'#3a6a3a'},idle:['Happy Halloween! Grab a treat for the road.',"Don't let Papa Bones add any more skeletons. Okay… maybe one more."]},
+ mara:{short:'Mara',name:'Mara',pal:{H:'#3a2418',T:'#6a4cb8',D:'#2a2a3a'},idle:['Welcome to my game! Do you like the sanctuary?',"I'm a witch this year. Hee hee!"]},
+ remy:{short:'Remy',name:'Remy',pal:{H:'#1a1424',T:'#1a1424',D:'#1a1424'},idle:["Meow! I'm a black cat this year.",'The spiderwebs are my favorite part.']},
+ rhett:{short:'Rhett',name:'Rhett',pal:{H:'#1a1424',T:'#1a1424',D:'#1a1424'},idle:["Hi-yah! I'm a ninja!","Have you played Toilet Goalie? It's at the arcade!",'Brick Ninja is the best game ever! Hi-YAH!']},
  tess:{short:'Tess',name:"Tess's Trinket Cart",pal:{H:'#c8641e',T:'#5ab4f0',D:'#5a3824'},idle:['Little treasures you can only find in Watertown!','Some trinkets are hidden around town. Keep your eyes open for purple glints.']},
  joy:{short:'Joy',name:'Pixel Palace Arcade',pal:{H:'#c84a7a',T:'#7cf0b8',D:'#2a2a3a'},idle:['Every cabinet in here is a real game. Walk up and press A!','Free play today. Have fun!','Brick Ninja and Toilet Goalie were dreamed up by a kid named Everett.']},
 };
@@ -1186,14 +1186,14 @@ const NPC_POS=[{id:'theo',x:21*16+8,y:19*16+12},{id:'hoot',x:32*16+8,y:16*16+12}
 const HOST={trinkets:'tess',market:'mabel',builder:'bram',goods:'pip',bakery:'rosa',hall:'mayor'};
 const NPCSPR={};for(const id in NPCINFO)NPCSPR[id]=makeSprite(VIS_ROWS[0],NPCINFO[id].pal);
 const FAM_ROWS={
- baba:["..HHHH..",".HHHHHH.",".HskskH.","..ssss..",".TwwwwT.","sTwTTwTs",".TwwwwT.",".DwDDwD.",".Dw..wD.",".kk..kk."],
- emma:["..HHHH..",".HHHHHH.",".HskskH.","..ssss..",".TTTTTT.","sTkTTkTs",".TTkkTT.",".DDDDDD.",".DD..DD.",".kk..kk."],
- maya:["...VV...","..VVVV..","VVVVVVVV",".HskskH.","..ssss..",".TTTTTT.","sTTTTTTs",".DDDDDD.",".DD..DD.",".kk..kk."],
- emmy:[".H....H.",".HH..HH.",".HHHHHH.",".HskskH.","..ssss..",".TTTTTT.","sTTTTTTs",".DDDDDD.",".DD..DD.",".kk..kk."],
- everett:["..HHHH..",".rrrrrr.",".HskskH.","..ssss..",".TTTTTT.","sTTTTTTs",".DD..DD.",".kk..kk."]};
+ bones:["..HHHH..",".HHHHHH.",".HskskH.","..ssss..",".TwwwwT.","sTwTTwTs",".TwwwwT.",".DwDDwD.",".Dw..wD.",".kk..kk."],
+ gemma:["..HHHH..",".HHHHHH.",".HskskH.","..ssss..",".TTTTTT.","sTkTTkTs",".TTkkTT.",".DDDDDD.",".DD..DD.",".kk..kk."],
+ mara:["...VV...","..VVVV..","VVVVVVVV",".HskskH.","..ssss..",".TTTTTT.","sTTTTTTs",".DDDDDD.",".DD..DD.",".kk..kk."],
+ remy:[".H....H.",".HH..HH.",".HHHHHH.",".HskskH.","..ssss..",".TTTTTT.","sTTTTTTs",".DDDDDD.",".DD..DD.",".kk..kk."],
+ rhett:["..HHHH..",".rrrrrr.",".HskskH.","..ssss..",".TTTTTT.","sTTTTTTs",".DD..DD.",".kk..kk."]};
 for(const id in FAM_ROWS)NPCSPR[id]=makeSprite(FAM_ROWS[id],{...NPCINFO[id].pal,V:'#6a4cb8'});
-const FAM_GIFT={baba:'wt_skeleton',emma:'wt_candy',maya:'wt_jack',emmy:'wt_web',everett:'wt_skull'};
-const FAM_GIVE={baba:'Here, take a skeleton. I have plenty!',emma:'Take the whole bowl. Happy Halloween!',maya:'I carved this one just for you!',emmy:'Meow! A spiderweb for your cottage.',everett:'A glowing skull! Hi-YAH!'};
+const FAM_GIFT={bones:'wt_skeleton',gemma:'wt_candy',mara:'wt_jack',remy:'wt_web',rhett:'wt_skull'};
+const FAM_GIVE={bones:'Here, take a skeleton. I have plenty!',gemma:'Take the whole bowl. Happy Halloween!',mara:'I carved this one just for you!',remy:'Meow! A spiderweb for your cottage.',rhett:'A glowing skull! Hi-YAH!'};
 function famPanel(id){openPanel(()=>head(NPCINFO[id].name)+npcBlock(id)+((state.wtGifts||{})[id]?`<p class="muted">You already got a ${FURN[FAM_GIFT[id]].name.toLowerCase()} from ${NPCINFO[id].short}.</p>`:`<button class="pbtn go" type="button" data-act="gift">🎃 Trick or treat!</button>`),
   (a,d)=>{if(a==='gift'){state.wtGifts=state.wtGifts||{};if(state.wtGifts[id])return;state.wtGifts[id]=1;const f=FAM_GIFT[id];addInv('f:'+f,1);sendCmd('inv',{k:'f:'+f,n:1});sparks(player.x,player.y-20,20,'#ff9a3a');sfx('unlock');
       toast(`${NPCINFO[id].short}: “${FAM_GIVE[id]}”`);toast(`You got a ${FURN[f].name}! Place it with Decorate.`);save();refreshPanel(true);}else if(npcAct(a,d))refreshPanel(true);});}
@@ -1215,7 +1215,7 @@ const QUESTS=[
  {id:'wtotter',npc:'ripley',title:'Otters of the Charles',ask:"Charlotters are the river's little helpers. Give one a home at your sanctuary and more folks will learn to love the Charles.",goal:'Have a Charlotter living in a habitat.',ready:()=>housed('charlotter'),reward:'600 coins and a fish tank wall',give:()=>{state.coins+=600;addInv('f:fishwall',1);},thanks:'Look at it zoom! The river thanks you.'},
  {id:'wtheron',npc:'wren',title:'The Glimmerheron',ask:"For forty years I've watched for the Glimmerheron. They say it fishes the Charles when no one is looking. Could you befriend it and give it a home?",goal:'Have a Glimmerheron living in a habitat.',ready:()=>housed('glimmerheron'),reward:'1,200 coins and a Watertown snow globe',give:()=>{state.coins+=1200;addInv('f:snowglobe',1);},thanks:'I never thought I would see it up close. Thank you, truly.'},
  {id:'wtsurvey',npc:'manager',title:'A nature survey',ask:'The town council wants a nature survey. They argued about it for three hours, but they agreed on one thing: we need to know who lives here! Befriend an Acornsprite, a Lampwisp and a Charlotter.',goal:'Befriend an Acornsprite, a Lampwisp and a Charlotter.',ready:()=>['acornsprite','lampwisp','charlotter'].every(k=>state.dex[k]===2),reward:'800 coins and a model of Watertown',give:()=>{state.coins+=800;addInv('f:citymodel',1);},thanks:'A complete survey! The council will only argue about it a little bit.'},
- {id:'wtpumpkins',npc:'maya',title:"Maya's pumpkin hunt",ask:"I hid five jack-o'-lanterns all over Watertown: by the library, at the Gables Rain Garden, in Boyd Park, down by the river and in the Square. Can you find them all?",goal:"Find Maya's 5 jack-o'-lanterns around Watertown.",ready:()=>(state.inv.pumpkin||0)>=5,pay:()=>{state.inv.pumpkin=0;},reward:'700 coins, a bubbling cauldron, a tombstone and red Halloween lights',give:()=>{state.coins+=700;addInv('f:wt_cauldron',1);addInv('f:wt_tomb',1);addInv('f:wt_redlights',1);},thanks:'You found them ALL! Happy Halloween!',onAccept:()=>toast('Look for orange glints: the library, the Gables Rain Garden, Boyd Park, the river and the Square.')},
+ {id:'wtpumpkins',npc:'mara',title:"Mara's pumpkin hunt",ask:"I hid five jack-o'-lanterns all over Watertown: by the library, at the Gables Rain Garden, in Boyd Park, down by the river and in the Square. Can you find them all?",goal:"Find Mara's 5 jack-o'-lanterns around Watertown.",ready:()=>(state.inv.pumpkin||0)>=5,pay:()=>{state.inv.pumpkin=0;},reward:'700 coins, a bubbling cauldron, a tombstone and red Halloween lights',give:()=>{state.coins+=700;addInv('f:wt_cauldron',1);addInv('f:wt_tomb',1);addInv('f:wt_redlights',1);},thanks:'You found them ALL! Happy Halloween!',onAccept:()=>toast('Look for orange glints: the library, the Gables Rain Garden, Boyd Park, the river and the Square.')},
  {id:'wtkey',npc:'manager',after:'wtsurvey',title:'The Key to the City',ask:"You've helped so many people in Watertown! Finish every job in town and the council will give you its highest honor.",goal:'Finish every other Watertown quest.',ready:()=>WT_QUESTS.every(k=>k==='wtkey'||state.quests[k]==='done'),reward:'3,000 coins, the Golden Key and plans for a Watertown Clock Tower (+80 Charm)',give:()=>{state.coins+=3000;addInv('f:wtkey',1);state.unlocks.clocktower=true;},thanks:'By unanimous vote (a first!), Watertown presents you with the Key to the City!'},
 ];
 const WT_QUESTS=['wtpumpkins','wtbooks','wthamster','wtmuffin','wtball','wtotter','wtheron','wtsurvey','wtkey'];
@@ -1313,7 +1313,7 @@ function shopItems(id){
     for(const f in FURN){const Fu=FURN[f];if(Fu.wt!=='shop')continue;L.push({sec:'Only in Watertown',name:Fu.name,cost:Fu.cost,desc:`${Fu.blurb} · you own ${inv(f)}`,icon:ic(f),buy:()=>addInv('f:'+f,1)});}
     const hidden=(kind,sec,how)=>{for(const f in FURN){const Fu=FURN[f];if(Fu.wt!==kind)continue;const got=inv(f)>0;L.push({sec,name:Fu.name,cost:0,trophy:true,owned:()=>got,lock:got?null:how(f),desc:'Yours! Place it with Decorate.',icon:ic(f),buy:()=>{}});}};
     hidden('gift','From the Halloween House · say trick or treat',f=>`Say trick or treat to ${NPCINFO[Object.keys(FAM_GIFT).find(k=>FAM_GIFT[k]===f)].short}`);
-    hidden('quest',"Maya's pumpkin hunt prizes",()=>"Find Maya's 5 jack-o'-lanterns");
+    hidden('quest',"Mara's pumpkin hunt prizes",()=>"Find Mara's 5 jack-o'-lanterns");
     hidden('found','Hidden around Watertown · never sold',()=>'Look for purple glints around town');
     return L;}
   return[];}
@@ -1424,15 +1424,15 @@ const FURN={
    for(let k=0;k<3;k++)fill(g,W2,x+4,y+1+k*2,8,1);fill(g,W2,x+7,y+1,2,7);fill(g,W2,x+3,y+1,1,6);fill(g,W2,x+12,y+1,1,6);fill(g,W2,x+6,y+8,1,6);fill(g,W2,x+9,y+8,1,6);fill(g,W2,x+5,y+14,2,1);fill(g,W2,x+9,y+14,2,1);}},
  wt_skull:{name:'Glowing skull post',w:1,h:1,cost:0,tier:3,wt:'gift',blurb:'Glows red, just like on Irving Street',draw(g,x,y){g.globalAlpha=.22+.14*Math.sin(time*4+x);fill(g,'#ff2a2a',x+1,y-6,14,13);g.globalAlpha=1;fill(g,'#5a3824',x+7,y+3,2,12);fill(g,'rgba(0,0,0,.2)',x+5,y+14,6,2);
    fill(g,'#f4f0e6',x+5,y-4,6,5);fill(g,'#f4f0e6',x+6,y+1,4,2);fill(g,'#1a1424',x+6,y-2,1,2);fill(g,'#1a1424',x+9,y-2,1,2);fill(g,'#1a1424',x+7,y+1,1,1);fill(g,'#1a1424',x+8,y+2,1,1);fill(g,'rgba(255,40,40,.3)',x+5,y-4,6,7);}},
- wt_jack:{name:"Jack-o'-lantern",w:1,h:1,cost:0,tier:3,wt:'gift',blurb:'Carved by Maya',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#c8641e',x+3,y+5,10,9);fill(g,'#f29a3a',x+4,y+5,8,9);fill(g,'#c8641e',x+7,y+5,1,9);fill(g,'#3a8a3a',x+7,y+3,2,3);
+ wt_jack:{name:"Jack-o'-lantern",w:1,h:1,cost:0,tier:3,wt:'gift',blurb:'Carved by Mara',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#c8641e',x+3,y+5,10,9);fill(g,'#f29a3a',x+4,y+5,8,9);fill(g,'#c8641e',x+7,y+5,1,9);fill(g,'#3a8a3a',x+7,y+3,2,3);
    const f=Math.sin(time*9+x)>0?'#ffe27a':'#ffb030';fill(g,f,x+5,y+7,2,2);fill(g,f,x+9,y+7,2,2);fill(g,f,x+5,y+11,6,1);fill(g,f,x+6,y+10,1,1);fill(g,f,x+9,y+10,1,1);}},
- wt_candy:{name:'Candy bowl',w:1,h:1,cost:0,tier:3,wt:'gift',blurb:'A treat from Emma',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,12,2);fill(g,'#e8553a',x+2,y+9,12,4);fill(g,'#c8423a',x+3,y+12,10,2);[[3,7,'#ffd860'],[6,6,'#b49af4'],[9,7,'#7cf0b8'],[11,8,'#ff7aa8'],[5,8,'#ff9a3a'],[8,8,'#ffffff']].forEach(([a,b,c])=>fill(g,c,x+a,y+b,2,2));}},
- wt_web:{name:'Spooky spiderweb',w:1,h:1,cost:0,tier:3,wt:'gift',wall:true,blurb:"Emmy's favorite decoration",draw(g,x,y){const c='rgba(240,240,250,.85)';fill(g,c,x+1,y,15,1);fill(g,c,x+1,y,1,14);for(let k=0;k<12;k++)fill(g,c,x+1+k,y+k,1,1);
+ wt_candy:{name:'Candy bowl',w:1,h:1,cost:0,tier:3,wt:'gift',blurb:'A treat from Gemma',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,12,2);fill(g,'#e8553a',x+2,y+9,12,4);fill(g,'#c8423a',x+3,y+12,10,2);[[3,7,'#ffd860'],[6,6,'#b49af4'],[9,7,'#7cf0b8'],[11,8,'#ff7aa8'],[5,8,'#ff9a3a'],[8,8,'#ffffff']].forEach(([a,b,c])=>fill(g,c,x+a,y+b,2,2));}},
+ wt_web:{name:'Spooky spiderweb',w:1,h:1,cost:0,tier:3,wt:'gift',wall:true,blurb:"Remy's favorite decoration",draw(g,x,y){const c='rgba(240,240,250,.85)';fill(g,c,x+1,y,15,1);fill(g,c,x+1,y,1,14);for(let k=0;k<12;k++)fill(g,c,x+1+k,y+k,1,1);
    for(const r of[4,8,12])for(let t=0;t<=8;t++){const a=t/8*Math.PI/2;fill(g,c,x+1+Math.round(r*Math.cos(a)),y+Math.round(r*Math.sin(a)),1,1);}const b=Math.round(Math.sin(time*2)*2);fill(g,c,x+11,y,1,8+b);fill(g,'#1a1424',x+10,y+8+b,3,2);}},
- wt_cauldron:{name:'Bubbling cauldron',w:1,h:1,cost:0,tier:3,wt:'quest',blurb:"Reward for Maya's pumpkin hunt",draw(g,x,y){fill(g,'rgba(0,0,0,.25)',x+2,y+14,12,2);fill(g,'#1a1424',x+2,y+6,12,8);fill(g,'#2a2238',x+3,y+7,4,5);fill(g,'#1a1424',x+3,y+14,2,1);fill(g,'#1a1424',x+11,y+14,2,1);fill(g,'#7cf05a',x+3,y+5,10,2);
+ wt_cauldron:{name:'Bubbling cauldron',w:1,h:1,cost:0,tier:3,wt:'quest',blurb:"Reward for Mara's pumpkin hunt",draw(g,x,y){fill(g,'rgba(0,0,0,.25)',x+2,y+14,12,2);fill(g,'#1a1424',x+2,y+6,12,8);fill(g,'#2a2238',x+3,y+7,4,5);fill(g,'#1a1424',x+3,y+14,2,1);fill(g,'#1a1424',x+11,y+14,2,1);fill(g,'#7cf05a',x+3,y+5,10,2);
    const b=(time*3|0)%3;fill(g,'#b0ff90',x+5+b*2,y+3-b,2,2);fill(g,'#7cf05a',x+10-b,y+2,1,1);}},
- wt_tomb:{name:'Tombstone',w:1,h:1,cost:0,tier:3,wt:'quest',blurb:"Reward for Maya's pumpkin hunt",draw(g,x,y){fill(g,'rgba(0,0,0,.25)',x+2,y+14,12,2);fill(g,'#7a7684',x+3,y+3,10,12);fill(g,'#8a8698',x+4,y+2,8,1);fill(g,'#9a96a8',x+3,y+3,2,12);fill(g,'#4a4660',x+5,y+6,6,1);fill(g,'#4a4660',x+5,y+8,6,1);fill(g,'#4a4660',x+5,y+10,4,1);fill(g,'#3f8a32',x+2,y+13,3,2);fill(g,'#3f8a32',x+11,y+13,3,2);}},
- wt_redlights:{name:'Red Halloween lights',w:2,h:1,cost:0,tier:3,wt:'quest',wall:true,blurb:"Reward for Maya's pumpkin hunt",draw(g,x,y){for(let k=0;k<32;k++)fill(g,'#2a2238',x+k,y+3+Math.round(Math.sin(k/31*Math.PI)*3),1,1);
+ wt_tomb:{name:'Tombstone',w:1,h:1,cost:0,tier:3,wt:'quest',blurb:"Reward for Mara's pumpkin hunt",draw(g,x,y){fill(g,'rgba(0,0,0,.25)',x+2,y+14,12,2);fill(g,'#7a7684',x+3,y+3,10,12);fill(g,'#8a8698',x+4,y+2,8,1);fill(g,'#9a96a8',x+3,y+3,2,12);fill(g,'#4a4660',x+5,y+6,6,1);fill(g,'#4a4660',x+5,y+8,6,1);fill(g,'#4a4660',x+5,y+10,4,1);fill(g,'#3f8a32',x+2,y+13,3,2);fill(g,'#3f8a32',x+11,y+13,3,2);}},
+ wt_redlights:{name:'Red Halloween lights',w:2,h:1,cost:0,tier:3,wt:'quest',wall:true,blurb:"Reward for Mara's pumpkin hunt",draw(g,x,y){for(let k=0;k<32;k++)fill(g,'#2a2238',x+k,y+3+Math.round(Math.sin(k/31*Math.PI)*3),1,1);
    for(let k=1;k<32;k+=4){const yy=y+4+Math.round(Math.sin(k/31*Math.PI)*3),on=((k>>2)+(time*3|0))%2;if(on){g.globalAlpha=.3;fill(g,'#ff3030',x+k-2,yy-1,6,5);g.globalAlpha=1;}fill(g,on?'#ff3030':'#7a1a1a',x+k,yy,2,2);}}},
  wt_lamp:{name:'Watertown Square lamp',w:1,h:1,cost:120,tier:2,wt:'shop',blurb:'Just like the ones around the Square',draw(g,x,y){fill(g,'rgba(255,226,122,.18)',x+1,y-14,14,11);fill(g,'rgba(0,0,0,.25)',x+5,y+14,6,2);fill(g,'#2a3a2a',x+7,y-6,2,21);fill(g,'#2a3a2a',x+5,y+13,6,2);fill(g,'#2a3a2a',x+4,y-11,8,5);fill(g,'#ffe27a',x+5,y-10,6,3);fill(g,'#2a3a2a',x+6,y-13,4,2);}},
  wt_acornplush:{name:'Acornsprite plush',w:1,h:1,cost:60,tier:2,wt:'shop',blurb:'Soft, squishy, and it never buries anything',draw(g,x,y){const s2=BASE.acornsprite;fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);g.drawImage(s2,x+8-Math.floor(s2.width/2),y+15-s2.height);}},
@@ -1587,7 +1587,7 @@ function digSpark(sp){wild.sparks.splice(wild.sparks.indexOf(sp),1);
     if(left.length){const f=left[(R()*left.length)|0];addInv('f:'+f,1);sendCmd('inv',{k:'f:'+f,n:1});toast(`You found a Watertown trinket: ${FURN[f].name}! Place it in your cottage with Decorate.`);}
     else{state.coins+=150;netGain(150,0);wild.haul.coins+=150;toast('A shiny Watertown coin stash! +150 coins');}return;}
   if(sp.item){addInv(sp.item,1);sendCmd('inv',{k:sp.item,n:1});sparks(sp.x,sp.y-4,16,WT_ITEM[sp.item].col);sfx('unlock');
-    toast(sp.item==='pumpkin'?`You found one of Maya's jack-o'-lanterns! (${state.inv.pumpkin}/5)`:sp.item==='book'?`You found an overdue picture book! (${state.inv.book}/3)`:sp.item==='hamster'?"You found Biscuit the hamster! He's snuggled in your pocket. Bring him back to Nico.":'You found the lost soccer ball! Bring it to Coach Rita.');return;}
+    toast(sp.item==='pumpkin'?`You found one of Mara's jack-o'-lanterns! (${state.inv.pumpkin}/5)`:sp.item==='book'?`You found an overdue picture book! (${state.inv.book}/3)`:sp.item==='hamster'?"You found Biscuit the hamster! He's snuggled in your pocket. Bring him back to Nico.":'You found the lost soccer ball! Bring it to Coach Rita.');return;}
   if(sp.locket){addInv('locket',1);sendCmd('inv',{k:'locket',n:1});sparks(sp.x,sp.y-4,16,'#ff9ac0');sfx('unlock');toast("You found Nell's locket! Bring it to her in Willowbrook.");return;}
   const amt=(sp.big?40:8+((R()*8)|0))*(has('dig')?2:1)*(wild.zone==='watertown'?3:1);state.coins+=amt;netGain(amt,0);wild.haul.coins+=amt;
   addP({x:sp.x,y:sp.y-10,vy:-16,life:1.3,max:1.3,kind:'coin',val:amt});sparks(sp.x,sp.y-4,12,'#ffe27a');sfx('treasure');}

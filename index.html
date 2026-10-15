@@ -125,6 +125,20 @@ details .row{margin-top:8px}
 @keyframes shine{0%{background-position:130% 0}45%,100%{background-position:-30% 0}}
 .presents{position:absolute;left:0;right:0;top:40%;z-index:1;text-align:center;font:700 clamp(12px,3.6vw,18px)/1.6 var(--f-display);letter-spacing:.32em;color:#efe8ff;text-shadow:0 0 14px #b49af4,0 2px 0 #3a1e50;opacity:0;transition:opacity .6s;pointer-events:none}
 .presents.on{opacity:1}
+#epi{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;background:rgba(10,8,30,.25);pointer-events:auto;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+#epi[hidden]{display:none}#epi.rolling{background:rgba(10,8,30,.62);transition:background 2s}
+.epiText{max-width:560px;text-align:center;font:500 clamp(17px,4.6vw,24px)/1.5 Georgia,'Times New Roman',serif;color:#fff8e8;text-shadow:0 2px 0 #2a1a3a,0 0 16px #2a1a3a;background:rgba(20,12,40,.55);padding:18px 22px;border-radius:14px;opacity:0}
+.epiText.in{animation:epiIn 1.6s ease forwards}@keyframes epiIn{to{opacity:1}}
+.epiCred{position:absolute;inset:0;overflow:hidden;text-align:center;color:#fff8e8;font:500 16px/1.6 Georgia,serif;text-shadow:0 2px 0 #1a1030;pointer-events:none}
+.epiCred .roller{transform:translateY(100vh)}.epiCred.roll .roller{animation:credRoll 56s linear forwards}@keyframes credRoll{from{transform:translateY(100vh)}to{transform:translateY(-100%)}}
+.epiCred p{margin:6px 16px}.epiCred .ct{font:700 clamp(22px,6vw,34px)/1.2 var(--f-display);color:#ffd860;letter-spacing:.08em;margin-top:18px}.epiCred .cb{font-size:19px}
+.epiCred .ch{font:700 13px/1.4 var(--f-display);letter-spacing:.2em;color:#c8a0ff;margin-top:22px}.epiCred .cs{font-size:15px}.epiCred .dim{opacity:.45}
+.epiCred a.mk{pointer-events:auto;color:#fff8e8;opacity:.22;text-decoration:none;font-size:12px;letter-spacing:.1em}.epiCred a.mk:hover,.epiCred a.mk:focus{opacity:.9}
+.epiEnd{position:absolute;left:0;right:0;bottom:max(70px,12vh);display:flex;flex-direction:column;gap:10px;align-items:center}
+.epiEnd button,.epiNext{font:700 15px/1.2 var(--f-display);color:#1a1430;background:#ffd860;border:0;border-radius:10px;padding:12px 16px;cursor:pointer;box-shadow:0 3px 0 #a8742a}
+.epiEnd button[hidden]{display:none}
+.epiNext{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));padding:10px 16px;background:rgba(255,248,232,.85)}
+#epi.credits .epiNext{display:none}
 #gameov{--cab:#ff5ab4;position:fixed;inset:0;z-index:60;display:flex;justify-content:center;
   background:radial-gradient(ellipse at 50% 30%,#2a1f4a 0%,#120c24 60%,#07050f 100%);
   padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left))}
@@ -281,6 +295,9 @@ details .row{margin-top:8px}
     <div id="tut" hidden></div>
     <div id="toast" aria-live="polite"></div>
     <div id="panel" hidden></div>
+    <div id="epi" hidden><div id="epiText" class="epiText"></div><div id="epiCred" class="epiCred" hidden></div>
+      <div id="epiEnd" class="epiEnd" hidden><button type="button" id="epiCont">Begin again as the next keeper</button><button type="button" id="epiOff">Wake up young again (lifetimes off)</button><button type="button" id="epiClose">Back to the sanctuary</button></div>
+      <button type="button" id="epiNext" class="epiNext" aria-label="Continue">▸</button></div>
     <div id="gameov" hidden><div class="cab">
       <div class="marquee"><span id="gameovName"></span></div>
       <div class="bezel"><div class="screen"><iframe id="gameframe" title="Arcade game" allow="autoplay; fullscreen; gamepad"></iframe><div class="crt" aria-hidden="true"></div></div></div>
@@ -490,7 +507,7 @@ const getC=id=>state.owned.find(c=>c.id===id);
 const penOf=id=>state.pens.findIndex(p=>p.cid===id);
 const penAt=(i,j)=>state.pens.find(p=>i>=p.i&&i<p.i+p.w&&j>=p.j&&j<p.j+p.h);
 const penById=id=>state.pens.find(p=>p.id===id);
-const burrowList=()=>state.owned.filter(c=>penOf(c.id)<0);
+const burrowList=()=>state.owned.filter(c=>penOf(c.id)<0&&!c.dead);
 const comp=()=>companion?SPECIES[companion.sp]:null;
 const has=t=>{const s=comp();return !!s&&s.ab.type===t;};
 const lureEl=()=>{const s=comp();return s&&s.ab.type==='lure'?s.ab.el:null;};
@@ -499,7 +516,7 @@ const housed=sp=>state.pens.some(p=>p.cid&&getC(p.cid)&&getC(p.cid).sp===sp);
 const caughtKinds=()=>Object.keys(state.dex).filter(k=>state.dex[k]===2).length;
 function nextPenCost(){const n=state.pens.length-3;return n<0?0:60+n*50+n*n*10;}
 function countHoused(){let n=0;for(const p of state.pens){if(p.cid){const c=getC(p.cid);if(c&&!c.away)n++;}}return n;}
-function penValue(p){if(!p||!p.cid)return 0;const c=getC(p.cid);if(!c||c.away)return 0;const S=SPECIES[c.sp];
+function penValue(p){if(!p||!p.cid)return 0;const c=getC(p.cid);if(!c||c.away||c.dead)return 0;const S=SPECIES[c.sp];
   return S.appeal*(0.4+0.6*c.happy/100)*(ELEM[S.el].home===p.biome?1.5:1);}
 const charmMult=()=>1+Math.min(1.5,(zooWorld?zooWorld.charm:0)/100);
 const TOOLS=[
@@ -546,7 +563,7 @@ const SEAS=[
 const DAY_LEN=240,SEASON_DAYS=7;let SEASON=0;
 const realSeason=()=>{const m=new Date().getMonth();return m>=2&&m<=4?0:m>=5&&m<=7?1:m>=8&&m<=10?2:3;};
 function calOf(){if(!state.cal)state.cal={season:realSeason(),day:1,year:1,t:0};return state.cal;}
-function nextDay(){const c=calOf();c.t=0;c.day++;if(c.day>SEASON_DAYS){c.day=1;c.season=(c.season+1)%4;if(c.season===0)c.year++;}}
+function nextDay(){const c=calOf();c.t=0;c.abs=(c.abs||0)+1;c.day++;if(c.day>SEASON_DAYS){c.day=1;c.season=(c.season+1)%4;if(c.season===0)c.year++;}if(NET.role!=='guest')lifeDay();}
 function tickCal(dt){if(titleOpen||NET.role==='guest')return;const c=calOf();c.t+=dt;if(c.t>=DAY_LEN)nextDay();}
 const seasonOutdoor=()=>scene==='zoo'||scene==='town'||(scene==='wild'&&!!wild&&['meadow','plains','woods','watertown'].includes(wild.zone));
 function applySeason(announce){const prev=SEASON;SEASON=calOf().season;if(buildMode)closeBuild();
@@ -556,6 +573,101 @@ function applySeason(announce){const prev=SEASON;SEASON=calOf().season;if(buildM
   const popDied=announce&&NET.role!=='guest'&&popSeason();
   if(announce&&popDied){toast(`${SEAS[SEASON].icon} ${SEAS[SEASON].name} has come.`);}
   else if(announce){const S=SEAS[SEASON];toast(`${S.icon} ${S.name} has arrived!`);toast(`New ${S.name.toLowerCase()} creatures are out in the wilds, and the townsfolk have ${S.name.toLowerCase()} quests.`);sfx('unlock');}}
+/* ================= LIFETIMES =================
+   Creatures are born, grow old, and one day pass away peacefully in their habitats.
+   With "Keeper's lifetime" switched on in the journal settings, so does the keeper.
+   Both can be switched on or off at any time; while off, nobody gets any older. */
+const absDay=()=>calOf().abs||0;
+function settings(){if(!state.settings)state.settings={crLife:true,keeper:false};return state.settings;}
+function keeperS(){if(!state.keeper)state.keeper={len:'medium',days:0,ms:{},gen:1};return state.keeper;}
+const KLEN={short:28,medium:84,long:168},KLEN_NAME={short:'1 year (about 2 hours of play)',medium:'3 years (about 6 hours)',long:'6 years (about 12 hours)'};
+function lifeFor(sp){const S=SPECIES[sp];return Math.round([30,38,48,70][S.rar]*(S.huge?1.3:1)*(.85+R()*.3));}
+function ensureAge(c){if(c.born==null){c.life=lifeFor(c.sp);c.born=absDay()-Math.floor(R()*.25*c.life);}return c;}
+const ageFrac=c=>{ensureAge(c);return(absDay()-c.born)/c.life;};
+const ageStage=c=>{const f=ageFrac(c);return f<.2?'Young':f<.75?'Grown':'Elder';};
+const seasonsOld=c=>Math.max(0,Math.floor((absDay()-ensureAge(c).born)/SEASON_DAYS));
+const isElder=c=>settings().crLife&&!c.dead&&ageFrac(c)>=.75;
+const keeperF=()=>settings().keeper?clamp(keeperS().days/KLEN[keeperS().len],0,1):0;
+const keeperAge=()=>20+Math.round(keeperF()*70);
+const KMS=[[.15,"You're all grown up now. The sanctuary feels like yours."],[.35,'Years pass like seasons. You know every path by heart.'],[.55,'You notice silver in your hair this morning.'],
+  [.7,'Your knees creak on cold mornings. You walk a little slower now, and you notice more flowers.'],[.82,"The creatures are quicker than they used to be. Or maybe you're slower. They don't seem to mind."],
+  [.92,'You are very old now. Every sunrise feels like a gift.'],[.97,'You feel very tired, and very peaceful.']];
+function lifeDay(){const St=settings(),abs=absDay();
+  for(const c of state.owned.slice()){ensureAge(c);if(c.dead)continue;
+    if(!St.crLife||c.away){c.born++;continue;}
+    const f=ageFrac(c);
+    if(f>=.75&&!c.eld){c.eld=true;toast(`${SPECIES[c.sp].name} is getting old. It naps more and moves a little slower now.`);}
+    if(f>=1){if(c.happy>=60&&!c.extra){c.extra=true;c.life+=Math.round(c.life*.12);continue;}
+      c.dead=true;c.diedAbs=abs;c.loved=(c.happy>=50);const inPen=state.pens.some(p=>p.cid===c.id);
+      if(inPen)toast(`${SPECIES[c.sp].name} passed away peacefully in its habitat, after a long life. Go and say goodbye.`);
+      else layToRest(c,true);}}
+  if(St.keeper){const K=keeperS();K.days++;const f=keeperF();for(const[t,msg]of KMS)if(f>=t&&!K.ms[t]){K.ms[t]=1;toast(msg);}if(f>=1&&!K.passing){K.passing=true;keeperPasses();}}}
+function layToRest(c,quiet){const S=SPECIES[c.sp];state.memorial=state.memorial||[];state.memorial.push({sp:c.sp,seasons:seasonsOld(c)});
+  for(const p of state.pens)if(p.cid===c.id)p.cid=null;delete penMot[c.id];state.owned.splice(state.owned.indexOf(c),1);
+  if(quiet)toast(`${S.name} passed away peacefully in the burrow, curled up warm. It is remembered in your journal.`);
+  else toast(`You say goodbye to ${S.name} and lay it to rest under the meadow flowers. Its habitat is ready for a new friend.`);
+  if(c.loved&&R()<.4){const b=state.owned.length;addCreature(c.sp);toast(`Curled up in the straw, you find a little ${S.name}. Life goes on.`);}save();}
+function drawRestful(c,m){ctx.globalAlpha=.5;drawCr(c.sp,m.x,m.y,m.face,false,false);ctx.globalAlpha=1;
+  for(const[a,b,col]of[[-9,1,'#ff9ac0'],[8,0,'#ffd860'],[-4,3,'#ffffff'],[5,3,'#b49af4'],[0,-1,'#ff9ac0']]){fill(ctx,'#3f8a32',m.x+a,m.y+b,1,2);fill(ctx,col,m.x+a-1,m.y+b-1,3,1);fill(ctx,col,m.x+a,m.y+b-2,1,3);}
+  if(!reduceMotion&&R()<.04)addP({x:m.x+(R()-.5)*10,y:m.y-10,vy:-10,life:1.6,max:1.6,kind:'spark',col:'#fff6c0',scene:'zoo'});}
+function lifeJournal(){const St=settings(),K=keeperS(),mem=state.memorial||[];
+  let h='';if(mem.length)h+=`<h3>In loving memory · ${mem.length}</h3><div class="list">${mem.slice().reverse().slice(0,30).map(m=>`<div class="qrow">${img(m.sp,'spr sm')} <small><b>${SPECIES[m.sp]?SPECIES[m.sp].name:'A friend'}</b> · lived ${m.seasons} season${m.seasons===1?'':'s'} in your sanctuary</small></div>`).join('')}</div>`;
+  h+=`<h3>Settings</h3><div class="list">
+    <button class="pbtn" type="button" data-act="crlife" aria-pressed="${St.crLife}"><span class="grow"><b>Creature lifetimes · ${St.crLife?'On':'Off'}</b><small>Creatures grow up, grow old, and one day pass away. While off, nobody ages.</small></span></button>
+    <button class="pbtn" type="button" data-act="keeper" aria-pressed="${St.keeper}"><span class="grow"><b>Keeper's lifetime · ${St.keeper?'On':'Off'}</b><small>${St.keeper?`You are ${keeperAge()} years old. You'll grow older, slower and frailer, and one day your story will end.`:'Your keeper grows old over the seasons. Switch it on or off any time.'}</small></span></button>`;
+  if(St.keeper)h+=`<div class="row">${Object.keys(KLEN).map(k=>`<button class="pbtn" type="button" data-act="klen" data-k="${k}" aria-pressed="${K.len===k}"><span class="grow"><b>${k[0].toUpperCase()+k.slice(1)} life</b><small>${KLEN_NAME[k]}</small></span></button>`).join('')}</div>`;
+  h+=`<button class="pbtn" type="button" data-act="credits"><span class="grow"><b>Credits</b><small>Who made this game</small></span></button></div>`;return h;}
+function journalAct(a,d){const St=settings(),K=keeperS();
+  if(a==='crlife'){St.crLife=!St.crLife;toast(St.crLife?'Creature lifetimes are on. Every life is precious.':'Creature lifetimes are off. Nobody will grow any older.');}
+  else if(a==='keeper'){St.keeper=!St.keeper;if(St.keeper)toast(`Keeper's lifetime is on. You are ${keeperAge()}. Make every season count.`);else toast("Keeper's lifetime is off. You stay just as you are.");}
+  else if(a==='klen'&&KLEN[d.k]){const f=keeperF();K.len=d.k;K.days=Math.round(f*KLEN[d.k]);toast(`Your life will last about ${KLEN_NAME[d.k]}.`);}
+  else if(a==='credits'){closePanel();openEpilogue(false);return;}
+  else return;sfx('blip');save();refreshPanel(true);}
+
+/* ---------- the keeper's last day, the epilogue, and the credits ---------- */
+let EPI=null;const MAKING_OF='https://github.com/samuelling/Animal-Sanctuary/blob/main/MAKING-OF.md';
+function keeperPasses(){if(buildMode)closeBuild();if(panelOpen)closePanel();sleepFx=2.4;setTimeout(()=>openEpilogue(true),1800);}
+function epilogueLines(){const K=keeperS(),days=K.days,seasons=Math.max(1,Math.floor(days/SEASON_DAYS)),yrs=Math.max(1,Math.round(days/(SEASON_DAYS*4))),mem=(state.memorial||[]).length,
+    n=Object.keys(SPECIES).filter(k=>state.dex[k]===2).length,v=state.stats.visitors|0,popMet=state.pop&&state.pop.met,fav=(state.owned.find(c=>!c.dead)||{sp:'puffbun'}).sp;
+  return[`One evening, after feeding the creatures, you sat down in your favorite chair to watch the sun go down. A ${SPECIES[fav].name} curled up in your lap. You fell asleep, and you didn't wake up. It was a long, good life.`,
+    `You kept the sanctuary for ${yrs} year${yrs===1?'':'s'}. ${seasons} seasons of springs, summers, falls and winters.`,
+    'You never finished it. Nobody ever does. There was always one more path to lay, one more creature to find, one more coin to count.',
+    'But that was never really the point.',
+    `The point was the morning light on the meadow pens. A Puffbun chewing a berry. Snow on the roofs of Willowbrook.${popMet?" Tea on Pop's porch.":''}`,
+    `You befriended ${n} kind${n===1?'':'s'} of creature${n===1?'':'s'}.${mem?` You said goodbye to ${mem} of them, and you loved every one.`:''} ${v} visitors came to see them.`,
+    'None of it was a score. The days were the story. Each one, just as it was.',
+    'Every winter it feels like the meadow is gone for good. And every spring it comes back. It always comes back.',
+    'Thank you for playing.'];}
+function creditsHTML(){const sp=Object.keys(SPECIES),mem=[...new Set((state.memorial||[]).map(m=>m.sp))].filter(k=>SPECIES[k]);
+  const L=(t,c='')=>`<p class="${c}">${t}</p>`;
+  return'<div class="roller">'+L('ANIMAL SANCTUARY','ct')+L('Dreamed up by Maya &amp; Sam','cb')+L('&nbsp;')+L('Built with Claude')+L('&nbsp;')+
+    L('Glimmer Meadow · Moonlit Woods · Ember Peaks','cs')+L('Crystal Lake · Thunder Plains · Willowbrook','cs')+L('and a real town called Watertown','cs')+L('&nbsp;')+
+    L('Watertown map © OpenStreetMap contributors and MassGIS, by way of Townies','cs')+L('Music composed live by the game, one note at a time','cs')+L('&nbsp;')+
+    L('Starring','ch')+sp.map(k=>L(`${state.dex[k]===2?'':'<span class="dim">'}${SPECIES[k].name}${state.dex[k]===2?'':'</span>'}`,'cs')).join('')+L('&nbsp;')+
+    L('Willowbrook','ch')+['Mabel','Rosa','Bram','Pip','Mayor Oakley','Theo','Professor Hoot','Nell','Old Gus','Joy','Pop','Gran'].map(n=>L(n,'cs')).join('')+L('&nbsp;')+
+    (mem.length||(state.pop&&!state.pop.alive)?L('In loving memory','ch')+(state.pop&&!state.pop.alive?L('Pop','cs'):'')+mem.map(k=>L(`every ${SPECIES[k].name} you kept`,'cs')).join('')+L('&nbsp;'):'')+
+    L('Special thanks to everyone who ever sat with a creature when it was scared.','cs')+L('&nbsp;')+
+    `<p class="cs"><a class="mk" href="${MAKING_OF}" target="_blank" rel="noopener">· how this game was made ·</a></p>`+L('&nbsp;')+L('THE END','ct')+L('(It always comes back.)','cs')+'</div>';}
+function openEpilogue(passing){if(EPI)return;ensureAudio();const ov=$('#epi');EPI={passing,i:passing?0:-1,t:0,lines:passing?epilogueLines():[],parade:Object.keys(SPECIES).filter(k=>state.dex[k]===2&&!SPECIES[k].huge),px:0};
+  ov.hidden=false;ov.classList.toggle('credits',!passing);$('#epiCred').innerHTML=creditsHTML();$('#epiEnd').hidden=true;epiShow();musicDuck(false);}
+function epiShow(){const E=EPI;if(!E)return;const tx=$('#epiText'),cr=$('#epiCred');
+  if(E.i>=0&&E.i<E.lines.length){tx.hidden=false;cr.hidden=true;tx.classList.remove('in');void tx.offsetWidth;tx.textContent=E.lines[E.i];tx.classList.add('in');E.t=0;}
+  else{tx.hidden=true;cr.hidden=false;$('#epi').classList.add('rolling');cr.classList.remove('roll');void cr.offsetWidth;cr.classList.add('roll');E.rolling=true;E.t=0;}}
+function epiNext(){const E=EPI;if(!E)return;if(E.rolling){epiEnd();return;}E.i++;epiShow();}
+function epiEnd(){const E=EPI;if(!E)return;$('#epiEnd').hidden=false;$('#epiCont').hidden=!E.passing;$('#epiOff').hidden=!E.passing;$('#epiClose').hidden=E.passing;}
+function closeEpilogue(mode){const E=EPI;if(!E)return;const K=keeperS();
+  if(E.passing){K.passing=false;K.days=0;K.ms={};K.gen=(K.gen||1)+1;if(mode==='off')settings().keeper=false;
+    toast(mode==='off'?'You wake on the porch, young again. Lifetimes are off.':'A new keeper takes up the sanctuary. The creatures sniff your boots and decide you will do.');save();}
+  EPI=null;$('#epi').hidden=true;$('#epi').classList.remove('rolling');}
+function drawEpi(dt){const E=EPI;E.t+=dt;if(!E.rolling&&E.i>=0&&E.t>9)epiNext();if(E.rolling&&E.t>58&&$('#epiEnd').hidden)epiEnd();
+  const g=ctx,W=VW,H=VH,ph=(time*.05)%1,S=Math.floor(ph*4),pal=[['#ffd6e8','#bfe6ff','#64b84c'],['#ffe8a8','#7cc2f4','#58a63e'],['#ffc890','#c8a0ff','#a8a046'],['#c8d8ff','#3a3070','#eaf2f8']][S];
+  g.setTransform(1,0,0,1,0,0);for(let y=0;y<H;y+=4){const k=y/H;fill(g,k<.5?pal[1]:pal[0],0,y,W,4);}
+  g.globalAlpha=.6;fill(g,'#fff6c0',W*.7,H*.18,10,10);g.globalAlpha=1;
+  for(let x=0;x<W;x++){const h=Math.round(H*.62+Math.sin(x*.05+1)*6+Math.sin(x*.013)*8);fill(g,pal[2],x,h,1,H-h);}
+  fill(g,'rgba(0,0,0,.12)',0,Math.round(H*.8),W,H);
+  for(let k=0;k<6;k++){const x=((k*53+time*4)%(W+40))-20;fill(g,'#6a4228',Math.round(x),Math.round(H*.72),2,10);}
+  if(E.parade.length){E.px+=dt*14;const gap=34;for(let k=0;k<E.parade.length;k++){const x=((E.px+k*gap)%(Math.max(W+40,E.parade.length*gap)))-20;if(x<-20||x>W+20)continue;const spr=SPR[E.parade[k]][SPECIES[E.parade[k]].nat==='R'?0:1],hop=Math.abs(Math.sin(time*6+k))*2;g.drawImage(spr,Math.round(x-spr.width/2),Math.round(H*.86-spr.height-hop));}}
+  for(let k=0;k<12;k++){const x=(k*37+time*6)%W,y=(k*23+time*(S===3?10:4))%H;g.globalAlpha=.7;fill(g,['#ffc0d8','#fff6c8','#f2b040','#ffffff'][S],Math.round(x),Math.round(y),S===2?2:1,S===2?2:1);}g.globalAlpha=1;}
 function sleepToMorning(){const c=calOf();nextDay();toast(`Good morning! ${SEAS[c.season].icon} ${SEAS[c.season].name}, day ${c.day}.`);}
 function seasonBlock(){const c=calOf(),S=SEAS[c.season],sp=Object.keys(SPECIES).filter(k=>SPECIES[k].season===c.season).map(k=>SPECIES[k].name),qs=QUESTS.filter(q=>q.season===c.season&&state.quests[q.id]!=='done').length;
   return`<p class="ab">${S.icon} <b>${S.name}</b> · day ${c.day} of ${SEASON_DAYS} · year ${c.year}<br><small class="muted">In season: ${sp.join(' and ')}.${qs?` ${qs} ${S.name.toLowerCase()} quest${qs>1?'s':''} in Willowbrook.`:''} Nap in your cottage bed to skip to the next morning.</small></p>`;}
@@ -1002,7 +1114,7 @@ function genMotif(v){const m=v.mel,a=new Array(16).fill(null);let d=m.oct*7+[0,2
   for(let s=0;s<16;s+=2){const strong=s%8===0;if(R()<(strong?m.dens+.3:m.dens)){d+=[-2,-1,-1,0,1,1,2,3][(R()*8)|0];d=clamp(d,m.oct*7-2,m.oct*7+7);const len=R()<.3?4:2;a[s]={d,len,strong};if(len===4)s+=2;}}
   return a;}
 function newMotifs(v){mus.motif=genMotif(v);mus.motifV=mus.motif.map((n,s)=>n&&s>=10&&R()<.6?{...n,d:n.d+(R()<.5?1:-1)}:n);mus.motifB=genMotif(v);}
-const vibeFor=()=>titleOpen?'title':(scene==='town'||scene==='zoo')&&popMourning()?'memorial':scene==='wild'&&wild?wild.zone:scene==='arcade'?'arcade':scene==='town'?'town':scene==='home'?'cottage':'home'+['','Su','Fa','Wi'][SEASON];
+const vibeFor=()=>titleOpen||EPI?'title':(scene==='town'||scene==='zoo')&&popMourning()?'memorial':scene==='wild'&&wild?wild.zone:scene==='arcade'?'arcade':scene==='town'?'town':scene==='home'?'cottage':'home'+['','Su','Fa','Wi'][SEASON];
 function switchVibe(k){const t=AC.currentTime;
   if(mus.vibe){const ob=mus.buses[mus.vibe].gain;ob.cancelScheduledValues(t);ob.setValueAtTime(ob.value,t);ob.linearRampToValueAtTime(0,t+1.6);}
   const nb=mus.buses[k].gain;nb.cancelScheduledValues(t);nb.setValueAtTime(0,t);nb.linearRampToValueAtTime(MV,t+2.2);
@@ -1104,15 +1216,16 @@ function updVisitor(v,dt){if(!isPath(v.i,v.j)||!isPath(v.ti,v.tj)){v.gone=true;p
   const tx=v.ti*16+8+v.ox,ty=v.tj*16+12+v.oy,dx=tx-v.x,dy=ty-v.y,d=Math.hypot(dx,dy),s=17*dt;v.anim+=dt;
   if(d<=s){v.x=tx;v.y=ty;v.i=v.ti;v.j=v.tj;vArrive(v);}else{v.x+=dx/d*s;v.y+=dy/d*s;}}
 function simHome(dt){
-  if(!titleOpen&&NET.role!=='guest')for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c&&!c.away)c.happy=Math.max(0,c.happy-.3*dt);}
+  if(!titleOpen&&NET.role!=='guest')for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c&&!c.away&&!c.dead)c.happy=Math.max(0,c.happy-.3*dt);}
   const W=zooWorld;let reach=0;for(const p of state.pens)if(W.penReach.has(p.id)&&penValue(p)>0)reach++;
   visitorT-=dt;if(visitorT<=0){visitorT=Math.max(2,7-reach*.5-W.charm*.03)*(.7+R()*.6);if(reach>0&&visitors.length<16)spawnVisitor();}
   for(const v of visitors)updVisitor(v,dt);visitors=visitors.filter(v=>!v.gone);}
 function updPens(dt){state.pens.forEach(p=>{if(!p.cid)return;const c=getC(p.cid);if(!c||c.away)return;
   const sp=SPR[c.sp][0],hw=Math.ceil(sp.width/2)+1,x0=(p.i+1)*16+hw,x1=Math.max(x0,(p.i+p.w-1)*16-hw),y0=Math.min((p.j+p.h-1)*16-1,(p.j+1)*16+Math.round(sp.height*.75)),y1=(p.j+p.h-1)*16-1;let m=penMot[c.id];
   if(!m||m.pen!==p.id)m=penMot[c.id]={pen:p.id,x:(x0+x1)/2,y:(y0+y1)/2,tx:(x0+x1)/2,ty:(y0+y1)/2,t:R()*2,face:1,moving:false,e:1+R()*3};
-  m.t-=dt;if(m.t<=0){if(R()<.4){m.tx=m.x;m.ty=m.y;}else{m.tx=x0+R()*(x1-x0);m.ty=y0+R()*(y1-y0);}m.t=1.5+R()*2.5;}
-  const dx=m.tx-m.x,dy=m.ty-m.y,d=Math.hypot(dx,dy);m.moving=d>1;if(d>1){const s=Math.min(d,12*dt);m.x+=dx/d*s;m.y+=dy/d*s;if(Math.abs(dx)>.5)m.face=dx>0?1:-1;}
+  if(c.dead){m.moving=false;return;}const old=isElder(c);
+  m.t-=dt;if(m.t<=0){if(R()<(old?.7:.4)){m.tx=m.x;m.ty=m.y;}else{m.tx=x0+R()*(x1-x0);m.ty=y0+R()*(y1-y0);}m.t=(1.5+R()*2.5)*(old?1.8:1);}
+  const dx=m.tx-m.x,dy=m.ty-m.y,d=Math.hypot(dx,dy);m.moving=d>1;if(d>1){const s=Math.min(d,(old?6:12)*dt);m.x+=dx/d*s;m.y+=dy/d*s;if(Math.abs(dx)>.5)m.face=dx>0?1:-1;}
   m.e-=dt;if(m.e<=0){m.e=3+R()*4;if(c.happy>70)hearts(m.x,m.y-14,1,'zoo');else if(c.happy<30)addP({x:m.x+6,y:m.y-16,vy:6,life:1,max:1,kind:'drop',scene:'zoo'});}});}
 
 /* ================= BUILD MODE (sanctuary) / DECORATE MODE (cottage) ================= */
@@ -1889,13 +2002,13 @@ function updWild(dt){
     if(tg){const dx=tg[0]-companion.x,dy=tg[1]-companion.y;companion.moving=Math.hypot(dx,dy)>1;companion.x+=dx*Math.min(1,dt*8);companion.y+=dy*Math.min(1,dt*8);if(Math.abs(dx)>.3)companion.face=dx>0?1:-1;}
     companion.fx-=dt;if(companion.fx<=0){companion.fx=.45;const S=SPECIES[companion.sp];sparks(companion.x+(R()-.5)*8,companion.y-8,1,ELEM[S.el].col);}}
 }
-function addCreature(sp){const c={id:state.nextId++,sp,happy:70,petT:0};state.owned.push(c);state.dex[sp]=2;grantTrophies(false);
+function addCreature(sp){const c={id:state.nextId++,sp,happy:70,petT:0,born:absDay(),life:lifeFor(sp)};state.owned.push(c);state.dex[sp]=2;grantTrophies(false);
   let best=-1;state.pens.forEach((p,i)=>{if(p.cid||!fits(c,p))return;if(best<0)best=i;if(p.biome===ELEM[SPECIES[sp].el].home&&state.pens[best].biome!==p.biome)best=i;});
   if(best>=0)state.pens[best].cid=c.id;return best;}
 
 /* ================= CATCHING ================= */
-function startCatch(c){const S=SPECIES[c.sp],rr=RAR[S.rar],calm=has('calm');const zw=Math.min(.5,rr.zone*(calm?1.5:1));
-  catchG={cr:c,pos:0,dir:1,speed:rr.speed*(calm?.85:1),zs:.1+R()*(.8-zw),zw,tries:2+(S.rar>=2?1:0),res:null,flash:0,miss:0};c.vx=c.vy=0;if(wild.follow&&c.u)sendCmd('hold',{u:c.u});sfx('blip');}
+function startCatch(c){const S=SPECIES[c.sp],rr=RAR[S.rar],calm=has('calm'),fr=Math.max(0,(keeperF()-.5)/.5);const zw=Math.min(.5,rr.zone*(calm?1.5:1))*(1-.4*fr);
+  catchG={cr:c,pos:0,dir:1,speed:rr.speed*(calm?.85:1)*(1+.35*fr),zs:.1+R()*(.8-zw),zw,tries:2+(S.rar>=2?1:0),res:null,flash:0,miss:0};c.vx=c.vy=0;if(wild.follow&&c.u)sendCmd('hold',{u:c.u});sfx('blip');}
 function updCatch(dt){const g=catchG;g.miss=Math.max(0,g.miss-dt);if(g.res){g.flash-=dt;if(g.flash<=0)finishCatch();return;}
   g.pos+=g.dir*g.speed*dt;if(g.pos>1){g.pos=1;g.dir=-1;}if(g.pos<0){g.pos=0;g.dir=1;}}
 function catchPress(){const g=catchG;if(g.res)return;const hit=g.pos>=g.zs&&g.pos<=g.zs+g.zw;
@@ -1994,13 +2107,16 @@ const img=(sp,cls='spr')=>`<img class="${cls}" src="${sprURL(sp,BASE[sp])}" alt=
 const tags=S=>`<div class="tags"><span class="tag" style="color:${ELEM[S.el].col}">${ELEM[S.el].name}</span><span class="tag">${RAR[S.rar].name}</span><span class="tag">Appeal ${S.appeal}</span></div>`;
 function card(c){const S=SPECIES[c.sp];return`<div class="card">${img(c.sp)}<div class="cinfo"><div class="nm">${S.name}</div>${tags(S)}
   <div class="meter" role="meter" aria-label="Happiness" aria-valuenow="${Math.round(c.happy)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${c.happy}%"></i></div>
-  <small class="muted">Happiness ${Math.round(c.happy)} / 100</small></div></div><p class="ab"><b>${S.abName}.</b> ${S.abText}</p>`;}
+  <small class="muted">Happiness ${Math.round(c.happy)} / 100${settings().crLife?` · ${ageStage(c)} · ${seasonsOld(c)} season${seasonsOld(c)===1?'':'s'} old`:''}</small></div></div><p class="ab"><b>${S.abName}.</b> ${S.abText}</p>`;}
 
 function penPanel(i){
   const render=()=>{const p=state.pens[i];if(!p)return head('Habitat')+'<p class="muted">This habitat was removed.</p>';
     const c=p.cid&&getC(p.cid),reach=zooWorld.penReach.has(p.id);
     const rebuild=`<details><summary>Change this habitat · 25 coins</summary><div class="row">${Object.keys(BIOMES).filter(b=>b!==p.biome).map(b=>`<button class="pbtn" type="button" data-act="rebuild" data-b="${b}" ${state.coins<25?'disabled':''}><span class="sw sw-${b}"></span>${BIOMES[b].name}</button>`).join('')}</div></details>`;
     const noPath=reach?'':`<p class="warn">No path touches this habitat, so visitors can't see it. Tap Build and draw a path next to it.</p>`;
+    if(c&&c.dead){const S=SPECIES[c.sp];return head(`${BIOMES[p.biome].name} habitat`)+`<div class="card">${img(c.sp)}<div class="cinfo"><div class="nm">${S.name}</div><small class="muted">Lived ${seasonsOld(c)} season${seasonsOld(c)===1?'':'s'} in your sanctuary</small></div></div>
+      <p class="ab">${S.name} passed away peacefully, curled up in its favorite spot. ${c.loved?'It was happy here, and it was loved.':'It had a long life with you.'}</p>
+      <button class="pbtn go" type="button" data-act="goodbye" data-autofocus>Say goodbye and lay it to rest</button><p class="muted" style="font-size:13px">It will be remembered in your journal, and the habitat will be ready for a new friend.</p>`;}
     if(c){const S=SPECIES[c.sp],love=ELEM[S.el].home===p.biome,tip=Math.max(1,Math.round(penValue(p)*.5*charmMult()));
       return head(`${p.size==='grand'?'Grand ':''}${BIOMES[p.biome].name} habitat`)+card(c)+noPath+`<p class="${love?'good':'muted'}">${love?'Loves this habitat: +50% coins.':`Would rather live in a ${BIOMES[ELEM[S.el].home].name} habitat.`} Each visitor tips about ${tip}.</p>
         <div class="row"><button class="pbtn" type="button" data-act="feed" data-autofocus ${state.berries<1||c.happy>=99.5?'disabled':''}>Feed · 1 berry</button><button class="pbtn" type="button" data-act="pet">Pet</button></div>
@@ -2018,7 +2134,8 @@ function penAct(p,a,d){const c=p.cid&&getC(p.cid),m=c&&penMot[c.id],hx=m?m.x:(p.
     else if(a==='pet'&&c){tutEv.fed=true;if(Date.now()-(c.petT||0)<15000){toast(`${SPECIES[c.sp].name} is still glowing from the last pet.`);}else{c.petT=Date.now();c.happy=Math.min(100,c.happy+10);hearts(hx,hy,3);sfx('pet');}}
     else if(a==='golden'&&c&&state.inv.golden>0){state.inv.golden--;c.happy=100;hearts(hx,hy,8);sparks(hx,hy,10,'#ffd860');sfx('unlock');tutEv.fed=true;}
     else if((a==='cookie'||a==='cake'||a==='mooncake')&&state.inv[a]>0){state.inv[a]--;const add={cookie:30,cake:60,mooncake:100}[a];for(const q of state.pens){const cc=q.cid&&getC(q.cid);if(cc){cc.happy=Math.min(100,cc.happy+add);const mm=penMot[cc.id];if(mm)hearts(mm.x,mm.y-12,a==='cookie'?2:4,'zoo');}}toast({cookie:'Everyone loved the cookies!',cake:'Rainbow cake for everyone! So happy!',mooncake:'Moon cake magic! Every creature is perfectly happy.'}[a]);sfx(a==='cookie'?'berry':'unlock');}
-    else if(a==='burrow'&&c){p.cid=null;delete penMot[c.id];}
+    else if(a==='goodbye'&&c&&c.dead){sparks(hx,hy,24,'#fff6c0');hearts(hx,hy,4);sfx('pet');layToRest(c,false);buildZoo();}
+    else if(a==='burrow'&&c){if(c.dead)return;p.cid=null;delete penMot[c.id];}
     else if(a==='place'){p.cid=+d.id;delete penMot[p.cid];sfx('blip');}
     else if(a==='rebuild'){if(state.coins<25)return;state.coins-=25;p.biome=d.b;buildZoo();sfx('unlock');}
     save();}
@@ -2026,7 +2143,7 @@ function penAct(p,a,d){const c=p.cid&&getC(p.cid),m=c&&penMot[c.id],hx=m?m.x:(p.
 let gateSel={zone:'meadow',cid:0,clover:false,star:false};
 function gatePanel(fixed){
   if(fixed)gateSel.zone=fixed;else if(ZONES[gateSel.zone]&&ZONES[gateSel.zone].hidden)gateSel.zone='meadow';if(!state.unlocked[gateSel.zone])gateSel.zone='meadow';if(gateSel.cid&&!getC(gateSel.cid))gateSel.cid=0;
-  const render=()=>{const own=[...state.owned].filter(c=>!SPECIES[c.sp].huge).sort((a,b)=>SPECIES[b.sp].rar-SPECIES[a.sp].rar),nc=state.inv.clover||0;
+  const render=()=>{const own=[...state.owned].filter(c=>!SPECIES[c.sp].huge&&!c.dead).sort((a,b)=>SPECIES[b.sp].rar-SPECIES[a.sp].rar),nc=state.inv.clover||0;
     return head(fixed?(ZONES[fixed].hidden?'The shimmering portal':`Trail to ${ZONES[fixed].name}`):'Into the wilds')+(fixed?`<p class="muted">${ZONES[fixed].blurb}</p>`:`<h3>Where to?</h3><div class="list">${Object.keys(ZONES).filter(z=>!ZONES[z].hidden).map(z=>{const Z=ZONES[z],ok=state.unlocked[z];
       return`<button class="pbtn" type="button" data-act="zone" data-z="${z}" aria-pressed="${gateSel.zone===z}" ${ok?'':'disabled'}><span class="grow"><b>${Z.name}</b><small>${ok?Z.blurb:Z.quest?'Locked · ask Professor Hoot in Willowbrook':`Locked · unlock at the ranger board for ${Z.cost} coins`}</small></span></button>`;}).join('')}</div>`)+`
       <h3>Bring a companion?</h3><p class="muted" style="font-size:14px">A companion's ability works in the wilds, but its habitat earns nothing while it is away. Giants are too big to come along.</p>
@@ -2079,7 +2196,7 @@ function journalPanel(){const render=()=>{const ks=Object.keys(SPECIES),got=ks.f
   const rk=sanctRank();return head(`Field journal · ${got}/${ks.length}`)+`<p class="ab"><b>${rankStars(rk)} ${rankLabel(rk)}</b>${rk<5?`<br><small class="muted">Next: ${reqText(RANKS[rk+1].req)}</small>`:''}</p>`+quests+popJournal()+(bag?`<p class="muted" style="font-size:14px">Bag: ${bag}</p>`:'')+`<h3>Creatures</h3><div class="dex">${ks.map(k=>{const S=SPECIES[k],st=state.dex[k]||0,n=state.owned.filter(c=>c.sp===k).length;
     if(st===2)return`<div><div class="top">${img(k,'spr sm')}<div><b>${S.name}</b><br><small>${n} in the sanctuary${S.huge?' · giant':''}</small></div></div>${tags(S)}<small><b style="color:var(--gold)">${S.abName}.</b> ${S.abText}</small><small>${S.desc}</small></div>`;
     return`<div><div class="top"><img class="spr sm" src="${sprURL('sil-'+k,SIL[k])}" alt=""><div><b>${st?S.name:'???'}</b><br><small>${st?'Seen, not befriended':'Not yet seen'}</small></div></div>
-      <small>Lives in ${ZONES[S.zone].hidden&&!state.unlocked[S.zone]?'a secret place…':ZONES[S.zone].name}.${S.season!=null?` ${SEAS[S.season].icon} ${SEAS[S.season].name} only.`:''} ${RAR[S.rar].name}${S.huge?', giant':''}.${S.needs?` ${NEED_HINT[S.needs]}`:''}</small></div>`;}).join('')}</div>`;};openPanel(render,()=>{});}
+      <small>Lives in ${ZONES[S.zone].hidden&&!state.unlocked[S.zone]?'a secret place…':ZONES[S.zone].name}.${S.season!=null?` ${SEAS[S.season].icon} ${SEAS[S.season].name} only.`:''} ${RAR[S.rar].name}${S.huge?', giant':''}.${S.needs?` ${NEED_HINT[S.needs]}`:''}</small></div>`;}).join('')}</div>`+lifeJournal();};openPanel(render,journalAct);}
 
 /* ================= DRAWING ================= */
 function snapCam(){camX=player.x-VW/2;camY=player.y-8-(VH+(buildMode?0:tutPad()))/2;clampCam();}
@@ -2090,7 +2207,11 @@ function drawCr(sp,x,y,face,moving,swim){const S=SPECIES[sp];const right=face>=0
   const sw=Math.max(10,Math.round(spr.width*.7));if(!swim)shadow(x,y,sw);
   const dx=Math.round(x-spr.width/2),dy=Math.round(y-spr.height-bob)+(swim?Math.round(spr.height*.2):0);ctx.drawImage(spr,dx,dy);
   if(swim){const wl=Math.round(y-spr.height*.15);ctx.globalAlpha=.55;fill(ctx,'#3b86d4',dx,wl,spr.width,Math.max(0,dy+spr.height-wl));ctx.globalAlpha=1;fill(ctx,'rgba(220,245,255,.8)',dx+2,wl,spr.width-4,1);}}
-function drawPlayer(){const PS=NET.role==='guest'?SPR_P2:SPR_P,set=PS[player.face]||PS.down,spr=set[player.moving?player.frame:0];shadow(player.x,player.y,10);ctx.drawImage(spr,Math.round(player.x-spr.width/2),Math.round(player.y-spr.height));}
+const pRowsAge=(head,f,hc)=>[...P_HEAD[head].map(r=>r.replace(/N/g,hc)),...P_BODY,...P_LEGS[f]];
+const SPR_PE={},SPR_PO={};for(const[set,hc]of[[SPR_PE,'e'],[SPR_PO,'l']]){set.down=[0,1].map(f=>makeSprite(pRowsAge('down',f,hc)));set.up=[0,1].map(f=>makeSprite(pRowsAge('up',f,hc)));set.right=[0,1].map(f=>makeSprite(pRowsAge('side',f,hc)));set.left=[0,1].map(f=>makeSprite(pRowsAge('side',f,hc),null,true,true));}
+function drawPlayer(){const kf=NET.role==='guest'?0:keeperF();if(kf>.55){const PS=kf>.82?SPR_PO:SPR_PE,set=PS[player.face]||PS.down,spr=set[player.moving?player.frame:0];shadow(player.x,player.y,10);ctx.drawImage(spr,Math.round(player.x-spr.width/2),Math.round(player.y-spr.height)+(kf>.82?1:0));
+    if(kf>.7){const cx=Math.round(player.x+(player.face==='left'?-7:6)),cy=Math.round(player.y);fill(ctx,'#6a4228',cx,cy-11,1,11);fill(ctx,'#6a4228',cx-1,cy-12,3,1);}return;}
+  const PS=NET.role==='guest'?SPR_P2:SPR_P,set=PS[player.face]||PS.down,spr=set[player.moving?player.frame:0];shadow(player.x,player.y,10);ctx.drawImage(spr,Math.round(player.x-spr.width/2),Math.round(player.y-spr.height));}
 function drawGate(){fill(ctx,'#6a4228',146,2,5,30);fill(ctx,'#6a4228',169,2,5,30);fill(ctx,'#8a5a34',146,2,2,30);fill(ctx,'#8a5a34',169,2,2,30);
   fill(ctx,'#5a3824',141,3,38,7);fill(ctx,'#9a6a3e',141,2,38,6);fill(ctx,'#c08a52',141,2,38,1);fill(ctx,'#e8d8a8',153,9,14,8);fill(ctx,'#5a3824',153,16,14,1);
   const tw=(Math.sin(time*3)+1)/2;fill(ctx,tw>.5?'#9ef0f0':'#b49af4',159,11,2,4);fill(ctx,'#ffd860',157,12,6,2);
@@ -2135,7 +2256,8 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;fi
   const L=[];
   if(scene==='zoo'){L.push({y:20,d:shift(drawGate)},{y:33,d:shift(drawBoard)},{y:32,d:shift(drawBurrow)});
     for(const p of state.pens){const c=p.cid&&getC(p.cid);
-      if(c&&!c.away){const m=penMot[c.id];if(m)L.push({y:m.y,d:()=>drawCr(c.sp,m.x,m.y,m.face,m.moving,p.biome==='pond')});L.push({y:p.j*16+1,d:()=>drawHearts(p,c.happy)});}
+      if(c&&!c.away&&c.dead){const m=penMot[c.id];if(m)L.push({y:m.y,d:()=>drawRestful(c,m)});}
+      else if(c&&!c.away){const m=penMot[c.id];if(m)L.push({y:m.y,d:()=>drawCr(c.sp,m.x,m.y,m.face,m.moving&&(!isElder(c)||Math.sin(time*3)>0),p.biome==='pond')});L.push({y:p.j*16+1,d:()=>drawHearts(p,c.happy)});}
       if(!zooWorld.penReach.has(p.id))L.push({y:(p.j+p.h)*16+1,d:()=>drawNoPath(p)});}
     for(const v of visitors)L.push({y:v.y,d:()=>drawVisitor(v)});}
   else if(scene==='town'){L.push({y:20,d:drawArch},{y:19*16,d:drawPlazaFountain});for(const b of BUILDINGS)L.push({y:(b.y+b.h)*16,d:()=>drawBuilding(b)});
@@ -2166,7 +2288,7 @@ function drawSense(){let best=null,bs=-1;for(const c of wild.crs){const d=Math.h
 /* ================= INPUT ================= */
 const keys=new Set(),KMAP={ArrowUp:'U',w:'U',W:'U',ArrowDown:'D',s:'D',S:'D',ArrowLeft:'L',a:'L',A:'L',ArrowRight:'R',d:'R',D:'R'};
 let padDir={x:0,y:0};
-addEventListener('keydown',e=>{const k=e.key;if(gameOpen){if(k==='Escape')closeGame();return;}if(e.target&&e.target.tagName==='INPUT'){if(k==='Escape')closePanel();return;}
+addEventListener('keydown',e=>{const k=e.key;if(gameOpen){if(k==='Escape')closeGame();return;}if(EPI){if(k===' '||k==='Enter'||k==='z'||k==='Z'){e.preventDefault();epiNext();}else if(k==='Escape'&&!EPI.passing)closeEpilogue('close');return;}if(e.target&&e.target.tagName==='INPUT'){if(k==='Escape')closePanel();return;}
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(k))e.preventDefault();ensureAudio();
   if(panelOpen){if(k==='Escape'||k==='x'||k==='X'||k==='Backspace'){e.preventDefault();closePanel();return;}
     if(KMAP[k]==='D'||KMAP[k]==='R'){e.preventDefault();focusMove(1);return;}if(KMAP[k]==='U'||KMAP[k]==='L'){e.preventDefault();focusMove(-1);return;}
@@ -2208,7 +2330,7 @@ let lastTouchEnd=0;document.addEventListener('touchend',e=>{const now=Date.now()
    anywhere else (GitHub Pages) it falls back to PeerJS (WebRTC). */
 let NET={role:null,mode:null,code:null,r:null,roomApi:undefined,peer:null,conn:null,partner:null,partnerId:null,pv:null,pc:null,lastSnap:'',snapT:0,posT:0,wT:0,rx:{},solo:null,lastPos:0,gotState:false};
 let crSeq=0;
-const SHARED=['pop','gran','houses','cal','qBase','pipSeen','hiscore','coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
+const SHARED=['memorial','settings','pop','gran','houses','cal','qBase','pipSeen','hiscore','coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
 const PJ_URL='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function myName(){let n='';try{n=localStorage.getItem('as-name')||'';}catch(e){}return n||'Friend';}
@@ -2518,7 +2640,7 @@ function update(dt){
   if(buildMode){if(ix||iy){bmRep-=dt;if(bmRep<=0){const[tw,th]=toolSize(toolDef(tool)),mi=Math.max(1,world.w-1-tw),mj=Math.max(1,world.h-1-th);cur.i=clamp(cur.i+ix,1,mi);cur.j=clamp(cur.j+iy,1,mj);bmRep=bmRep<-1?.09:.2;keepCurVisible();}}else bmRep=0;ix=iy=0;}
   if(frozen){ix=iy=0;}
   player.moving=!!(ix||iy);
-  if(player.moving){const n=Math.hypot(ix,iy),sp=(scene==='wild'&&has('swift'))?98:62;moveEnt(player,ix/n*sp*dt,iy/n*sp*dt,4,4,scene==='wild'&&has('lavawalk'));
+  if(player.moving){const n=Math.hypot(ix,iy),sp=((scene==='wild'&&has('swift'))?98:62)*(1-.35*Math.max(0,(keeperF()-.55)/.45));moveEnt(player,ix/n*sp*dt,iy/n*sp*dt,4,4,scene==='wild'&&has('lavawalk'));
     player.face=Math.abs(ix)>Math.abs(iy)?(ix>0?'right':'left'):(iy>0?'down':'up');player.anim+=dt;if(player.anim>.14){player.anim=0;player.frame^=1;}
     if(companion){companion.trail.push([player.x,player.y]);if(companion.trail.length>40)companion.trail.shift();}}
   if(scene==='zoo'){updPens(dt);if(!buildMode&&player.y>(ZH-1)*16+11)goTown('zoo');}
@@ -2534,9 +2656,11 @@ function update(dt){
   netTick(dt);tutTick();updHint();updHUD();
   if(!titleOpen&&NET.role!=='guest'&&(time%3)<dt){const pt=sanctRank();if(pt>(state.pipSeen||1)){state.pipSeen=pt;playFanfare();sparks(player.x,player.y-20,30,'#ffd860');toast(`SANCTUARY RANK UP! ${rankStars(pt)} You're a ${RANKS[pt].name} now!`);toast('Brand-new things just arrived in every shop in Willowbrook!');save();}}saveT-=dt;if(saveT<=0){saveT=4;if(!titleOpen)save();}}
 const btnBuild=$('#btnBuild');btnBuild.addEventListener('click',()=>{ensureAudio();if(buildMode)closeBuild();else openBuild();});
-function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(gameOpen){requestAnimationFrame(frame);return;}time+=dt;update(dt);if(titleOpen)drawSplash(dt);else draw();requestAnimationFrame(frame);}
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(gameOpen){requestAnimationFrame(frame);return;}if(EPI){time+=dt;drawEpi(dt);requestAnimationFrame(frame);return;}time+=dt;update(dt);if(titleOpen)drawSplash(dt);else draw();requestAnimationFrame(frame);}
 
 $('#gameovClose').addEventListener('click',closeGame);
+$('#epiNext').addEventListener('click',e=>{e.stopPropagation();epiNext();});$('#epi').addEventListener('click',e=>{if(e.target.closest('button,a'))return;if(EPI)epiNext();});
+$('#epiCont').addEventListener('click',()=>closeEpilogue('next'));$('#epiOff').addEventListener('click',()=>closeEpilogue('off'));$('#epiClose').addEventListener('click',()=>closeEpilogue('close'));
 if(DEPTH>0){$('#depthChip').hidden=false;$('#depthTxt').textContent=`🌀 ×${DEPTH}`;$('#btnCoop').hidden=true;$('.gatesign').textContent=`Animal Sanctuary · Level ${DEPTH}`;
   $('#depthChip').addEventListener('click',()=>toast(depthLine()));}
 function depthLine(){return({1:"You're playing Animal Sanctuary inside Animal Sanctuary!",2:'Two games deep. You are a character playing a game about a character playing a game.',3:'Three games deep! Is that your sanctuary? Is any of this real?',5:'Five games deep. Remember to blink.',7:'Seven! Somewhere far, far above you, the real you is holding a real tablet.',10:'TEN GAMES DEEP. This is the deepest anyone has ever gone. Probably.',12:'Twelve. This is the bottom. Even the cabinet in here is too dizzy to play.'})[DEPTH]||`${DEPTH} games deep. It's games all the way down.`;}

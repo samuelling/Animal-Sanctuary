@@ -253,6 +253,7 @@ details .row{margin-top:8px}
   <header id="hud">
     <span class="chip" title="Coins"><img id="icCoin" alt=""><span id="coins">0</span></span>
     <span class="chip" title="Berries"><img id="icBerry" alt=""><span id="berries">0</span></span>
+    <span class="chip" id="seasonChip" title="Season" role="button" tabindex="0"><small id="seasonTxt"></small></span>
     <span class="chip" id="compChip" hidden><img id="icComp" alt=""><small id="compName"></small></span>
     <span class="spacer"></span>
     <span class="chip" id="coopChip" hidden><small id="coopName"></small></span>
@@ -352,6 +353,14 @@ acornsprite:[".......nnnn.","......nnnnnn",".n.n..nngnnn","nnnn..nnn.nn","nknnn.
 lampwisp:["....kk....","...kyyk...","..yYYYYy..",".yYYYYYYy.","vyYkYYkYyv","vvyYYYYyvv",".vvyYYyvv.","..v.yy.v..","....y....."],
 charlotter:["..NNN.......",".NnbnN......","NnknnnN.....","NwwwnnN.....",".wkwnnnnnnN.","..wwnnnnnnnN","..nnnnnnnnnN","..nn.nn.nNNN","..NN.NN..NN."],
 glimmerheron:["....lll.....","...lllll....","yyylklll....","...lllll....","....lll.....",".....ll.....",".....lll....","....lllcll..","...lllcccll.","...llccccccl","....lllllll.",".....e..e...",".....e..e...","....ee.ee..."],
+petalpip:["...pp.....","..pppp....",".pkpppPp..","yppppPPPp.",".pwwpPPPPp","..wwppPPp.","...pppp...","...y..y..."],
+blossomfawn:["..p.P.......",".pPpPp......","..nnn.......",".nknnn......","nnnnnn......","..nnnnnnnnn.","..nwnnwnnnnn","..nnnnnnnnn.","..n.n...n.n.","..N.N...N.N."],
+sunnybee:["..cc..cc..","..cccccc..","...yyyy...",".ykkyykky.",".yyyyyyyy.",".ykkyykky.","..yyyyyy..","...yyyy...","....kk...."],
+surfseal:["...eee......","..eekee.....",".eeeeeee....","kwweeeeeeee.",".wweeeeeeeee","..eeeeeeeeEE","...EE....EE."],
+pumpkit:[".k......k.",".kk....kk.",".kkkkkkkk.",".kykkkkyk.","..kkppkk..",".ooOooOoo.","ooOooOooOo","ooOooOooOo",".oooooooo."],
+maplemunch:["....rOrO...","..OrOrOrO..",".rOrOrOrOr.","nkrOrOrOrOr","nnnnnnnnnn.",".nnnnnnnn..","..N.N.N.N.."],
+snowpuff:["...llll...","..llllll..",".lkllllkl.",".llloolll.",".llllllll.",".lcllllcl.","..llllll..","...o..o..."],
+twinkledeer:["y.y.y.......",".yyy........","..y.........","..lll.......",".lkll.......","llllll......","..lllllllll.","..lclllclll.","..lllllllll.","..l.l...l.l.","..e.e...e.e."],
 });
 const SCALE={mossback:3,skyhorn:3,glimmerwhale:3};
 function upscale(c,s){if(s===1)return c;const k=document.createElement('canvas');k.width=c.width*s;k.height=c.height*s;const g=k.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(c,0,0,k.width,k.height);return k;}
@@ -415,10 +424,18 @@ const SPECIES={
  lampwisp:{name:'Lampwisp',el:'light',rar:1,zone:'watertown',appeal:12,nat:'S',ab:{type:'lure',el:'light'},abName:'Streetlight Glow',abText:'Glows like a street lamp and draws light creatures to you.',desc:'Lives in the old lamps around the Square. Hums when the lights come on.'},
  charlotter:{name:'Charlotter',el:'water',rar:1,zone:'watertown',appeal:15,nat:'L',ab:{type:'swift'},abName:'River Zoomies',abText:'Zooms along beside you. You move much faster.',desc:'An otter from the Charles River. Holds paws with friends when it naps.'},
  glimmerheron:{name:'Glimmerheron',el:'light',rar:3,zone:'watertown',appeal:55,nat:'L',ab:{type:'calm'},abName:'Still Waters',abText:'Everything goes calm and still. The green zone grows.',desc:'A legendary heron that fishes the Charles at sunrise. Its feathers shimmer like river light.'},
+ petalpip:{name:'Petalpip',el:'leaf',rar:0,zone:'meadow',zones:['meadow','watertown'],season:0,appeal:6,nat:'L',ab:{type:'forage'},abName:'Petal Peck',abText:'Finds berries hidden under the blossoms. Bushes give double.',desc:'Its wings are made of cherry blossom petals. Only seen in spring.'},
+ blossomfawn:{name:'Blossomfawn',el:'leaf',rar:2,zone:'meadow',season:0,appeal:20,nat:'L',ab:{type:'calm'},abName:'Petal Hush',abText:'A calm settles over everything. The green zone grows.',desc:'Wears a crown of spring flowers that never wilts.'},
+ sunnybee:{name:'Sunnybee',el:'light',rar:0,zone:'meadow',zones:['meadow','plains'],season:1,appeal:7,nat:'S',ab:{type:'magnet'},abName:'Honey Hum',abText:'Berries and sparkles nearby buzz straight to you.',desc:'A fuzzy summer bee as warm as sunshine. Only seen in summer.'},
+ surfseal:{name:'Surfseal',el:'water',rar:1,zone:'lake',zones:['lake','meadow'],season:1,appeal:14,nat:'L',ab:{type:'lure',el:'water'},abName:'Wave Song',abText:'Sings up water creatures, even the shy ones.',desc:'Spends every summer day riding waves. Only seen in summer.'},
+ pumpkit:{name:'Pumpkit',el:'fire',rar:1,zone:'meadow',zones:['meadow','watertown'],season:2,appeal:13,nat:'S',ab:{type:'dig'},abName:'Pumpkin Patch',abText:'Sniffs out buried treasure. Sparkle spots give double coins.',desc:'A tiny black kitten that lives in a pumpkin. Only seen in fall.'},
+ maplemunch:{name:'Maplemunch',el:'leaf',rar:0,zone:'woods',zones:['woods','meadow'],season:2,appeal:8,nat:'L',ab:{type:'forage'},abName:'Leaf Pile',abText:'Rummages through leaves for berries. Bushes give double.',desc:'A hedgehog whose spines are maple leaves. Only seen in fall.'},
+ snowpuff:{name:'Snowpuff',el:'ice',rar:0,zone:'meadow',zones:['meadow','plains','watertown'],season:3,appeal:9,nat:'S',ab:{type:'lure',el:'ice'},abName:'Flurry Song',abText:'Calls ice creatures out of hiding.',desc:'A round little bird that looks like a snowball. Only seen in winter.'},
+ twinkledeer:{name:'Twinkledeer',el:'light',rar:2,zone:'woods',zones:['woods','meadow'],season:3,appeal:24,nat:'L',ab:{type:'swift'},abName:'Starlight Dash',abText:'Bounds through the snow and you keep up. You move much faster.',desc:'Its antlers twinkle with tiny stars on winter nights.'},
 };
 const NEED_HINT={water:'Only surfaces for a water song.',light:'Only follows something that glows.',fire:'Only shows itself to a fire companion.',ice:'Only appears for a frosty song.'};
 const T={GRASS:0,PATH:1,WATER:2,TREE:3,FENCE:4,FLOWER:5,NIGHT:6,PINE:7,ASH:8,ROCK:9,LAVA:10,DIRT:11,BUSH:12,SHROOM:13,HEDGE:14,BED:15,BENCH:16,LAMP:17,FOUNTAIN:18,STAND:19,FROST:20,SNOWPINE:21,PRAIRIE:22,ICE:23,COBBLE:24,HWALL:25,HFLOOR:26,BRIDGE:27,TOPIARY:28,STATUE:29,WINDMILL:30,GIFT:31,CAFE:32,DOORMAT:33,CRYSTALT:34,RAINBOW:35,GOLDF:36,STARTOWER:37,CAROUSEL:38,DRAGONST:39,BEACON:40,
-  WROAD:41,WWALK:42,WPARK:44,WLOT:45,WFIELD:46,WPLAY:47,WBRIDGE:48,WPLAZA:49,WROADM:50,WSVC:51,AWALL:64,AFLOOR:65,CLOCKT:66};
+  WROAD:41,WWALK:42,WPARK:44,WLOT:45,WFIELD:46,WPLAY:47,WBRIDGE:48,WPLAZA:49,WROADM:50,WSVC:51,AWALL:64,AFLOOR:65,CLOCKT:66,SNOWMAN:67};
 const ZONES={
  meadow:{name:'Glimmer Meadow',cost:0,ground:T.GRASS,obst:T.TREE,liquid:T.WATER,deco:T.FLOWER,dark:false,tint:null,amb:'pollen',seed:11,blurb:'Sunny fields and lily ponds.'},
  woods:{name:'Moonlit Woods',cost:120,ground:T.NIGHT,obst:T.PINE,liquid:T.WATER,deco:T.SHROOM,dark:true,tint:null,amb:'firefly',seed:23,blurb:'Always night. A glowing friend helps.'},
@@ -496,21 +513,45 @@ const TOOLS=[
  {id:'carousel',name:'Carousel',cost:1200,tile:T.CAROUSEL,charm:20,shop:12,lock:'carousel',info:'Visitors take a ride for 12 coins.'},
  {id:'dragonst',name:'Dragon statue',cost:1500,tile:T.DRAGONST,charm:40,lock:'dragon'},
  {id:'beacon',name:'Aurora beacon',cost:3000,tile:T.BEACON,charm:60,lock:'beacon'},
+ {id:'snowman',name:'Snowman',cost:5,tile:T.SNOWMAN,charm:5,season:3,info:'Only in winter! Snowmen melt when spring comes.'},
  {id:'clocktower',name:'Watertown Clock Tower',cost:800,tile:T.CLOCKT,charm:80,lock:'clocktower',secret:true,info:'A gift from Watertown. The grandest wonder of all.'},
  {id:'bulldoze',name:'Remove',info:'Tap anything you built to remove it. You get your coins back.'},
 ];const TOOL={};TOOLS.forEach(t=>TOOL[t.id]=t);
 
 /* ================= TILES & MAPS ================= */
-const SOL=new Uint8Array(80);[T.WATER,T.TREE,T.FENCE,T.PINE,T.ROCK,T.BUSH,T.HEDGE,T.BED,T.BENCH,T.LAMP,T.FOUNTAIN,T.STAND,T.SNOWPINE,T.TOPIARY,T.STATUE,T.WINDMILL,T.GIFT,T.CAFE,T.HWALL,T.CRYSTALT,T.RAINBOW,T.GOLDF,T.STARTOWER,T.CAROUSEL,T.DRAGONST,T.BEACON,T.AWALL,T.CLOCKT].forEach(t=>SOL[t]=1);SOL[T.LAVA]=2;for(let k=52;k<64;k++)SOL[k]=1;
+const SOL=new Uint8Array(80);[T.WATER,T.TREE,T.FENCE,T.PINE,T.ROCK,T.BUSH,T.HEDGE,T.BED,T.BENCH,T.LAMP,T.FOUNTAIN,T.STAND,T.SNOWPINE,T.TOPIARY,T.STATUE,T.WINDMILL,T.GIFT,T.CAFE,T.HWALL,T.CRYSTALT,T.RAINBOW,T.GOLDF,T.STARTOWER,T.CAROUSEL,T.DRAGONST,T.BEACON,T.AWALL,T.CLOCKT,T.SNOWMAN].forEach(t=>SOL[t]=1);SOL[T.LAVA]=2;for(let k=52;k<64;k++)SOL[k]=1;
 function makeSolid(W){const s=new Uint8Array(W.w*W.h);for(let k=0;k<s.length;k++)s[k]=SOL[W.m[k]];return s;}
 function speck(g,x,y,base,cols,n,r){fill(g,base,x,y,16,16);for(let k=0;k<n;k++){g.fillStyle=cols[(r()*cols.length)|0];g.fillRect(x+((r()*16)|0),y+((r()*16)|0),1,1);}}
+/* ================= SEASONS =================
+   Each season lasts 7 in-game days of about 4 minutes of play. Napping skips to the next morning.
+   A new save starts in whatever season it really is outside. */
+const SEAS=[
+ {name:'Spring',icon:'🌸',g0:'#64b84c',g1:['#52a43e','#7cd062','#52a43e'],blade:'#3f8a32',can:['#2f7a36','#4fa04c','#86d064','#1f5a2a'],fl:['#ff7aa8','#ffffff','#b49af4','#ffd860'],amb:'petal',tint:null},
+ {name:'Summer',icon:'☀️',g0:'#58a63e',g1:['#489432','#6aba4e','#489432'],blade:'#367a2c',can:['#256a2e','#3a8a3e','#6cbc50','#1a4e24'],fl:['#ff5a5a','#ffd860','#5ab4f0','#ffffff'],amb:'pollen',tint:'rgba(255,220,120,.05)'},
+ {name:'Fall',icon:'🍂',g0:'#98a646',g1:['#86943a','#aab454','#b08a3a'],blade:'#6a7a2a',can:['#a8481e','#d8742a','#f2b040','#7a3014'],fl:['#e8853a','#c84a2a','#ffd860','#a8326a'],amb:'leaf',tint:'rgba(255,150,60,.06)'},
+ {name:'Winter',icon:'❄️',g0:'#eaf2f8',g1:['#d6e2ec','#ffffff','#dce8f0'],blade:null,can:['#3a6a4a','#5a8a6a','#ffffff','#2a4a3a'],fl:['#ffffff','#ffffff','#ffffff','#ffffff'],amb:'snow',tint:'rgba(180,210,255,.08)'}];
+const DAY_LEN=240,SEASON_DAYS=7;let SEASON=0;
+const realSeason=()=>{const m=new Date().getMonth();return m>=2&&m<=4?0:m>=5&&m<=7?1:m>=8&&m<=10?2:3;};
+function calOf(){if(!state.cal)state.cal={season:realSeason(),day:1,year:1,t:0};return state.cal;}
+function nextDay(){const c=calOf();c.t=0;c.day++;if(c.day>SEASON_DAYS){c.day=1;c.season=(c.season+1)%4;if(c.season===0)c.year++;}}
+function tickCal(dt){if(titleOpen||NET.role==='guest')return;const c=calOf();c.t+=dt;if(c.t>=DAY_LEN)nextDay();}
+const seasonOutdoor=()=>scene==='zoo'||scene==='town'||(scene==='wild'&&!!wild&&['meadow','plains','woods','watertown'].includes(wild.zone));
+function applySeason(announce){const prev=SEASON;SEASON=calOf().season;if(buildMode)closeBuild();
+  if(prev===3&&SEASON===0&&NET.role!=='guest'){let n=0;for(const k in state.zoo.deco)if(state.zoo.deco[k]==='snowman'){delete state.zoo.deco[k];n++;}if(n&&announce)toast(`Your ${n} snowm${n>1?'en':'an'} melted into puddles. Goodbye, friends!`);}
+  buildZoo();buildTown();if(scene==='zoo')world=zooWorld;else if(scene==='town')world=townWorld;
+  if(wild&&wild.W){if(wild.W.chunks)wild.W.chunks.clear();else renderMap(wild.W);}if(WTW)WTW.chunks.clear();
+  if(announce){const S=SEAS[SEASON];toast(`${S.icon} ${S.name} has arrived!`);toast(`New ${S.name.toLowerCase()} creatures are out in the wilds, and the townsfolk have ${S.name.toLowerCase()} quests.`);sfx('unlock');}}
+function sleepToMorning(){const c=calOf();nextDay();toast(`Good morning! ${SEAS[c.season].icon} ${SEAS[c.season].name}, day ${c.day}.`);}
+function seasonBlock(){const c=calOf(),S=SEAS[c.season],sp=Object.keys(SPECIES).filter(k=>SPECIES[k].season===c.season).map(k=>SPECIES[k].name),qs=QUESTS.filter(q=>q.season===c.season&&state.quests[q.id]!=='done').length;
+  return`<p class="ab">${S.icon} <b>${S.name}</b> · day ${c.day} of ${SEASON_DAYS} · year ${c.year}<br><small class="muted">In season: ${sp.join(' and ')}.${qs?` ${qs} ${S.name.toLowerCase()} quest${qs>1?'s':''} in Willowbrook.`:''} Nap in your cottage bed to skip to the next morning.</small></p>`;}
 const GROUNDS={
- [T.GRASS]:(g,x,y,r)=>{speck(g,x,y,'#5fae46',['#4c9838','#74c658','#4c9838'],18,r);if(r()<.5){const a=x+2+((r()*11)|0),b=y+3+((r()*10)|0);fill(g,'#3f8a32',a,b,1,2);fill(g,'#3f8a32',a+2,b-1,1,3);}},
- [T.NIGHT]:(g,x,y,r)=>{speck(g,x,y,'#294a4c',['#203c40','#35605c','#2e5452'],18,r);if(r()<.4){const a=x+2+((r()*11)|0),b=y+3+((r()*10)|0);fill(g,'#1c3638',a,b,1,2);fill(g,'#1c3638',a+2,b-1,1,3);}},
+ [T.GRASS]:(g,x,y,r)=>{const S=SEAS[SEASON];speck(g,x,y,S.g0,S.g1,18,r);if(S.blade&&r()<.5){const a=x+2+((r()*11)|0),b=y+3+((r()*10)|0);fill(g,S.blade,a,b,1,2);fill(g,S.blade,a+2,b-1,1,3);}
+   if(SEASON===2&&r()<.4)fill(g,['#d8742a','#b8481e','#f2b040'][(r()*3)|0],x+((r()*14)|0),y+((r()*14)|0),2,1);if(SEASON===0&&r()<.2)fill(g,'#ffb0c8',x+((r()*15)|0),y+((r()*15)|0),1,1);if(SEASON===3&&r()<.35)fill(g,'#c4d4e2',x+((r()*12)|0),y+((r()*14)|0),3,1);},
+ [T.NIGHT]:(g,x,y,r)=>{if(SEASON===3){speck(g,x,y,'#3a5a6a',['#4a6a7a','#c8dce8','#2e4a58'],22,r);return;}if(SEASON===2&&r()<.5)fill(g,'#7a4a2a',x+((r()*14)|0),y+((r()*14)|0),2,1);speck(g,x,y,'#294a4c',['#203c40','#35605c','#2e5452'],18,r);if(r()<.4){const a=x+2+((r()*11)|0),b=y+3+((r()*10)|0);fill(g,'#1c3638',a,b,1,2);fill(g,'#1c3638',a+2,b-1,1,3);}},
  [T.ASH]:(g,x,y,r)=>{speck(g,x,y,'#5c4648',['#4b3739','#705a5a','#7a4a3c'],20,r);if(r()<.3)fill(g,'#3e2e30',x+((r()*12)|0),y+((r()*14)|0),3,1);},
- [T.PATH]:(g,x,y,r)=>{speck(g,x,y,'#dcc086',['#c9a96a','#ecd6a6'],16,r);if(r()<.6)fill(g,'#b8945a',x+((r()*13)|0),y+((r()*14)|0),2,1);},
+ [T.PATH]:(g,x,y,r)=>{if(SEASON===3){speck(g,x,y,'#e4e2dc',['#cfc6b0','#ffffff','#d8d0bc'],16,r);return;}speck(g,x,y,'#dcc086',['#c9a96a','#ecd6a6'],16,r);if(r()<.6)fill(g,'#b8945a',x+((r()*13)|0),y+((r()*14)|0),2,1);},
  [T.FROST]:(g,x,y,r)=>{speck(g,x,y,'#d4e8f0',['#bcd6e4','#eef8fc','#a8c8da'],18,r);},
- [T.PRAIRIE]:(g,x,y,r)=>{speck(g,x,y,'#a6c04e',['#bccc5e','#8ca83e','#d8c86a'],20,r);if(r()<.6){const a=x+2+((r()*11)|0),b=y+3+((r()*9)|0);fill(g,'#7a9a32',a,b,1,3);fill(g,'#7a9a32',a+2,b-1,1,4);}},
+ [T.PRAIRIE]:(g,x,y,r)=>{if(SEASON===3){speck(g,x,y,'#e6eef4',['#d0dce6','#ffffff','#c8b88a'],20,r);return;}if(SEASON===2){speck(g,x,y,'#c4ac4a',['#d8bc5a','#a8903a','#e8a040'],20,r);return;}speck(g,x,y,'#a6c04e',['#bccc5e','#8ca83e','#d8c86a'],20,r);if(r()<.6){const a=x+2+((r()*11)|0),b=y+3+((r()*9)|0);fill(g,'#7a9a32',a,b,1,3);fill(g,'#7a9a32',a+2,b-1,1,4);}},
  [T.COBBLE]:(g,x,y,r)=>{fill(g,'#a89c90',x,y,16,16);for(let b=0;b<4;b++)for(let a=0;a<2;a++){const ox=x+a*8+(b%2?4:0),oy=y+b*4,w=Math.min(6,x+16-ox-1);if(w>0){fill(g,['#c4b8aa','#b8ac9e','#cfc4b6'][(r()*3)|0],ox+1,oy+1,w,2);fill(g,'#d8cec2',ox+1,oy+1,w,1);}}},
  [T.ICE]:(g,x,y,r)=>{speck(g,x,y,'#a8dcf0',['#c8ecfa','#88c4e0'],14,r);if(r()<.5){const a=x+2+((r()*10)|0),b=y+2+((r()*10)|0);fill(g,'#ffffff',a,b,3,1);fill(g,'#ffffff',a+1,b-1,1,3);}},
  [T.DIRT]:(g,x,y,r)=>{speck(g,x,y,'#a07450',['#8c6242','#b48660'],14,r);for(let k=2;k<16;k+=5)fill(g,'#86603e',x,y+k,16,1);},
@@ -525,17 +566,21 @@ function drawTile(g,W,i,j,r){
   switch(t){
     case T.FROST:case T.PRAIRIE:case T.COBBLE:case T.ICE:
     case T.GRASS:case T.PATH:case T.NIGHT:case T.ASH:case T.DIRT:GROUNDS[t](g,x,y,r);break;
-    case T.FLOWER:GG(W.kind==='wild'?W.ground:T.GRASS);for(let k=0;k<3;k++){const fx=x+2+((r()*12)|0),fy=y+2+((r()*12)|0),c=['#ff7aa8','#ffffff','#b49af4','#ffd860'][(r()*4)|0];fill(g,c,fx-1,fy,3,1);fill(g,c,fx,fy-1,1,3);fill(g,'#ffe27a',fx,fy,1,1);}break;
+    case T.FLOWER:GG(W.kind==='wild'?W.ground:T.GRASS);for(let k=0;k<3;k++){const fx=x+2+((r()*12)|0),fy=y+2+((r()*12)|0),c=SEAS[SEASON].fl[(r()*4)|0];if(SEASON===3&&(W.kind!=='wild'||W.ground===T.GRASS||W.ground===T.PRAIRIE)){fill(g,'#ffffff',fx-1,fy,4,2);fill(g,'#e8553a',fx+1,fy-1,2,1);continue;}fill(g,c,fx-1,fy,3,1);fill(g,c,fx,fy-1,1,3);fill(g,'#ffe27a',fx,fy,1,1);}break;
     case T.SHROOM:GROUNDS[T.NIGHT](g,x,y,r);for(let k=0;k<2;k++){const fx=x+3+((r()*9)|0),fy=y+5+((r()*8)|0);fill(g,'#e2ecff',fx+1,fy+2,1,2);fill(g,'#7ff0e8',fx,fy,3,2);fill(g,'#d8fffa',fx,fy,1,1);}break;
-    case T.WATER:{fill(g,'#3b86d4',x,y,16,16);for(let k=0;k<10;k++)fill(g,'#347ac4',x+((r()*16)|0),y+((r()*16)|0),2,1);for(let k=0;k<2;k++)fill(g,'#7cc2f4',x+((r()*11)|0),y+3+((r()*10)|0),4,1);
+    case T.WATER:{const ice=SEASON===3&&W.zone!=='lake';fill(g,ice?'#9ccbe8':'#3b86d4',x,y,16,16);if(ice){fill(g,'#e8f6ff',x+((r()*10)|0),y+((r()*14)|0),5,1);fill(g,'#e8f6ff',x+((r()*12)|0),y+((r()*14)|0),3,1);}for(let k=0;k<10;k++)fill(g,'#347ac4',x+((r()*16)|0),y+((r()*16)|0),2,1);for(let k=0;k<2;k++)fill(g,'#7cc2f4',x+((r()*11)|0),y+3+((r()*10)|0),4,1);
       if(at(i,j-1)!==T.WATER){fill(g,'#bfe6ff',x,y,16,1);fill(g,'#5aa6e6',x,y+1,16,1);}
       if(W.kind==='zoo'&&r()<.5){const a=x+4+((r()*6)|0),b=y+6+((r()*5)|0);fill(g,'#3f8a32',a,b,5,3);fill(g,'#6cc24a',a,b,4,2);}break;}
     case T.LAVA:{fill(g,'#e2501a',x,y,16,16);for(let k=0;k<22;k++)fill(g,['#ff9a2a','#c43812','#ffc040'][(r()*3)|0],x+((r()*16)|0),y+((r()*16)|0),2,1);if(at(i,j-1)!==T.LAVA)fill(g,'#7a2a18',x,y,16,2);break;}
-    case T.TREE:GG(W.ground);fill(g,'rgba(0,0,0,.25)',x+3,y+14,10,2);fill(g,'#6a4228',x+6,y+10,4,6);shape(g,x,y,CANOPY,'#2f7a36','#46984a','#7cc85a');fill(g,'#1f5a2a',x+3,y+9,10,1);break;
-    case T.PINE:GG(W.ground);fill(g,'rgba(0,0,0,.3)',x+3,y+14,10,2);fill(g,'#3a2a26',x+7,y+11,2,5);shape(g,x,y,PINEC,'#173038','#24505a','#4a8a94');break;
+    case T.TREE:{GG(W.ground);fill(g,'rgba(0,0,0,.25)',x+3,y+14,10,2);fill(g,'#6a4228',x+6,y+10,4,6);
+      if(SEASON===3){for(const[a,b,w2]of[[7,2,2],[3,4,4],[9,3,4],[4,7,3],[9,6,3]])fill(g,'#6a4228',x+a,y+b,w2,a===7?9:1);for(const[a,b,w2]of[[3,3,3],[9,2,4],[7,1,2],[4,6,2],[10,5,2]])fill(g,'#ffffff',x+a,y+b,w2,1);break;}
+      const C=SEAS[SEASON].can;shape(g,x,y,CANOPY,C[0],C[1],C[2]);fill(g,C[3],x+3,y+9,10,1);
+      if(SEASON===0)for(let k=0;k<6;k++)fill(g,'#ffc8dc',x+2+((r()*12)|0),y+1+((r()*8)|0),1,1);
+      if(SEASON===2&&r()<.7)fill(g,C[1],x+((r()*14)|0),y+14,2,1);break;}
+    case T.PINE:GG(W.ground);fill(g,'rgba(0,0,0,.3)',x+3,y+14,10,2);fill(g,'#3a2a26',x+7,y+11,2,5);shape(g,x,y,PINEC,'#173038','#24505a','#4a8a94');if(SEASON===3){fill(g,'#f4fbff',x+6,y+1,4,1);fill(g,'#f4fbff',x+4,y+4,3,1);fill(g,'#f4fbff',x+9,y+7,3,1);fill(g,'#f4fbff',x+3,y+9,3,1);}break;
     case T.ROCK:GG(W.ground);fill(g,'rgba(0,0,0,.3)',x+2,y+13,12,2);shape(g,x,y,BLOB,'#6a6280','#8a8298','#b4aec4');fill(g,'#4a4460',x+5,y+8,1,3);fill(g,'#4a4460',x+6,y+10,2,1);break;
-    case T.BUSH:GG(W.ground);fill(g,'rgba(0,0,0,.25)',x+2,y+13,12,2);shape(g,x,y,BLOB,'#2f7a36','#46984a','#7cc85a');break;
-    case T.HEDGE:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+1,y+13,14,2);fill(g,'#2a6a30',x+1,y+3,14,11);fill(g,'#3f8a3a',x+1,y+3,14,3);fill(g,'#6cbc52',x+2,y+3,5,1);fill(g,'#1f5226',x+1,y+12,14,2);break;
+    case T.BUSH:GG(W.ground);fill(g,'rgba(0,0,0,.25)',x+2,y+13,12,2);shape(g,x,y,BLOB,...(SEASON===3?['#3a6a4a','#5a8a6a','#ffffff']:SEASON===2?['#8a5a1e','#b87a2a','#e8a840']:['#2f7a36','#46984a','#7cc85a']));if(SEASON===3)fill(g,'#ffffff',x+3,y+5,10,2);break;
+    case T.HEDGE:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+1,y+13,14,2);fill(g,'#2a6a30',x+1,y+3,14,11);fill(g,'#3f8a3a',x+1,y+3,14,3);fill(g,'#6cbc52',x+2,y+3,5,1);fill(g,'#1f5226',x+1,y+12,14,2);if(SEASON===3)fill(g,'#ffffff',x+1,y+2,14,3);break;
     case T.BED:{GG(T.GRASS);fill(g,'#7a5030',x+1,y+3,14,11);fill(g,'#5a3824',x+1,y+12,14,2);
       for(let k=0;k<6;k++){const fx=x+3+(k%3)*4+((r()*2)|0),fy=y+5+((k/3)|0)*4,c=['#ff7aa8','#ffd860','#b49af4','#ffffff','#ff9a3a'][(r()*5)|0];fill(g,'#3f8a32',fx,fy+1,1,2);fill(g,c,fx-1,fy,3,1);fill(g,c,fx,fy-1,1,3);}break;}
     case T.BENCH:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+2,y+12,12,2);fill(g,'#7a4a2a',x+2,y+4,12,3);fill(g,'#9a6a3e',x+2,y+8,12,3);fill(g,'#c08a52',x+2,y+8,12,1);fill(g,'#5a3824',x+3,y+11,2,3);fill(g,'#5a3824',x+11,y+11,2,3);break;
@@ -564,6 +609,8 @@ function drawTile(g,W,i,j,r){
     case T.DRAGONST:{GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+1,y+14,14,2);fill(g,'#6a6280',x+1,y+10,14,5);fill(g,'#8a8698',x+1,y+10,14,1);const gs=goldSpr('emberwyrm');g.drawImage(gs,x+8-Math.floor(gs.width/2),y+11-gs.height);break;}
     case T.BEACON:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+3,y+14,10,2);fill(g,'#3a3060',x+5,y-2,6,17);fill(g,'#5a4a90',x+5,y-2,2,17);fill(g,'#7cf0b8',x+5,y-8,6,6);fill(g,'#c8fff0',x+6,y-7,2,2);
       g.globalAlpha=.45;for(let k=0;k<6;k++)fill(g,k%2?'#7cf0b8':'#c8a0ff',x+2+k*2,y-14+(k%3),2,6);g.globalAlpha=1;break;
+    case T.SNOWMAN:GG(T.GRASS);fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#f4f8fb',x+3,y+8,10,7);fill(g,'#dce8f0',x+3,y+13,10,2);fill(g,'#f4f8fb',x+5,y+3,6,6);fill(g,'#1a1424',x+6,y+5,1,1);fill(g,'#1a1424',x+9,y+5,1,1);fill(g,'#f29a3a',x+7,y+6,3,1);
+      fill(g,'#e8553a',x+4,y+8,8,2);fill(g,'#1a1424',x+5,y-1,6,3);fill(g,'#1a1424',x+4,y+2,8,1);fill(g,'#6a4228',x+1,y+9,3,1);fill(g,'#6a4228',x+12,y+9,3,1);fill(g,'#1a1424',x+7,y+11,1,1);fill(g,'#1a1424',x+7,y+13,1,1);break;
     case T.CLOCKT:GG(T.GRASS);fill(g,'rgba(0,0,0,.25)',x+1,y+14,14,2);fill(g,'#a8503c',x+3,y-8,10,23);fill(g,'#c86a50',x+3,y-8,3,23);for(let r2=-5;r2<15;r2+=3)fill(g,'#8a3a2a',x+3,y+r2,10,1);fill(g,'#2a2238',x+6,y+10,4,5);
       fill(g,'#e8e0d0',x+4,y-6,8,8);fill(g,'#ffd860',x+4,y-6,8,1);fill(g,'#1a1424',x+7,y-4,1,3);fill(g,'#1a1424',x+8,y-2,2,1);for(let r2=0;r2<6;r2++)fill(g,'#3a6a5a',x+7-r2,y-14+r2,r2*2+2,1);fill(g,'#ffd860',x+7,y-17,2,3);break;
     case T.FENCE:{GG(T.GRASS);const f=(a,b)=>at(a,b)===T.FENCE;
@@ -658,7 +705,7 @@ function wtTile(g,W,i,j,x,y,r,t){const at=(a,b)=>(a<0||b<0||a>=W.w||b>=W.h)?-1:W
       if(top&&(i%2))fill(g,'#ffd860',x+6,y+3,3,3);}
     return;}
   if(t>=52){const c=t-52,flat=c>=7&&c<=9,face=at(i,j+1)!==t,top=at(i,j-1)!==t,L=at(i-1,j)!==t,Rr=at(i+1,j)!==t,R0=WT_ROOF[c];
-    if(face){fill(g,R0,x,y,16,5);fill(g,'rgba(0,0,0,.28)',x,y+4,16,1);fill(g,WT_FACE[c],x,y+5,16,11);fill(g,'rgba(0,0,0,.12)',x,y+15,16,1);
+    if(face){fill(g,R0,x,y,16,5);if(SEASON===3)fill(g,'#f4f8fb',x,y,16,3);fill(g,'rgba(0,0,0,.28)',x,y+4,16,1);fill(g,WT_FACE[c],x,y+5,16,11);fill(g,'rgba(0,0,0,.12)',x,y+15,16,1);
       const sg=W.signs&&W.signs.get(j*W.w+i);
       if(sg){fill(g,'#2a2238',x+1,y+5,14,5);fill(g,SIGNCOL[sg[3]]||'#ffd860',x+2,y+6,12,3);fill(g,'#fff8e8',x+4,y+7,8,1);fill(g,'#6a4228',x+5,y+10,6,6);fill(g,'#9ed8ff',x+6,y+11,4,2);fill(g,'#ffd860',x+9,y+13,1,1);}
       else if(flat){fill(g,'#6a7a8a',x+1,y+7,14,7);fill(g,'#9ed8ff',x+2,y+8,12,5);fill(g,'#d8f0ff',x+3,y+8,3,1);}
@@ -668,18 +715,18 @@ function wtTile(g,W,i,j,x,y,r,t){const at=(a,b)=>(a<0||b<0||a>=W.w||b>=W.h)?-1:W
     else{fill(g,R0,x,y,16,16);
       if(flat){if((i*5+j*3)%7===0){fill(g,'#8a8a94',x+4,y+4,6,5);fill(g,'#c8c8d0',x+4,y+4,6,1);}}
       else for(let k=1;k<16;k+=4)fill(g,'rgba(0,0,0,.13)',x,y+k,16,1);
-      if(top)fill(g,'rgba(255,255,255,.22)',x,y,16,2);if(L)fill(g,'rgba(0,0,0,.28)',x,y,1,16);if(Rr)fill(g,'rgba(0,0,0,.28)',x+15,y,1,16);}
+      if(SEASON===3)fill(g,'rgba(244,248,251,.85)',x,y,16,16);if(top)fill(g,'rgba(255,255,255,.22)',x,y,16,2);if(L)fill(g,'rgba(0,0,0,.28)',x,y,1,16);if(Rr)fill(g,'rgba(0,0,0,.28)',x+15,y,1,16);}
     return;}
   switch(t){
     case T.WROAD:case T.WROADM:case T.WSVC:case T.WBRIDGE:{const base=t===T.WSVC?'#7a7a84':t===T.WROADM?'#55555f':'#5e5e68';
       speck(g,x,y,base,['#4e4e58','#6a6a74'],10,r);const nr=(a,b)=>{const u=at(a,b);return wtIsRoad(u)||u===-1;};
-      if(t!==T.WSVC){if(!nr(i,j-1))fill(g,'#a4a4ae',x,y,16,1);if(!nr(i,j+1))fill(g,'#a4a4ae',x,y+15,16,1);if(!nr(i-1,j))fill(g,'#a4a4ae',x,y,1,16);if(!nr(i+1,j))fill(g,'#a4a4ae',x+15,y,1,16);}
+      if(t!==T.WSVC){const cb=SEASON===3?'#f0f6fa':'#a4a4ae',cw=SEASON===3?2:1;if(!nr(i,j-1))fill(g,cb,x,y,16,cw);if(!nr(i,j+1))fill(g,cb,x,y+16-cw,16,cw);if(!nr(i-1,j))fill(g,cb,x,y,cw,16);if(!nr(i+1,j))fill(g,cb,x+16-cw,y,cw,16);}
       if(t===T.WBRIDGE){const wa=(a,b)=>at(a,b)===T.WATER;if(wa(i,j-1))fill(g,'#b4b0c4',x,y,16,2);if(wa(i,j+1))fill(g,'#b4b0c4',x,y+14,16,2);if(wa(i-1,j))fill(g,'#b4b0c4',x,y,2,16);if(wa(i+1,j))fill(g,'#b4b0c4',x+14,y,2,16);}
       break;}
-    case T.WWALK:fill(g,'#cdc8c2',x,y,16,16);fill(g,'#b8b2ac',x,y+7,16,1);fill(g,'#b8b2ac',x+7,y,1,16);fill(g,'#ddd8d2',x,y,16,1);if(r()<.08)fill(g,'#3f8a32',x+((r()*12)|0),y+((r()*12)|0),2,1);break;
-    case T.WPARK:fill(g,(j%2)?'#64b44a':'#5aa842',x,y,16,16);for(let k=0;k<8;k++)fill(g,'#4c9838',x+((r()*16)|0),y+((r()*16)|0),1,1);break;
+    case T.WWALK:fill(g,'#cdc8c2',x,y,16,16);fill(g,'#b8b2ac',x,y+7,16,1);fill(g,'#b8b2ac',x+7,y,1,16);fill(g,'#ddd8d2',x,y,16,1);if(SEASON===3)for(let k=0;k<5;k++)fill(g,'#ffffff',x+((r()*12)|0),y+((r()*14)|0),4,2);if(SEASON===2&&r()<.6)fill(g,'#d8742a',x+((r()*14)|0),y+((r()*14)|0),2,1);if(r()<.08)fill(g,'#3f8a32',x+((r()*12)|0),y+((r()*12)|0),2,1);break;
+    case T.WPARK:{const P2=SEASON===3?['#eef4f8','#e4ecf2','#cddbe6']:SEASON===2?['#a4ac4c','#98a244','#c87a30']:['#64b44a','#5aa842','#4c9838'];fill(g,(j%2)?P2[0]:P2[1],x,y,16,16);for(let k=0;k<8;k++)fill(g,P2[2],x+((r()*16)|0),y+((r()*16)|0),SEASON===2?2:1,1);break;}
     case T.WLOT:speck(g,x,y,'#6a6a74',['#62626c','#74747e'],8,r);if(j%2===0){fill(g,'#e8e8ec',x,y,1,8);fill(g,'#e8e8ec',x+8,y,1,8);}break;
-    case T.WFIELD:fill(g,(i%2)?'#58aa48':'#4fa040',x,y,16,16);if(i%10===0)fill(g,'#f4f4f0',x,y,1,16);if(j%10===0)fill(g,'#f4f4f0',x,y,16,1);break;
+    case T.WFIELD:fill(g,SEASON===3?((i%2)?'#eef4f8':'#e4ecf2'):(i%2)?'#58aa48':'#4fa040',x,y,16,16);if(i%10===0)fill(g,'#f4f4f0',x,y,1,16);if(j%10===0)fill(g,'#f4f4f0',x,y,16,1);break;
     case T.WPLAY:speck(g,x,y,'#e8a860',['#d89850','#f0b870'],12,r);if((i*7+j*5)%9===0){fill(g,'#e8553a',x+3,y+2,3,12);fill(g,'#ffd860',x+6,y+4,7,2);fill(g,'#ffd860',x+11,y+6,2,8);}
       else if((i*3+j*11)%13===0){fill(g,'#5ab4f0',x+2,y+3,12,2);fill(g,'#3a4a8a',x+3,y+5,1,9);fill(g,'#3a4a8a',x+12,y+5,1,9);fill(g,'#e8553a',x+6,y+9,4,2);}break;
     case T.WPLAZA:fill(g,'#c89a7a',x,y,16,16);for(let b=0;b<16;b+=4){fill(g,'#b08466',x,y+b,16,1);for(let a=(b/4)%2?0:4;a<16;a+=8)fill(g,'#b08466',x+a,y+b,1,4);}break;
@@ -888,6 +935,9 @@ const MUSIC={
    pad:{vol:.016,type:'square',cut:1600,oct:0,att:.05},bass:{pat:[0,4,8,12],vol:.09,oct:-1,octJump:true},
    mel:{inst:'pluck',dens:.6,oct:1,vol:.075},arp:{inst:'musicbox',kind:'up',vol:.025,oct:2},shaker:.012,kick:.15,spark:0},
 };
+MUSIC.homeSu={...MUSIC.home,name:'Summer Sanctuary',bpm:94,root:55,mel:{...MUSIC.home.mel,inst:'marimba'},shaker:.014};
+MUSIC.homeFa={...MUSIC.home,name:'Harvest Sanctuary',bpm:72,root:50,mode:AEO,prog:[0,5,3,4],mel:{...MUSIC.home.mel,inst:'pluck',dens:.36}};
+MUSIC.homeWi={...MUSIC.home,name:'Snowy Sanctuary',bpm:64,root:52,wet:.6,mel:{inst:'celesta',dens:.3,oct:1,vol:.06},arp:{inst:'musicbox',kind:'rand',vol:.022,oct:2,prob:.25},shaker:0};
 const MV=2.6;let musicOn=true;try{musicOn=localStorage.getItem('as-music')!=='off';}catch(e){}
 const mus={vibe:null,step:0,next:0,buses:{},out:null,duck:null,rev:null,noise:null,motif:null,motifV:null,motifB:null,ducked:false};
 const mtof=m=>440*Math.pow(2,(m-69)/12);
@@ -930,7 +980,7 @@ function genMotif(v){const m=v.mel,a=new Array(16).fill(null);let d=m.oct*7+[0,2
   for(let s=0;s<16;s+=2){const strong=s%8===0;if(R()<(strong?m.dens+.3:m.dens)){d+=[-2,-1,-1,0,1,1,2,3][(R()*8)|0];d=clamp(d,m.oct*7-2,m.oct*7+7);const len=R()<.3?4:2;a[s]={d,len,strong};if(len===4)s+=2;}}
   return a;}
 function newMotifs(v){mus.motif=genMotif(v);mus.motifV=mus.motif.map((n,s)=>n&&s>=10&&R()<.6?{...n,d:n.d+(R()<.5?1:-1)}:n);mus.motifB=genMotif(v);}
-const vibeFor=()=>titleOpen?'title':scene==='wild'&&wild?wild.zone:scene==='arcade'?'arcade':scene==='town'?'town':scene==='home'?'cottage':'home';
+const vibeFor=()=>titleOpen?'title':scene==='wild'&&wild?wild.zone:scene==='arcade'?'arcade':scene==='town'?'town':scene==='home'?'cottage':'home'+['','Su','Fa','Wi'][SEASON];
 function switchVibe(k){const t=AC.currentTime;
   if(mus.vibe){const ob=mus.buses[mus.vibe].gain;ob.cancelScheduledValues(t);ob.setValueAtTime(ob.value,t);ob.linearRampToValueAtTime(0,t+1.6);}
   const nb=mus.buses[k].gain;nb.cancelScheduledValues(t);nb.setValueAtTime(0,t);nb.linearRampToValueAtTime(MV,t+2.2);
@@ -982,7 +1032,7 @@ function nextToast(){const m=toastQ.shift();if(!m){toastBusy=false;return;}toast
   setTimeout(()=>{toastEl.classList.remove('on');setTimeout(nextToast,260);},Math.min(4200,1600+m.length*35));}
 let hintS='';function setHint(h){if(h!==hintS){hintS=h;hintEl.innerHTML=h;}}
 const KA='<span class="ka">A</span>',KB='<span class="kb">B</span>';
-let hudC=-1,hudB=-1;function updHUD(){const c=Math.floor(state.coins);if(c!==hudC){hudC=c;$('#coins').textContent=c;}if(state.berries!==hudB){hudB=state.berries;$('#berries').textContent=state.berries;}}
+let hudC=-1,hudB=-1,hudS='';function updHUD(){{const c=calOf(),t=`${SEAS[c.season].icon} ${c.day}/${SEASON_DAYS}`;if(t!==hudS){hudS=t;$('#seasonTxt').textContent=t;$('#seasonChip').title=`${SEAS[c.season].name}, day ${c.day} of ${SEASON_DAYS}`;}}const c=Math.floor(state.coins);if(c!==hudC){hudC=c;$('#coins').textContent=c;}if(state.berries!==hudB){hudB=state.berries;$('#berries').textContent=state.berries;}}
 function updCompChip(){const chip=$('#compChip');if(companion){const S=SPECIES[companion.sp];$('#icComp').src=sprURL(companion.sp,SPR[companion.sp][0]);$('#compName').textContent=S.abName;chip.hidden=false;}else chip.hidden=true;}
 
 /* ================= PARTICLES ================= */
@@ -1002,13 +1052,15 @@ function drawParts(){for(const p of parts){if(p.scene!==scene)continue;ctx.globa
     case'spark':fill(ctx,p.col||'#fff6b0',x,y,1,1);if(p.life>.4){fill(ctx,p.col||'#fff6b0',x-1,y,3,1);fill(ctx,p.col||'#fff6b0',x,y-1,1,3);}break;
     case'poof':fill(ctx,'#e8e4f4',x-1,y-1,Math.max(1,Math.round(p.life*6)),Math.max(1,Math.round(p.life*6)));break;}
 }ctx.globalAlpha=1;}
-function updAmbient(dt){if(reduceMotion||titleOpen&&scene!=='zoo'||scene==='home'||scene==='arcade')return;const kind=scene==='wild'?ZONES[wild.zone].amb:'pollen';ambT-=dt;
-  if(ambT<=0&&ambient.length<26){ambT=kind==='firefly'?.22:.4;ambient.push({x:camX+R()*VW,y:camY+R()*VH,vx:(R()-.5)*8,vy:kind==='ember'?-14-R()*12:kind==='pollen'?-3-R()*4:kind==='snow'?8+R()*8:(R()-.5)*6,life:3+R()*3,max:6,kind,ph:R()*6});}
-  for(const a of ambient){a.x+=a.vx*dt+(a.kind==='firefly'?Math.sin(time*2+a.ph)*.3:0);a.y+=a.vy*dt;a.life-=dt;}ambient=ambient.filter(a=>a.life>0);}
+function updAmbient(dt){if(reduceMotion||titleOpen&&scene!=='zoo'||scene==='home'||scene==='arcade')return;const kind=!seasonOutdoor()?(scene==='wild'?ZONES[wild.zone].amb:'pollen'):scene==='wild'&&wild.zone==='woods'&&SEASON!==3?'firefly':SEAS[SEASON].amb;ambT-=dt;
+  if(ambT<=0&&ambient.length<26){ambT=kind==='firefly'?.22:kind==='snow'&&SEASON===3&&seasonOutdoor()?.14:.4;ambient.push({x:camX+R()*VW,y:camY+R()*VH,vx:(R()-.5)*8,vy:kind==='ember'?-14-R()*12:kind==='pollen'?-3-R()*4:(kind==='snow'||kind==='petal'||kind==='leaf')?6+R()*8:(R()-.5)*6,life:3+R()*3,max:6,kind,ph:R()*6});}
+  for(const a of ambient){a.x+=a.vx*dt+(a.kind==='firefly'||a.kind==='leaf'||a.kind==='petal'?Math.sin(time*2+a.ph)*.3:0);a.y+=a.vy*dt;a.life-=dt;}ambient=ambient.filter(a=>a.life>0);}
 function drawAmbient(){for(const a of ambient){const al=clamp(Math.min(a.life,a.max-a.life),0,1);const x=Math.round(a.x),y=Math.round(a.y);
   if(a.kind==='pollen'){ctx.globalAlpha=al*.8;fill(ctx,'#fff6c8',x,y,1,1);}
   else if(a.kind==='firefly'){const b=(Math.sin(time*5+a.ph)+1)/2;ctx.globalAlpha=al*b*.35;fill(ctx,'#d8ff7a',x-1,y-1,3,3);ctx.globalAlpha=al*b;fill(ctx,'#f0ffb0',x,y,1,1);}
   else if(a.kind==='snow'){ctx.globalAlpha=al*.9;fill(ctx,'#ffffff',x,y,a.ph>3?2:1,a.ph>3?2:1);}
+  else if(a.kind==='petal'){ctx.globalAlpha=al;fill(ctx,'#ffc0d8',x,y,2,1);fill(ctx,'#ff9ac0',x+1,y+1,1,1);}
+  else if(a.kind==='leaf'){ctx.globalAlpha=al;fill(ctx,['#d8742a','#b8481e','#f2b040'][(a.ph*10|0)%3],x,y,2,2);}
   else {ctx.globalAlpha=al;fill(ctx,a.life>2?'#ffd040':'#ff7a2a',x,y,1,1);}}ctx.globalAlpha=1;}
 
 /* ================= HOME SIMULATION ================= */
@@ -1044,7 +1096,7 @@ function updPens(dt){state.pens.forEach(p=>{if(!p.cid)return;const c=getC(p.cid)
 /* ================= BUILD MODE (sanctuary) / DECORATE MODE (cottage) ================= */
 const PSZ={std:[6,4],grand:[9,6]};
 const locked=t=>!!(t&&t.lock&&!state.unlocks[t.lock]);
-const toolList=()=>scene==='home'?homeTools():TOOLS.filter(t=>!t.secret||!locked(t));
+const toolList=()=>scene==='home'?homeTools():TOOLS.filter(t=>(!t.secret||!locked(t))&&(t.season==null||t.season===SEASON));
 const toolDef=id=>scene==='home'?homeToolDef(id):TOOL[id];
 function toolSize(t){if(!t)return[1,1];if(t.size)return PSZ[t.size];if(t.furn)return[FURN[t.furn].w,FURN[t.furn].h];return[1,1];}
 function toolCost(t){if(!t)return 0;if(t.size==='std')return nextPenCost();if(t.size==='grand')return nextPenCost()+150;return t.cost||0;}
@@ -1215,6 +1267,14 @@ const QUESTS=[
  {id:'wtotter',npc:'ripley',title:'Otters of the Charles',ask:"Charlotters are the river's little helpers. Give one a home at your sanctuary and more folks will learn to love the Charles.",goal:'Have a Charlotter living in a habitat.',ready:()=>housed('charlotter'),reward:'600 coins and a fish tank wall',give:()=>{state.coins+=600;addInv('f:fishwall',1);},thanks:'Look at it zoom! The river thanks you.'},
  {id:'wtheron',npc:'wren',title:'The Glimmerheron',ask:"For forty years I've watched for the Glimmerheron. They say it fishes the Charles when no one is looking. Could you befriend it and give it a home?",goal:'Have a Glimmerheron living in a habitat.',ready:()=>housed('glimmerheron'),reward:'1,200 coins and a Watertown snow globe',give:()=>{state.coins+=1200;addInv('f:snowglobe',1);},thanks:'I never thought I would see it up close. Thank you, truly.'},
  {id:'wtsurvey',npc:'manager',title:'A nature survey',ask:'The town council wants a nature survey. They argued about it for three hours, but they agreed on one thing: we need to know who lives here! Befriend an Acornsprite, a Lampwisp and a Charlotter.',goal:'Befriend an Acornsprite, a Lampwisp and a Charlotter.',ready:()=>['acornsprite','lampwisp','charlotter'].every(k=>state.dex[k]===2),reward:'800 coins and a model of Watertown',give:()=>{state.coins+=800;addInv('f:citymodel',1);},thanks:'A complete survey! The council will only argue about it a little bit.'},
+ {id:'spr_seeds',npc:'mabel',season:0,title:'Spring planting',ask:"Spring is here! Help me plant the berry patch. Could you bring me 12 berries to use as seeds?",goal:'Bring Mabel 12 berries.',ready:()=>state.berries>=12,pay:()=>{state.berries-=12;},reward:'250 coins and a potted cherry blossom',give:()=>{state.coins+=250;addInv('f:sakura',1);},thanks:'The patch will be bursting with berries by summer!'},
+ {id:'spr_fawn',npc:'hoot',season:0,title:'The blossom fawn',ask:'Every spring a Blossomfawn wanders Glimmer Meadow, wearing a crown of petals. Could you befriend one and give it a home?',goal:'Have a Blossomfawn living in a habitat.',ready:()=>housed('blossomfawn'),reward:'500 coins and a kite for your wall',give:()=>{state.coins+=500;addInv('f:kite',1);},thanks:'Marvelous! Spring has come to your sanctuary.'},
+ {id:'sum_lemon',npc:'rosa',season:1,title:'Berry lemonade',ask:"Phew, it's hot! I want to sell berry lemonade at the summer fair. Could you bring me 15 berries?",goal:'Bring Rosa 15 berries.',ready:()=>state.berries>=15,pay:()=>{state.berries-=15;},reward:'300 coins and a little lemonade stand',give:()=>{state.coins+=300;addInv('f:lemonade',1);},thanks:'Ice-cold berry lemonade for everyone!'},
+ {id:'sum_bee',npc:'theo',season:1,title:"Theo's buzzing buddy",ask:"I saw a fuzzy Sunnybee in Glimmer Meadow! Can you give one a home at the sanctuary so I can visit it every day?",goal:'Have a Sunnybee living in a habitat.',ready:()=>housed('sunnybee'),reward:'400 coins and a surfboard for your wall',give:()=>{state.coins+=400;addInv('f:surfboard',1);},thanks:"It's SO fuzzy! Best summer ever!"},
+ {id:'fal_fest',npc:'gus',season:2,title:'Harvest festival',ask:'The harvest festival is here! Welcome 40 visitors to your sanctuary this fall and the whole town will celebrate.',goal:'Welcome 40 visitors after taking this quest.',ready:()=>state.stats.visitors-((state.qBase||{}).fal_fest||0)>=40,onAccept:()=>{state.qBase=state.qBase||{};state.qBase.fal_fest=state.stats.visitors;},reward:'350 coins and a harvest basket',give:()=>{state.coins+=350;addInv('f:harvest',1);},thanks:'What a festival! Just like the old days.'},
+ {id:'fal_kit',npc:'nell',season:2,title:'A kitten in a pumpkin',ask:"There's a tiny Pumpkit hiding in the pumpkin patches of Glimmer Meadow. The nights are getting cold! Can you give it a cozy home?",goal:'Have a Pumpkit living in a habitat.',ready:()=>housed('pumpkit'),reward:'450 coins and a pile of leaves to jump in',give:()=>{state.coins+=450;addInv('f:leafpile',1);},thanks:'Look at it purr inside its pumpkin!'},
+ {id:'win_snow',npc:'mayor',season:3,title:'Snowman contest',ask:"It's the Willowbrook snowman contest! Build 3 snowmen in your sanctuary. They're in Build mode, but only while it's winter.",goal:'Build 3 snowmen in your sanctuary.',ready:()=>Object.values(state.zoo.deco).filter(v=>v==='snowman').length>=3,reward:'350 coins and a twinkle tree',give:()=>{state.coins+=350;addInv('f:twinkletree',1);},thanks:'First prize goes to… you!'},
+ {id:'win_deer',npc:'hoot',season:3,title:'The twinkle deer',ask:'On winter nights a Twinkledeer walks the Moonlit Woods, its antlers full of stars. Befriend it!',goal:'Have a Twinkledeer living in a habitat.',ready:()=>housed('twinkledeer'),reward:'550 coins and a snowman plush',give:()=>{state.coins+=550;addInv('f:snowplush',1);},thanks:'Stars in its antlers! Truly a winter wonder.'},
  {id:'wtpumpkins',npc:'mara',title:"Mara's pumpkin hunt",ask:"I hid five jack-o'-lanterns all over Watertown: by the library, at the Gables Rain Garden, in Boyd Park, down by the river and in the Square. Can you find them all?",goal:"Find Mara's 5 jack-o'-lanterns around Watertown.",ready:()=>(state.inv.pumpkin||0)>=5,pay:()=>{state.inv.pumpkin=0;},reward:'700 coins, a bubbling cauldron, a tombstone and red Halloween lights',give:()=>{state.coins+=700;addInv('f:wt_cauldron',1);addInv('f:wt_tomb',1);addInv('f:wt_redlights',1);},thanks:'You found them ALL! Happy Halloween!',onAccept:()=>toast('Look for orange glints: the library, the Gables Rain Garden, Boyd Park, the river and the Square.')},
  {id:'wtkey',npc:'manager',after:'wtsurvey',title:'The Key to the City',ask:"You've helped so many people in Watertown! Finish every job in town and the council will give you its highest honor.",goal:'Finish every other Watertown quest.',ready:()=>WT_QUESTS.every(k=>k==='wtkey'||state.quests[k]==='done'),reward:'3,000 coins, the Golden Key and plans for a Watertown Clock Tower (+80 Charm)',give:()=>{state.coins+=3000;addInv('f:wtkey',1);state.unlocks.clocktower=true;},thanks:'By unanimous vote (a first!), Watertown presents you with the Key to the City!'},
 ];
@@ -1256,7 +1316,7 @@ function goTown(from,x,y){if(buildMode)closeBuild();scene='town';world=townWorld
 function goZoo(){if(buildMode)closeBuild();scene='zoo';world=zooWorld;ambient=[];player.x=208;player.y=(ZH-2)*16+4;player.face='up';snapCam();save();}
 function goHome(){if(buildMode)closeBuild();buildHome();scene='home';world=homeWorld;ambient=[];player.x=(homeWorld.door+1)*16;player.y=(homeWorld.h-2)*16+12;player.face='up';snapCam();
   if(!state.seenHome){state.seenHome=true;toast('Your cottage! Tap Decorate to arrange furniture. Buy more at Pip\'s Home Goods.');}save();}
-function npcQuest(id){const qs=QUESTS.filter(q=>q.npc===id);return{act:qs.find(q=>state.quests[q.id]==='active'),offer:qs.find(q=>!state.quests[q.id]&&(!q.after||state.quests[q.after]==='done'))};}
+function npcQuest(id){const qs=QUESTS.filter(q=>q.npc===id);return{act:qs.find(q=>state.quests[q.id]==='active'),offer:(()=>{const ok=q=>!state.quests[q.id]&&(!q.after||state.quests[q.after]==='done')&&(q.season==null||q.season===SEASON);return qs.find(q=>q.season!=null&&ok(q))||qs.find(ok);})()};}
 function npcMark(id){const{act,offer}=npcQuest(id);if(act&&act.ready())return'ready';if(offer)return'offer';if(act)return'wait';return null;}
 function npcBlock(id){const N=NPCINFO[id],{act,offer}=npcQuest(id);let say,extra='';
   if(act){const ok=act.ready();say=ok?'You did it! Is that really for me?':act.ask;extra=`<p class="ab"><b>Quest · ${act.title}.</b> ${act.goal}</p>`+(ok?`<button class="pbtn go" type="button" data-act="turnin" data-q="${act.id}" data-autofocus>Hand it in</button>`:`<p class="muted">Reward: ${act.reward}</p>`);}
@@ -1332,6 +1392,7 @@ function drawBuilding(b){const x=b.x*16,y=b.y*16,w=b.w*16,h=b.h*16,roofH=Math.ro
   fill(ctx,b.trim,x+2,wy,2,wh);fill(ctx,b.trim,x+w-4,wy,2,wh);
   fill(ctx,'#8a6a5a',x+w-20,y-2,6,10);fill(ctx,'#5a4038',x+w-21,y-3,8,2);
   for(let r=0;r<roofH;r++){const inset=Math.round((roofH-r)*w/(roofH*6));fill(ctx,b.roof,x+inset,y+r,w-inset*2,1);if(r%4===2)fill(ctx,'rgba(0,0,0,.14)',x+inset,y+r,w-inset*2,1);}
+  if(SEASON===3)for(let r=0;r<roofH-3;r++){const inset=Math.round((roofH-r)*w/(roofH*6));fill(ctx,r%4===2?'#dce8f0':'#f4f8fb',x+inset,y+r,w-inset*2,1);}
   fill(ctx,'rgba(255,255,255,.25)',x+Math.round(w*.25),y+3,Math.round(w*.2),1);fill(ctx,b.trim,x,wy-3,w,3);
   const dx=b.door*16+2,dy=y+h-15;
   for(let wx=x+8;wx<x+w-14;wx+=18){if(Math.abs(wx-dx)<16)continue;fill(ctx,b.trim,wx-1,wy+5,14,12);fill(ctx,'#9ed8ff',wx,wy+6,12,10);fill(ctx,'#d8f0ff',wx+1,wy+7,4,3);fill(ctx,b.trim,wx+5,wy+6,2,10);}
@@ -1449,6 +1510,15 @@ const FURN={
  wt_pigeon:{name:'Pigeon statue',w:1,h:1,cost:0,tier:3,wt:'found',blurb:'The unofficial mascot of the Square',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#8a8698',x+4,y+9,8,6);fill(g,'#a8a4b8',x+4,y+9,8,1);fill(g,'#8a8698',x+5,y+4,6,5);fill(g,'#6a6680',x+5,y+6,4,2);fill(g,'#7a7690',x+9,y+2,3,3);fill(g,'#1a1424',x+10,y+3,1,1);fill(g,'#f29a3a',x+12,y+3,1,1);fill(g,'#7cc2a8',x+9,y+5,2,1);}},
  wt_books:{name:'Stack of library books',w:1,h:1,cost:0,tier:3,wt:'found',blurb:'Found near the library. Very overdue.',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,12,2);[['#e8553a',3,1],['#5ab4f0',3,2],['#ffd860',2,0],['#6cc24a',3,2],['#b49af4',2,1]].reduce((yy,[c,h2,o])=>{fill(g,c,x+2+o,yy-h2,11-o,h2);fill(g,'#f4f0e6',x+12,yy-h2,1,h2);return yy-h2;},y+14);}},
  wt_muffins:{name:"Bea's berry muffins",w:1,h:1,cost:0,tier:3,wt:'found',blurb:'Still warm, somehow',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+14,14,2);fill(g,'#f4f4f0',x+1,y+11,14,2);for(const a of[2,6,10]){fill(g,'#e8a0b0',x+a,y+8,4,3);fill(g,'#a8643a',x+a-1,y+5,6,3);fill(g,'#6a4cb8',x+a+1,y+6,1,1);fill(g,'#6a4cb8',x+a+3,y+5,1,1);}}},
+ sakura:{name:'Potted cherry blossom',w:1,h:1,cost:0,quest:true,tier:3,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#a8643a',x+4,y+10,8,5);fill(g,'#7a4a2a',x+4,y+14,8,1);fill(g,'#6a4228',x+7,y+4,2,7);shape(g,x,y-6,CANOPY,'#d0648c','#f6a8c4','#ffe0ec');for(let k=0;k<4;k++)fill(g,'#ffffff',x+3+k*3,y-3+(k%2)*3,1,1);}},
+ kite:{name:'Spring kite',w:1,h:1,cost:0,quest:true,tier:3,wall:true,draw(g,x,y){for(let r=0;r<6;r++){fill(g,'#ff7aa8',x+8-r,y+r,r,1);fill(g,'#5ab4f0',x+8,y+r,r,1);fill(g,'#ffd860',x+8-(6-r),y+6+r,6-r,1);fill(g,'#7cf0b8',x+8,y+6+r,6-r,1);}fill(g,'#3a3448',x+8,y+12,1,3);fill(g,'#ff7aa8',x+9,y+13,2,1);fill(g,'#ffd860',x+7,y+15,2,1);}},
+ lemonade:{name:'Lemonade stand',w:1,h:1,cost:0,quest:true,tier:3,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+14,14,2);fill(g,'#c08a52',x+1,y+7,14,7);fill(g,'#a8743e',x+1,y+7,14,1);for(let k=0;k<4;k++)fill(g,k%2?'#fff8e8':'#ffd860',x+1+k*4,y-1,4,3);fill(g,'#8a5a34',x+1,y+2,1,5);fill(g,'#8a5a34',x+14,y+2,1,5);fill(g,'#e2ecff',x+4,y+3,4,4);fill(g,'#ffe27a',x+4,y+5,4,2);fill(g,'#ff9ac0',x+10,y+4,2,3);}},
+ surfboard:{name:'Surfboard',w:1,h:1,cost:0,quest:true,tier:3,wall:true,draw(g,x,y){fill(g,'#5ab4f0',x+5,y,6,15);fill(g,'#5ab4f0',x+6,y-1,4,1);fill(g,'#ffd860',x+7,y,2,15);fill(g,'#ff7aa8',x+5,y+6,6,2);}},
+ harvest:{name:'Harvest basket',w:1,h:1,cost:0,quest:true,tier:3,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,12,2);fill(g,'#c89a5a',x+2,y+8,12,6);for(let k=0;k<12;k+=3)fill(g,'#a8743e',x+2+k,y+8,1,6);fill(g,'#a8743e',x+3,y+2,1,6);fill(g,'#a8743e',x+12,y+2,1,6);fill(g,'#a8743e',x+3,y+2,10,1);fill(g,'#e8553a',x+4,y+5,3,3);fill(g,'#f29a3a',x+7,y+4,4,4);fill(g,'#6cc24a',x+8,y+3,1,1);fill(g,'#ffd860',x+10,y+6,2,2);}},
+ leafpile:{name:'Leaf pile',w:1,h:1,cost:0,quest:true,tier:3,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+14,14,2);[[2,10,12,'#b8481e'],[3,7,10,'#d8742a'],[5,5,6,'#f2b040']].forEach(([a,b,w2,c])=>fill(g,c,x+a,y+b,w2,15-b));for(let k=0;k<6;k++)fill(g,['#7a3014','#f2b040','#d8742a'][k%3],x+3+((k*5)%10),y+6+((k*3)%7),2,1);}},
+ twinkletree:{name:'Twinkle tree',w:1,h:1,cost:0,quest:true,tier:3,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#a8643a',x+6,y+11,4,4);shape(g,x,y-4,PINEC,'#173038','#24505a','#4a8a94');fill(g,'#ffd860',x+7,y-5,2,2);
+   for(let k=0;k<6;k++){const on=((time*3|0)+k)%3;fill(g,['#ff3030','#ffd860','#5ab4f0'][(k+on)%3],x+3+((k*5)%10),y+((k*7)%9),1,1);}}},
+ snowplush:{name:'Snowman plush',w:1,h:1,cost:0,quest:true,tier:3,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#f4f8fb',x+3,y+8,10,7);fill(g,'#f4f8fb',x+5,y+3,6,6);fill(g,'#1a1424',x+6,y+5,1,1);fill(g,'#1a1424',x+9,y+5,1,1);fill(g,'#f29a3a',x+7,y+6,2,1);fill(g,'#5ab4f0',x+4,y+8,8,2);fill(g,'#ff7aa8',x+4,y+2,8,2);fill(g,'#ffffff',x+7,y+1,2,1);}},
  snowglobe:{name:'Watertown snow globe',w:1,h:1,cost:0,quest:true,tier:4,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#6a4228',x+3,y+11,10,4);fill(g,'#c89a3a',x+3,y+11,10,1);
    fill(g,'#bfe6ff',x+3,y+1,10,10);fill(g,'#bfe6ff',x+2,y+3,12,6);fill(g,'#f4f4f0',x+3,y+9,10,2);fill(g,'#c8503c',x+5,y+6,3,3);fill(g,'#5a6a8a',x+9,y+5,2,4);fill(g,'#a8503c',x+7,y+3,2,6);fill(g,'#ffd860',x+7,y+3,2,1);
    const f=(time*2|0)%3;fill(g,'#ffffff',x+4+f,y+2+f,1,1);fill(g,'#ffffff',x+10-f,y+4+f,1,1);fill(g,'#ffffff',x+6,y+5-f+2,1,1);fill(g,'rgba(255,255,255,.5)',x+4,y+2,2,1);}},
@@ -1525,7 +1595,7 @@ function furnCanvas(f){const Fu=FURN[f],c=document.createElement('canvas');c.wid
 function drawFurn(it){const Fu=FURN[it.f];if(Fu)Fu.draw(ctx,it.i*16,it.j*16);}
 function rest(remote){if(G('rest',{})){sleepFx=2.4;sfx('pet');toast('What a cozy nap!');return;}const now=Date.now();if(now-(state.restAt||0)<90000){toast("You're not sleepy yet. Come back in a little while.");return;}state.restAt=now;if(!remote)sleepFx=2.4;
   const boost=15+Math.min(45,Math.floor(coziness()/4));let n=0;for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c){c.happy=Math.min(100,c.happy+boost);n++;}}
-  toast(`What a cozy nap! ${n} creature${n===1?'':'s'} feel happier too (+${boost}).`);sfx('pet');save();}
+  toast(`What a cozy nap! ${n} creature${n===1?'':'s'} feel happier too (+${boost}).`);sfx('pet');sleepToMorning();save();}
 function useFurn(u,it){if(u==='bed')rest();else if(u==='piano')playPiano(it);
   else if(u==='arcade'){ensureAudio();if(AC&&!muted){let t=AC.currentTime+.02;for(const n of[72,76,79,84,79,84,88]){const o=AC.createOscillator(),gn=AC.createGain();o.type='square';o.frequency.value=mtof(n);gn.gain.setValueAtTime(.04,t);gn.gain.exponentialRampToValueAtTime(.0001,t+.09);o.connect(gn).connect(AC.destination);o.start(t);o.stop(t+.1);t+=.08;}}
     const sc=(1000+((R()*98)|0)*100);toast(sc>state.hiscore||!state.hiscore?`NEW HIGH SCORE: ${sc.toLocaleString()}!`:`Score: ${sc.toLocaleString()} · best ${state.hiscore.toLocaleString()}`);if(!state.hiscore||sc>state.hiscore)state.hiscore=sc;sparks((it.i+.5)*16,it.j*16-8,8,'#7cf0b8');}
@@ -1566,9 +1636,9 @@ function returnHome(){
 }
 function spawnWildCr(first,minRar=0){
   const zk=wild.zone,le=lureEl(),lucky=has('lucky')||wild.clover;const cands=[];let tot=0;
-  for(const k in SPECIES){const S=SPECIES[k];if(S.zone!==zk||S.rar<minRar)continue;if(S.needs&&S.needs!==le)continue;
+  for(const k in SPECIES){const S=SPECIES[k];if((S.zones?!S.zones.includes(zk):S.zone!==zk)||S.rar<minRar)continue;if(S.season!=null&&S.season!==SEASON)continue;if(S.needs&&S.needs!==le)continue;
     if((S.rar===3||S.huge)&&wild.crs.some(c=>SPECIES[c.sp].rar===3||SPECIES[c.sp].huge))continue;if(S.swim&&!wild.water.length)continue;
-    let w=RAR[S.rar].w;if(le&&S.el===le)w*=3;if(lucky&&S.rar>=2)w*=3;if(S.needs)w*=2.2;if((state.dex[k]||0)<2)w*=1.4;cands.push([k,w]);tot+=w;}
+    let w=RAR[S.rar].w;if(le&&S.el===le)w*=3;if(lucky&&S.rar>=2)w*=3;if(S.needs)w*=2.2;if((state.dex[k]||0)<2)w*=1.4;if(S.season!=null)w*=1.2;cands.push([k,w]);tot+=w;}
   if(!cands.length)return;let r=R()*tot,k=cands[0][0];for(const[kk,w]of cands){if((r-=w)<=0){k=kk;break;}}
   const S=SPECIES[k],pool=S.swim?wild.water:wild.reach;
   for(let t=0;t<50;t++){const idx=pool[(R()*pool.length)|0],x=(idx%wild.W.w)*16+8,y=((idx/wild.W.w)|0)*16+12,d=Math.hypot(x-player.x,y-player.y);
@@ -1770,7 +1840,7 @@ function rumor(){const d=state.dex,u=state.unlocked,q=state.quests;
   if(d.skyhorn!==2)return'Rumor: a thunder giant on the plains follows only things that glow.';
   return'Every creature in the journal has been befriended. The sanctuary is legendary!';}
 function boardPanel(){
-  const render=()=>{const rk=sanctRank();return`${head('Ranger board')}<p class="ab"><b>${rankStars(rk)} ${rankLabel(rk)}</b>${rk<5?`<br><small class="muted">Next rank: ${reqText(RANKS[rk+1].req)}. Each rank brings fancier things to every shop.</small>`:'<br><small class="muted">The highest rank there is!</small>'}</p><p class="ab"><b>${rumor()}</b></p>
+  const render=()=>{const rk=sanctRank();return`${head('Ranger board')}${seasonBlock()}<p class="ab"><b>${rankStars(rk)} ${rankLabel(rk)}</b>${rk<5?`<br><small class="muted">Next rank: ${reqText(RANKS[rk+1].req)}. Each rank brings fancier things to every shop.</small>`:'<br><small class="muted">The highest rank there is!</small>'}</p><p class="ab"><b>${rumor()}</b></p>
     <h3>Supplies</h3><div class="list"><button class="pbtn" type="button" data-act="berries" ${state.coins<15?'disabled':''}>${`<img class="spr sm" src="${sprURL('berry4',SM.berry,8)}" alt="">`}<span class="grow"><b>5 berries</b><small>Feed creatures to keep them happy</small></span><span class="cost">15</span></button></div>
     <h3>Maps</h3><div class="list">${Object.keys(ZONES).filter(z=>ZONES[z].cost).map(z=>{const Z=ZONES[z],ok=state.unlocked[z];
       return`<button class="pbtn" type="button" data-act="unlock" data-z="${z}" ${ok||state.coins<Z.cost?'disabled':''}><span class="grow"><b>${Z.name}</b><small>${ok?'Unlocked':Z.blurb}</small></span><span class="cost">${ok?'✓':Z.cost}</span></button>`;}).join('')}</div>
@@ -1793,7 +1863,7 @@ function journalPanel(){const render=()=>{const ks=Object.keys(SPECIES),got=ks.f
   const rk=sanctRank();return head(`Field journal · ${got}/${ks.length}`)+`<p class="ab"><b>${rankStars(rk)} ${rankLabel(rk)}</b>${rk<5?`<br><small class="muted">Next: ${reqText(RANKS[rk+1].req)}</small>`:''}</p>`+quests+(bag?`<p class="muted" style="font-size:14px">Bag: ${bag}</p>`:'')+`<h3>Creatures</h3><div class="dex">${ks.map(k=>{const S=SPECIES[k],st=state.dex[k]||0,n=state.owned.filter(c=>c.sp===k).length;
     if(st===2)return`<div><div class="top">${img(k,'spr sm')}<div><b>${S.name}</b><br><small>${n} in the sanctuary${S.huge?' · giant':''}</small></div></div>${tags(S)}<small><b style="color:var(--gold)">${S.abName}.</b> ${S.abText}</small><small>${S.desc}</small></div>`;
     return`<div><div class="top"><img class="spr sm" src="${sprURL('sil-'+k,SIL[k])}" alt=""><div><b>${st?S.name:'???'}</b><br><small>${st?'Seen, not befriended':'Not yet seen'}</small></div></div>
-      <small>Lives in ${ZONES[S.zone].hidden&&!state.unlocked[S.zone]?'a secret place…':ZONES[S.zone].name}. ${RAR[S.rar].name}${S.huge?', giant':''}.${S.needs?` ${NEED_HINT[S.needs]}`:''}</small></div>`;}).join('')}</div>`;};openPanel(render,()=>{});}
+      <small>Lives in ${ZONES[S.zone].hidden&&!state.unlocked[S.zone]?'a secret place…':ZONES[S.zone].name}.${S.season!=null?` ${SEAS[S.season].icon} ${SEAS[S.season].name} only.`:''} ${RAR[S.rar].name}${S.huge?', giant':''}.${S.needs?` ${NEED_HINT[S.needs]}`:''}</small></div>`;}).join('')}</div>`;};openPanel(render,()=>{});}
 
 /* ================= DRAWING ================= */
 function snapCam(){camX=player.x-VW/2;camY=player.y-8-VH/2;clampCam();}
@@ -1867,6 +1937,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;fi
   if(partnerHere()){const pv=NET.pv;L.push({y:pv.y,d:drawPartner});if(NET.partner.c&&SPECIES[NET.partner.c]&&NET.pc)L.push({y:NET.pc.y,d:()=>drawCr(NET.partner.c,NET.pc.x,NET.pc.y,NET.pc.f,!!NET.partner.m,false)});}
   L.push({y:player.y,d:drawPlayer});L.sort((a,b)=>a.y-b.y);for(const o of L)o.d();drawParts();if(buildMode)drawBuildOverlay();ctx.restore();
   if(scene==='wild'){const Z=ZONES[wild.zone];if(Z.dark)drawDark(cx,cy);if(Z.tint)fill(ctx,Z.tint,0,0,VW,VH);}
+  if(seasonOutdoor()&&SEAS[SEASON].tint)fill(ctx,SEAS[SEASON].tint,0,0,VW,VH);
   ctx.save();ctx.translate(-cx,-cy);drawAmbient();ctx.restore();
   if(wtPlane&&scene==='wild')drawPlane();
   if(partnerHere())drawPartnerArrow(cx,cy);
@@ -1920,7 +1991,7 @@ let lastTouchEnd=0;document.addEventListener('touchend',e=>{const now=Date.now()
    anywhere else (GitHub Pages) it falls back to PeerJS (WebRTC). */
 let NET={role:null,mode:null,code:null,r:null,roomApi:undefined,peer:null,conn:null,partner:null,partnerId:null,pv:null,pc:null,lastSnap:'',snapT:0,posT:0,wT:0,rx:{},solo:null,lastPos:0,gotState:false};
 let crSeq=0;
-const SHARED=['pipSeen','hiscore','coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
+const SHARED=['cal','qBase','pipSeen','hiscore','coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
 const PJ_URL='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function myName(){let n='';try{n=localStorage.getItem('as-name')||'';}catch(e){}return n||'Friend';}
@@ -2221,7 +2292,7 @@ $('#tYes').addEventListener('click',()=>{state=defaultState();penMot={};visitors
 
 let last=performance.now();
 function update(dt){
-  simHome(dt);if(catchG)updCatch(dt);
+  simHome(dt);if(catchG)updCatch(dt);tickCal(dt);if(state.cal&&state.cal.season!==SEASON)applySeason(true);
   const frozen=titleOpen||panelOpen||!!catchG||buildMode;let ix=0,iy=0;
   if(!titleOpen&&!panelOpen){if(keys.has('L'))ix--;if(keys.has('R'))ix++;if(keys.has('U'))iy--;if(keys.has('D'))iy++;ix=clamp(ix+padDir.x,-1,1);iy=clamp(iy+padDir.y,-1,1);}
   if(buildMode){if(ix||iy){bmRep-=dt;if(bmRep<=0){const[tw,th]=toolSize(toolDef(tool)),mi=Math.max(1,world.w-1-tw),mj=Math.max(1,world.h-1-th);cur.i=clamp(cur.i+ix,1,mi);cur.j=clamp(cur.j+iy,1,mj);bmRep=bmRep<-1?.09:.2;keepCurVisible();}}else bmRep=0;ix=iy=0;}
@@ -2246,9 +2317,10 @@ const btnBuild=$('#btnBuild');btnBuild.addEventListener('click',()=>{ensureAudio
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;update(dt);if(titleOpen)drawSplash(dt);else draw();requestAnimationFrame(frame);}
 
 $('#gameovClose').addEventListener('click',closeGame);
+$('#seasonChip').addEventListener('click',()=>{const c=calOf();toast(`${SEAS[c.season].icon} ${SEAS[c.season].name}, day ${c.day} of ${SEASON_DAYS} (year ${c.year}). Each season lasts ${SEASON_DAYS} days. Nap in your bed to skip to morning.`);});
 function boot(data){
   const saved=load();state=migrate(data&&data.state)||saved||defaultState();if(!state.zoo)state=saved||defaultState();state.owned.forEach(c=>c.away=false);
-  grantTrophies(true);buildZoo();buildTown();buildHome();buildArcade();world=zooWorld;scene='zoo';player.x=208;player.y=40;snapCam();
+  calOf();SEASON=state.cal.season;grantTrophies(true);buildZoo();buildTown();buildHome();buildArcade();world=zooWorld;scene='zoo';player.x=208;player.y=40;snapCam();
   if(saved){$('#tStart').textContent='Continue';$('#tNew').hidden=false;}
   for(let k=0;k<300;k++)simHome(.1);
   resize();splashResize();requestAnimationFrame(t=>{last=t;frame(t);});

@@ -140,6 +140,13 @@ details .row{margin-top:8px}
 #gameov .bezel{flex:1;min-height:0;margin:0 22px;padding:clamp(6px,1.6vw,16px);background:linear-gradient(180deg,#0e0a1c,#1d1636);box-shadow:inset 0 0 0 2px #000,inset 0 6px 14px rgba(0,0,0,.7)}
 #gameov .screen{position:relative;height:100%;border-radius:22px/16px;overflow:hidden;background:#000;box-shadow:0 0 0 3px #000,0 0 22px color-mix(in srgb,var(--cab) 30%,transparent);animation:crton .45s ease-out}
 #gameov iframe{display:block;width:100%;height:100%;border:0;background:#000}
+#gameov.deep .bezel{padding:calc(clamp(4px,1.6vw,16px) + var(--d,1)*1.1vmin)}
+#gameov.deep .screen{border-radius:calc(22px + var(--d,1)*7px)/calc(16px + var(--d,1)*6px)}
+#gameov.deep iframe{filter:hue-rotate(calc(var(--d,1)*16deg)) saturate(calc(1 + var(--d,1)*.07)) contrast(calc(1 + var(--d,1)*.02))}
+#gameov.deep .crt::after{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(ellipse at center,transparent calc(62% - var(--d,1)*3%),rgba(20,0,40,.95) 100%);opacity:calc(.25 + var(--d,1)*.07)}
+#gameov.deep .marquee span{animation:mflick 6s steps(1) infinite,deepglow 2.4s ease-in-out infinite}
+@keyframes deepglow{50%{letter-spacing:.12em}}
+#depthChip{background:linear-gradient(#3a2a6a,#241a48)!important;color:#ffd860}
 #gameov .crt{position:absolute;inset:0;pointer-events:none;border-radius:inherit;
   background:linear-gradient(135deg,rgba(255,255,255,.07) 0%,transparent 35%),
     radial-gradient(ellipse at center,transparent 58%,rgba(0,0,0,.35) 82%,rgba(0,0,0,.7) 100%),
@@ -156,6 +163,9 @@ details .row{margin-top:8px}
 #gameov .cpanel button:active{transform:translateY(2px);box-shadow:0 1px 0 #a8742a}
 @media (max-width:560px){#gameov .cab{background:linear-gradient(90deg,var(--cab) 0,var(--cab) 6px,#15102a 6px,#15102a calc(100% - 6px),var(--cab) calc(100% - 6px))}
   #gameov .marquee,#gameov .bezel,#gameov .cpanel{margin-left:6px;margin-right:6px}#gameov .stick,#gameov .pbtns,#gameov .cpanel a{display:none}}
+@media (max-height:560px){#gameov{padding:1vmin}#gameov .marquee{margin:1vmin 2vmin 0;padding:.8vmin 1vmin}#gameov .marquee span{font-size:max(6px,4.4vmin)}#gameov .bezel{margin:0 2vmin}
+  #gameov .cpanel{margin:0 2vmin 1vmin;padding:.6vmin 1vmin;gap:1vmin}#gameov .cpanel button{font-size:max(6px,3.2vmin);padding:.8vmin 1.4vmin;box-shadow:none}#gameov .stick,#gameov .pbtns,#gameov .cpanel a{display:none}
+  #gameov.deep .bezel{padding:calc(.8vmin + var(--d,1)*.7vmin)}#gameov .cab{background:linear-gradient(90deg,var(--cab) 0,var(--cab) 1.2vmin,#15102a 1.2vmin,#15102a calc(100% - 1.2vmin),var(--cab) calc(100% - 1.2vmin))}}
 @media (prefers-reduced-motion:reduce){#gameov .screen,#gameov .marquee span{animation:none}}
 .gatesign{position:absolute;left:0;right:0;top:4%;z-index:1;text-align:center;font:700 clamp(18px,6vw,30px)/1 var(--f-display);letter-spacing:.08em;color:var(--gold);
   text-shadow:0 3px 0 #8a4a10,0 6px 0 #2a1030,0 0 18px #ffd25a77;pointer-events:none;display:none}
@@ -254,6 +264,7 @@ details .row{margin-top:8px}
   <header id="hud">
     <span class="chip" title="Coins"><img id="icCoin" alt=""><span id="coins">0</span></span>
     <span class="chip" title="Berries"><img id="icBerry" alt=""><span id="berries">0</span></span>
+    <span class="chip" id="depthChip" hidden title="How many games deep you are"><small id="depthTxt"></small></span>
     <span class="chip" id="seasonChip" title="Season" role="button" tabindex="0"><small id="seasonTxt"></small></span>
     <span class="chip" id="compChip" hidden><img id="icComp" alt=""><small id="compName"></small></span>
     <span class="spacer"></span>
@@ -305,6 +316,7 @@ details .row{margin-top:8px}
 <script>
 (()=>{
 'use strict';
+const DEPTH=Math.max(0,Math.min(99,+(window.__AS_DEPTH||0)||0));let SELF_HTML='';try{SELF_HTML='<!doctype html>\n'+document.documentElement.outerHTML.replace(new RegExp('<scr'+'ipt id="asdepth">[\\s\\S]*?</scr'+'ipt>','g'),'');}catch(e){}
 const $=s=>document.querySelector(s);
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const R=Math.random;
@@ -467,7 +479,7 @@ function migrate(s){if(!s)return s;
   if(s.v===2){s.v=3;s.zoo.w=s.zoo.w||26;s.pens.forEach(p=>{p.w=6;p.h=4;p.size='std';});s.home=defaultHome();s.inv=starterInv();s.unlocks={};s.quests={};
     s.unlocked.lake=false;s.unlocked.plains=false;s.newTown=true;}
   return s;}
-function save(){if(NET.role==='guest')return;try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function save(){if(NET.role==='guest'||DEPTH>0)return;try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 function load(){try{const s=migrate(JSON.parse(localStorage.getItem(KEY)));if(s&&s.v===3)return s;}catch(e){}return null;}
 
 let state,scene='zoo',world=null,zooWorld=null,townWorld=null,homeWorld=null,wild=null,companion=null;
@@ -881,13 +893,19 @@ function drawCabinet(c){const x=c.i*16+1,y=18,t=(time*3|0)%4,sx=x+3,sy=y+8;
   fill(ctx,'#3a3448',x+1,y+17,12,4);fill(ctx,'#e8553a',x+3,y+18,2,2);fill(ctx,'#ffd860',x+8,y+18,2,1);fill(ctx,'#5ab4f0',x+10,y+18,2,1);
   fill(ctx,'rgba(0,0,0,.25)',x+2,y+22,10,6);fill(ctx,'#ffd860',x+6,y+24,2,2);}
 function cabPanel(c){openPanel(()=>head(c.name)+`<p class="ab">${c.desc}</p>${c.by?`<p class="muted">${c.by}</p>`:''}`+
-  (c.url?`<button class="pbtn go" type="button" data-act="play" data-autofocus>▶ Insert coin and play</button><p class="muted" style="font-size:13px">Free play! Opens ${c.url.replace('https://','')}</p>`:`<button class="pbtn go" type="button" data-act="self" data-autofocus>▶ Play</button>`),
-  a=>{if(a==='play'){closePanel();playExternal(c);}else if(a==='self'){closePanel();sparks(player.x,player.y-20,24,'#f6a8c4');sfx('unlock');toast('Whoa… a game inside a game inside a game!');}});}
+  (c.url?`<button class="pbtn go" type="button" data-act="play" data-autofocus>▶ Insert coin and play</button><p class="muted" style="font-size:13px">Free play! Opens ${c.url.replace('https://','')}</p>`:`<button class="pbtn go" type="button" data-act="self" data-autofocus>▶ Play (go one game deeper)</button><p class="muted" style="font-size:13px">${DEPTH?`You are already ${DEPTH} game${DEPTH>1?'s':''} deep.`:'A real copy of this game, inside this game.'} Nothing you do in there is saved.</p>`),
+  a=>{if(a==='play'){closePanel();playExternal(c);}else if(a==='self'){closePanel();playSelf();}});}
 function musicDuck(on){if(!AC||!mus.out)return;const t=AC.currentTime;mus.out.gain.cancelScheduledValues(t);mus.out.gain.setTargetAtTime(on||!musicOn?0:.75,t,.2);}
-function playExternal(c){sfx('treasure');const pages=/github\.io$/.test(location.hostname)||location.protocol==='file:';
+const MAX_DEPTH=12;
+function playSelf(){if(DEPTH+1>MAX_DEPTH||!SELF_HTML){toast(`The cabinet is too dizzy! You're already ${DEPTH} games deep. Even video games need a floor.`);sfx('miss');return;}
+  const d=DEPTH+1,ov=$('#gameov'),fr=$('#gameframe');sfx('treasure');gameOpen=true;ov.style.setProperty('--cab','#f6a8c4');ov.style.setProperty('--d',String(d));ov.classList.add('deep');
+  const scr=$('#gameov .screen');scr.style.animation='none';void scr.offsetWidth;scr.style.animation='';
+  $('#gameovName').textContent=`Animal Sanctuary · Level ${d}`;$('#gameovTab').hidden=true;fr.removeAttribute('src');
+  fr.srcdoc=SELF_HTML.replace('<head>','<head><scr'+'ipt id="asdepth">window.__AS_DEPTH='+d+'</scr'+'ipt>');ov.hidden=false;musicDuck(true);keys.clear();}
+function playExternal(c){$('#gameov').classList.remove('deep');$('#gameov').style.setProperty('--d','1');$('#gameovTab').hidden=false;sfx('treasure');const pages=/github\.io$/.test(location.hostname)||location.protocol==='file:';
   if(!pages){let w=null;try{w=window.open(c.url,'_blank','noopener');}catch(e){}toast(w!==null?`${c.name} opened in a new tab. Come back any time!`:`Play ${c.name} at ${c.url.replace('https://','')}`);return;}
   gameOpen=true;$('#gameov').style.setProperty('--cab',c.col);const scr=$('#gameov .screen');scr.style.animation='none';void scr.offsetWidth;scr.style.animation='';$('#gameframe').src=c.url;$('#gameovName').textContent=c.name;$('#gameovTab').href=c.url;$('#gameov').hidden=false;musicDuck(true);keys.clear();}
-function closeGame(){if(!gameOpen)return;gameOpen=false;$('#gameov').hidden=true;$('#gameframe').src='about:blank';musicDuck(false);}
+function closeGame(){if(!gameOpen)return;gameOpen=false;$('#gameov').hidden=true;$('#gameframe').removeAttribute('srcdoc');$('#gameframe').src='about:blank';musicDuck(false);}
 /* ================= COLLISION ================= */
 function solidAt(px,py){const i=Math.floor(px/16),j=Math.floor(py/16);if(i<0||j<0||i>=world.w||j>=world.h)return 1;return world.solid[j*world.w+i];}
 function blocked(x,y,hw,hh,lava){for(const[a,b]of[[x-hw,y-hh],[x+hw-.01,y-hh],[x-hw,y-.01],[x+hw-.01,y-.01]]){const s=solidAt(a,b);if(s===1||(s===2&&!lava))return true;}return false;}
@@ -2443,7 +2461,7 @@ function drawSplash(dt){SPL.at+=dt;const gated=SPL.phase==='gate'||SPL.phase==='
 function splashBurst(x,y){for(let k=0;k<26;k++){const a=-Math.PI/2+(R()-.5)*1.6,v=40+R()*70;SPL.fx.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:160,life:.9+R()*.4,col:R()<.5?'#bfe6ff':'#ffffff',big:R()<.3});}}
 
 /* ================= TITLE & LOOP ================= */
-function startGame(){if(!titleOpen)return;if(SPL.phase==='opening')return;if(SPL.phase!=='ready'){skipIntro();return;}titleOpen=false;titleEl.hidden=true;ensureAudio();sfx('unlock');save();
+function startGame(){if(!titleOpen)return;if(DEPTH>0&&SPL.phase==='ready')setTimeout(()=>{toast(depthLine());toast('Nothing here is saved. It is a dream of a game.');},600);if(SPL.phase==='opening')return;if(SPL.phase!=='ready'){skipIntro();return;}titleOpen=false;titleEl.hidden=true;ensureAudio();sfx('unlock');save();
   if(!state.tutDone){tutShow();return;}
   if(state.newTown){delete state.newTown;toast('New! Walk out the bottom entrance to explore Willowbrook town: shops, quests, your own cottage, and new wild places with GIANT creatures.');save();}
   if(state.newBuild){delete state.newBuild;toast('New! Tap Build at the top to design your sanctuary: habitats, paths, flowers and more.');toast('Visitors now follow your paths, so connect every habitat to one.');save();}
@@ -2513,9 +2531,12 @@ function update(dt){
   netTick(dt);tutTick();updHint();updHUD();
   if(!titleOpen&&NET.role!=='guest'&&(time%3)<dt){const pt=sanctRank();if(pt>(state.pipSeen||1)){state.pipSeen=pt;playFanfare();sparks(player.x,player.y-20,30,'#ffd860');toast(`SANCTUARY RANK UP! ${rankStars(pt)} You're a ${RANKS[pt].name} now!`);toast('Brand-new things just arrived in every shop in Willowbrook!');save();}}saveT-=dt;if(saveT<=0){saveT=4;if(!titleOpen)save();}}
 const btnBuild=$('#btnBuild');btnBuild.addEventListener('click',()=>{ensureAudio();if(buildMode)closeBuild();else openBuild();});
-function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;update(dt);if(titleOpen)drawSplash(dt);else draw();requestAnimationFrame(frame);}
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(gameOpen){requestAnimationFrame(frame);return;}time+=dt;update(dt);if(titleOpen)drawSplash(dt);else draw();requestAnimationFrame(frame);}
 
 $('#gameovClose').addEventListener('click',closeGame);
+if(DEPTH>0){$('#depthChip').hidden=false;$('#depthTxt').textContent=`🌀 ×${DEPTH}`;$('#btnCoop').hidden=true;$('.gatesign').textContent=`Animal Sanctuary · Level ${DEPTH}`;
+  $('#depthChip').addEventListener('click',()=>toast(depthLine()));}
+function depthLine(){return({1:"You're playing Animal Sanctuary inside Animal Sanctuary!",2:'Two games deep. You are a character playing a game about a character playing a game.',3:'Three games deep! Is that your sanctuary? Is any of this real?',5:'Five games deep. Remember to blink.',7:'Seven! Somewhere far, far above you, the real you is holding a real tablet.',10:'TEN GAMES DEEP. This is the deepest anyone has ever gone. Probably.',12:'Twelve. This is the bottom. Even the cabinet in here is too dizzy to play.'})[DEPTH]||`${DEPTH} games deep. It's games all the way down.`;}
 $('#seasonChip').addEventListener('click',()=>{const c=calOf();toast(`${SEAS[c.season].icon} ${SEAS[c.season].name}, day ${c.day} of ${SEASON_DAYS} (year ${c.year}). Each season lasts ${SEASON_DAYS} days. Nap in your bed to skip to morning.`);});
 function boot(data){
   const saved=load();state=migrate(data&&data.state)||saved||defaultState();if(!state.zoo)state=saved||defaultState();state.owned.forEach(c=>c.away=false);

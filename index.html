@@ -213,6 +213,7 @@ details .row{margin-top:8px}
 .tool[aria-pressed="true"]{background:#5a3fb0;border-color:var(--gold)}
 .tool.locked{opacity:.5}
 .say{margin:0;font-size:15px;line-height:1.35}
+.letter{white-space:pre-line;background:#fff8e8;color:#3a2a2a;border-radius:10px;padding:14px 16px;font:italic 16px/1.5 Georgia,'Times New Roman',serif;box-shadow:inset 0 0 0 2px #e8d8b8;margin:8px 0}
 .qrow{display:flex;flex-direction:column;gap:2px;padding:6px 8px;background:#0a0d3366;border:1px solid #6a74c8;border-radius:4px}
 .qrow small{color:var(--muted)}
 .qrow.ok{border-color:var(--good)}
@@ -540,7 +541,9 @@ function applySeason(announce){const prev=SEASON;SEASON=calOf().season;if(buildM
   if(prev===3&&SEASON===0&&NET.role!=='guest'){let n=0;for(const k in state.zoo.deco)if(state.zoo.deco[k]==='snowman'){delete state.zoo.deco[k];n++;}if(n&&announce)toast(`Your ${n} snowm${n>1?'en':'an'} melted into puddles. Goodbye, friends!`);}
   buildZoo();buildTown();if(scene==='zoo')world=zooWorld;else if(scene==='town')world=townWorld;
   if(wild&&wild.W){if(wild.W.chunks)wild.W.chunks.clear();else renderMap(wild.W);}if(WTW)WTW.chunks.clear();
-  if(announce){const S=SEAS[SEASON];toast(`${S.icon} ${S.name} has arrived!`);toast(`New ${S.name.toLowerCase()} creatures are out in the wilds, and the townsfolk have ${S.name.toLowerCase()} quests.`);sfx('unlock');}}
+  const popDied=announce&&NET.role!=='guest'&&popSeason();
+  if(announce&&popDied){toast(`${SEAS[SEASON].icon} ${SEAS[SEASON].name} has come.`);}
+  else if(announce){const S=SEAS[SEASON];toast(`${S.icon} ${S.name} has arrived!`);toast(`New ${S.name.toLowerCase()} creatures are out in the wilds, and the townsfolk have ${S.name.toLowerCase()} quests.`);sfx('unlock');}}
 function sleepToMorning(){const c=calOf();nextDay();toast(`Good morning! ${SEAS[c.season].icon} ${SEAS[c.season].name}, day ${c.day}.`);}
 function seasonBlock(){const c=calOf(),S=SEAS[c.season],sp=Object.keys(SPECIES).filter(k=>SPECIES[k].season===c.season).map(k=>SPECIES[k].name),qs=QUESTS.filter(q=>q.season===c.season&&state.quests[q.id]!=='done').length;
   return`<p class="ab">${S.icon} <b>${S.name}</b> · day ${c.day} of ${SEASON_DAYS} · year ${c.year}<br><small class="muted">In season: ${sp.join(' and ')}.${qs?` ${qs} ${S.name.toLowerCase()} quest${qs>1?'s':''} in Willowbrook.`:''} Nap in your cottage bed to skip to the next morning.</small></p>`;}
@@ -935,6 +938,7 @@ const MUSIC={
    pad:{vol:.016,type:'square',cut:1600,oct:0,att:.05},bass:{pat:[0,4,8,12],vol:.09,oct:-1,octJump:true},
    mel:{inst:'pluck',dens:.6,oct:1,vol:.075},arp:{inst:'musicbox',kind:'up',vol:.025,oct:2},shaker:.012,kick:.15,spark:0},
 };
+MUSIC.memorial={name:'For Pop',bpm:56,root:50,mode:MAJ,prog:[0,5,3,4],bpc:2,swing:0,wet:.7,pad:{vol:.035,type:'triangle',cut:900,oct:0,att:2},bass:{pat:[0],vol:.055,oct:-1,long:true},mel:{inst:'musicbox',dens:.22,oct:1,vol:.05},arp:null,shaker:0,kick:0,spark:.1};
 MUSIC.homeSu={...MUSIC.home,name:'Summer Sanctuary',bpm:94,root:55,mel:{...MUSIC.home.mel,inst:'marimba'},shaker:.014};
 MUSIC.homeFa={...MUSIC.home,name:'Harvest Sanctuary',bpm:72,root:50,mode:AEO,prog:[0,5,3,4],mel:{...MUSIC.home.mel,inst:'pluck',dens:.36}};
 MUSIC.homeWi={...MUSIC.home,name:'Snowy Sanctuary',bpm:64,root:52,wet:.6,mel:{inst:'celesta',dens:.3,oct:1,vol:.06},arp:{inst:'musicbox',kind:'rand',vol:.022,oct:2,prob:.25},shaker:0};
@@ -980,7 +984,7 @@ function genMotif(v){const m=v.mel,a=new Array(16).fill(null);let d=m.oct*7+[0,2
   for(let s=0;s<16;s+=2){const strong=s%8===0;if(R()<(strong?m.dens+.3:m.dens)){d+=[-2,-1,-1,0,1,1,2,3][(R()*8)|0];d=clamp(d,m.oct*7-2,m.oct*7+7);const len=R()<.3?4:2;a[s]={d,len,strong};if(len===4)s+=2;}}
   return a;}
 function newMotifs(v){mus.motif=genMotif(v);mus.motifV=mus.motif.map((n,s)=>n&&s>=10&&R()<.6?{...n,d:n.d+(R()<.5?1:-1)}:n);mus.motifB=genMotif(v);}
-const vibeFor=()=>titleOpen?'title':scene==='wild'&&wild?wild.zone:scene==='arcade'?'arcade':scene==='town'?'town':scene==='home'?'cottage':'home'+['','Su','Fa','Wi'][SEASON];
+const vibeFor=()=>titleOpen?'title':(scene==='town'||scene==='zoo')&&popMourning()?'memorial':scene==='wild'&&wild?wild.zone:scene==='arcade'?'arcade':scene==='town'?'town':scene==='home'?'cottage':'home'+['','Su','Fa','Wi'][SEASON];
 function switchVibe(k){const t=AC.currentTime;
   if(mus.vibe){const ob=mus.buses[mus.vibe].gain;ob.cancelScheduledValues(t);ob.setValueAtTime(ob.value,t);ob.linearRampToValueAtTime(0,t+1.6);}
   const nb=mus.buses[k].gain;nb.cancelScheduledValues(t);nb.setValueAtTime(0,t);nb.linearRampToValueAtTime(MV,t+2.2);
@@ -1206,6 +1210,7 @@ const BUILDINGS=[
  {id:'bakery',name:"Rosa's Bakery",x:26,y:25,w:6,h:6,door:28,wall:'#fff0e0',roof:'#e8a0b0',trim:'#a85a6a',icon:'bread',awn:'#f6a8c4'},
  {id:'goods',name:"Pip's Home Goods",x:34,y:25,w:6,h:6,door:36,wall:'#e0e8f4',roof:'#5aa0b0',trim:'#2a6070',icon:'chair'},
  {id:'arcade',name:'Pixel Palace Arcade',x:15,y:25,w:6,h:6,door:17,wall:'#3a2e5a',roof:'#e8553a',trim:'#ff5ab4',icon:'joy',awn:'#5af0ff'},
+ {id:'pop',name:"Pop & Gran's house",x:3,y:17,w:5,h:5,door:5,wall:'#efe4d0',roof:'#7a6a5a',trim:'#5a4a3a',icon:'heart'},
  {id:'cottage',name:'Your cottage',x:3,y:3,w:6,h:5,door:5,wall:'#f8ecd8',roof:'#b49af4',trim:'#6a4cb8',icon:'heart'},
 ];
 const TRAILS=[{zone:'meadow',x:46*16+8,y:18*16+4},{zone:'woods',x:46*16+8,y:5*16+4},{zone:'peaks',x:46*16+8,y:32*16+4},{zone:'lake',x:24*16,y:47*16+4},{zone:'plains',x:1*16+8,y:32*16+4}];
@@ -1232,6 +1237,8 @@ const NPCINFO={
  remy:{short:'Remy',name:'Remy',pal:{H:'#1a1424',T:'#1a1424',D:'#1a1424'},idle:["Meow! I'm a black cat this year.",'The spiderwebs are my favorite part.']},
  rhett:{short:'Rhett',name:'Rhett',pal:{H:'#1a1424',T:'#1a1424',D:'#1a1424'},idle:["Hi-yah! I'm a ninja!","Have you played Toilet Goalie? It's at the arcade!",'Brick Ninja is the best game ever! Hi-YAH!']},
  tess:{short:'Tess',name:"Tess's Trinket Cart",pal:{H:'#c8641e',T:'#5ab4f0',D:'#5a3824'},idle:['Little treasures you can only find in Watertown!','Some trinkets are hidden around town. Keep your eyes open for purple glints.']},
+ pop:{short:'Pop',name:'Pop',pal:{H:'#e8e4f0',T:'#7a8a5a',D:'#5a5a6a'},idle:['']},
+ gran:{short:'Gran',name:'Gran',pal:{H:'#c8c4d0',T:'#c890b0',D:'#6a5a7a'},idle:['']},
  joy:{short:'Joy',name:'Pixel Palace Arcade',pal:{H:'#c84a7a',T:'#7cf0b8',D:'#2a2a3a'},idle:['Every cabinet in here is a real game. Walk up and press A!','Free play today. Have fun!','Brick Ninja and Toilet Goalie were dreamed up by a kid named Everett.']},
 };
 const NPC_POS=[{id:'theo',x:21*16+8,y:19*16+12},{id:'hoot',x:32*16+8,y:16*16+12},{id:'nell',x:42*16+8,y:22*16+12},{id:'gus',x:16*16+8,y:19*16+12}];
@@ -1249,6 +1256,8 @@ const FAM_GIVE={bones:'Here, take a skeleton. I have plenty!',gemma:'Take the wh
 function famPanel(id){openPanel(()=>head(NPCINFO[id].name)+npcBlock(id)+((state.wtGifts||{})[id]?`<p class="muted">You already got a ${FURN[FAM_GIFT[id]].name.toLowerCase()} from ${NPCINFO[id].short}.</p>`:`<button class="pbtn go" type="button" data-act="gift">🎃 Trick or treat!</button>`),
   (a,d)=>{if(a==='gift'){state.wtGifts=state.wtGifts||{};if(state.wtGifts[id])return;state.wtGifts[id]=1;const f=FAM_GIFT[id];addInv('f:'+f,1);sendCmd('inv',{k:'f:'+f,n:1});sparks(player.x,player.y-20,20,'#ff9a3a');sfx('unlock');
       toast(`${NPCINFO[id].short}: “${FAM_GIVE[id]}”`);toast(`You got a ${FURN[f].name}! Place it with Decorate.`);save();refreshPanel(true);}else if(npcAct(a,d))refreshPanel(true);});}
+NPCSPR.pop=makeSprite(["..HHHH...",".HHHHHH..",".HkskkH..",".HssssH..","..ssss...",".TTTTTT.n","sTTTTTTsn",".TTTTTT.n",".DDDDDD.n",".DD..DD.n",".kk..kk.n"],{H:'#e8e4f0',T:'#7a8a5a',D:'#5a5a6a'});
+NPCSPR.gran=makeSprite(["...HH...","..HHHH..",".HHHHHH.",".HskskH.","..ssss..",".TTTTTT.","sTTTTTTs",".TTTTTT.",".DDDDDD.",".DD..DD.",".kk..kk."],{H:'#c8c4d0',T:'#c890b0',D:'#6a5a7a'});
 const npcPortrait=id=>sprURL('npc-'+id,NPCSPR[id],5);
 const QUESTS=[
  {id:'pie',npc:'rosa',title:"Rosa's berry pie",ask:"I'm baking my famous berry pie, but I'm all out of berries! Could you bring me 10?",goal:'Bring Rosa 10 berries.',ready:()=>state.berries>=10,pay:()=>{state.berries-=10;},reward:'60 coins and 2 tins of creature cookies',give:()=>{state.coins+=60;addInv('cookie',2);},thanks:'Perfect! Take these cookies. Every creature loves them.'},
@@ -1267,6 +1276,7 @@ const QUESTS=[
  {id:'wtotter',npc:'ripley',title:'Otters of the Charles',ask:"Charlotters are the river's little helpers. Give one a home at your sanctuary and more folks will learn to love the Charles.",goal:'Have a Charlotter living in a habitat.',ready:()=>housed('charlotter'),reward:'600 coins and a fish tank wall',give:()=>{state.coins+=600;addInv('f:fishwall',1);},thanks:'Look at it zoom! The river thanks you.'},
  {id:'wtheron',npc:'wren',title:'The Glimmerheron',ask:"For forty years I've watched for the Glimmerheron. They say it fishes the Charles when no one is looking. Could you befriend it and give it a home?",goal:'Have a Glimmerheron living in a habitat.',ready:()=>housed('glimmerheron'),reward:'1,200 coins and a Watertown snow globe',give:()=>{state.coins+=1200;addInv('f:snowglobe',1);},thanks:'I never thought I would see it up close. Thank you, truly.'},
  {id:'wtsurvey',npc:'manager',title:'A nature survey',ask:'The town council wants a nature survey. They argued about it for three hours, but they agreed on one thing: we need to know who lives here! Befriend an Acornsprite, a Lampwisp and a Charlotter.',goal:'Befriend an Acornsprite, a Lampwisp and a Charlotter.',ready:()=>['acornsprite','lampwisp','charlotter'].every(k=>state.dex[k]===2),reward:'800 coins and a model of Watertown',give:()=>{state.coins+=800;addInv('f:citymodel',1);},thanks:'A complete survey! The council will only argue about it a little bit.'},
+ {id:'gran_garden',npc:'gran',hidden:true,title:"Gran's garden for Pop",ask:"Bring me 10 berries for seeds and we'll plant a garden around Pop's tree.",goal:'Bring Gran 10 berries.',ready:()=>state.berries>=10,pay:()=>{state.berries-=10;},reward:'Flowers around Pop\'s tree, and Gran\'s gratitude',give:()=>{const Gr=granState();Gr.garden=true;Gr.spirits=Math.min(100,Gr.spirits+20);},thanks:'You plant the seeds together. Gran pats the soil and whispers, "There. Now you\'ll have company."'},
  {id:'spr_seeds',npc:'mabel',season:0,title:'Spring planting',ask:"Spring is here! Help me plant the berry patch. Could you bring me 12 berries to use as seeds?",goal:'Bring Mabel 12 berries.',ready:()=>state.berries>=12,pay:()=>{state.berries-=12;},reward:'250 coins and a potted cherry blossom',give:()=>{state.coins+=250;addInv('f:sakura',1);},thanks:'The patch will be bursting with berries by summer!'},
  {id:'spr_fawn',npc:'hoot',season:0,title:'The blossom fawn',ask:'Every spring a Blossomfawn wanders Glimmer Meadow, wearing a crown of petals. Could you befriend one and give it a home?',goal:'Have a Blossomfawn living in a habitat.',ready:()=>housed('blossomfawn'),reward:'500 coins and a kite for your wall',give:()=>{state.coins+=500;addInv('f:kite',1);},thanks:'Marvelous! Spring has come to your sanctuary.'},
  {id:'sum_lemon',npc:'rosa',season:1,title:'Berry lemonade',ask:"Phew, it's hot! I want to sell berry lemonade at the summer fair. Could you bring me 15 berries?",goal:'Bring Rosa 15 berries.',ready:()=>state.berries>=15,pay:()=>{state.berries-=15;},reward:'300 coins and a little lemonade stand',give:()=>{state.coins+=300;addInv('f:lemonade',1);},thanks:'Ice-cold berry lemonade for everyone!'},
@@ -1298,9 +1308,12 @@ function buildTown(){const w=48,h=48,m=new Uint8Array(w*h).fill(T.GRASS),gm=new 
     for(const n of NPC_POS)if(Math.abs(n.x/16-i)<2&&Math.abs(n.y/16-j)<2)return true;for(const t of TRAILS)if(Math.abs(t.x/16-i)<3&&Math.abs(t.y/16-j)<3)return true;return false;};
   for(let k=0;k<420;k++){const i=1+((r()*(w-2))|0),j=1+((r()*(h-2))|0);if(m[j*w+i]!==T.GRASS||busy(i,j))continue;const edge=Math.min(i,j,w-1-i,h-1-j);if(r()<(edge<5?.8:.25))set(i,j,T.TREE);}
   for(let k=0;k<160;k++){const i=1+((r()*(w-2))|0),j=1+((r()*(h-2))|0);if(m[j*w+i]===T.GRASS)set(i,j,T.FLOWER);}
+  for(let j=22;j<=26;j++)for(let i=6;i<=12;i++)if(m[j*w+i]!==T.COBBLE&&m[j*w+i]!==T.PATH)set(i,j,T.GRASS);for(let j=17;j<=21;j++)for(let i=8;i<=11;i++)set(i,j,(i+j)%3?T.GRASS:T.FLOWER);
+  for(const[i,j]of POP_LOST)set(i,j,T.GRASS);
   for(let j=7;j<=13;j++)for(let i=37;i<=43;i++){const d=Math.abs(i-40)+Math.abs(j-10);if(d<=2)set(i,j,T.GRASS);else if(d===3)set(i,j,T.FLOWER);}
   const W={kind:'town',w,h,m,gmap:gm,ground:T.GRASS,seed:91};W.solid=makeSolid(W);
   for(const b of BUILDINGS)for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)W.solid[j*w+i]=1;
+  if(state.pop&&!state.pop.alive)W.solid[POP_TREE.j*w+POP_TREE.i]=1;
   (state.houses||[]).forEach((hh,k)=>{const b=houseBuilding(k);for(let j=b.y;j<b.y+b.h;j++)for(let i=b.x;i<b.x+b.w;i++)W.solid[j*w+i]=1;});
   [[23,17],[24,17],[23,18],[24,18]].forEach(([i,j])=>W.solid[j*w+i]=1);
   renderMap(W);townWorld=W;
@@ -1349,15 +1362,148 @@ function namePanel(){const k=curHouse;if(!k)return;const H=state.houses[k-1],K=H
 function drawLotSign(l){const x=(l.x+3)*16,y=(l.y+5)*16+10;fill(ctx,'rgba(0,0,0,.25)',x-6,y,12,2);fill(ctx,'#6a4228',x-1,y-12,2,12);fill(ctx,OUT,x-9,y-21,18,11);fill(ctx,'#f4ecd8',x-8,y-20,16,9);fill(ctx,'#e8553a',x-8,y-20,16,2);
   const ic=SM.coin;ctx.drawImage(ic,x-2,y-17);for(const[a,b]of[[-6,-6],[4,-8],[-4,-28]])if(Math.sin(time*3+a)>.6)fill(ctx,'#fff6b0',x+a,y+b,1,1);
   fill(ctx,'#c8b898',l.x*16+4,l.y*16+20,6*16-8,1);fill(ctx,'#c8b898',l.x*16+4,(l.y+6)*16-6,6*16-8,1);fill(ctx,'#c8b898',l.x*16+4,l.y*16+20,1,6*16-26);fill(ctx,'#c8b898',(l.x+6)*16-5,l.y*16+20,1,6*16-26);}
+/* ================= POP & GRAN =================
+   Pop is the keeper's dad and the sanctuary's first keeper. Gran is his wife.
+   Pop's memory slowly fades, one stage per season, but only in seasons you've visited him,
+   so his story never moves on without you. After his last season he dies peacefully in his sleep.
+   Then you help Gran through her grief, season by season, until she finds joy again. */
+const POP_SPOT={x:7*16+8,y:23*16+10},GRAN_SPOT={x:10*16+8,y:24*16+10},POP_TREE={i:9,j:21},POP_LOST=[[42,24],[22,35],[34,4]];
+const POP_MEM=["The day I found the very first Puffbun, it was hiding in my boot. Your Gran laughed so hard she cried.",
+ "I built the first fence of the sanctuary with my own two hands. Crooked as a dog's leg! Still standing, though.",
+ "You were so small the first time you came to the sanctuary. You fell asleep in the meadow pen, and a Glowfox curled up right beside you.",
+ "Every winter I thought the meadow was gone for good. And every spring it came back. It always comes back.",
+ "I heard the Glimmerwhale sing once, out on Crystal Lake. Never saw it. Maybe you will.",
+ "Your Gran planted the willow by the town gate the year we got married. She says trees are how we say 'I was here.'",
+ "Keeping creatures is simple, kiddo. Feed them, keep them warm, and sit with them when they're scared.",
+ "Have I ever told you how proud I am of you? I should say it more. I'm proud of you."];
+const POP_SAY=[["There's my favorite keeper!","The sanctuary looks wonderful. Better than when I ran it. Don't tell anyone I said so.","Sit, sit. My knees and I are having a disagreement today."],
+ ["Now, where did I put my glasses? Oh! On my head.","Have I told you about the Puffbun in my boot? …I have? Well, it's a good story.","What day is it today? Never mind. Every day's a good day with you."],
+ ["Is it spring already? Or… no. The leaves. I get mixed up.","I should go feed the creatures. They'll be hungry.","You look just like… oh, what's the word. Like someone I love."],
+ ["Mm. Warm sun today.","…","Is that a Puffbun I hear? Mm."]];
+const POP_CHOICE={1:{ask:"Have I told you how I found the first Puffbun?",note:'(He told you this story yesterday.)',good:'Tell me again, Pop! I love that one.',bad:'You already told me that.',goodT:'Pop beams and tells the whole story again. It is still a good story.',badT:'Pop goes quiet. "Oh. Sorry, kiddo."',tip:"It's okay to hear a story twice. It makes him happy to tell it."},
+ 2:{ask:"I need to get to the sanctuary. The creatures will be hungry!",note:"(You've been the keeper for years now.)",good:"They're all fed, Pop. Want to come see them with me someday?",bad:"Pop, you don't work there anymore.",goodT:'His shoulders relax. "You\'re a good keeper," he says, and pats your hand.',badT:'He looks lost and worried, and starts to cry a little.',tip:'When someone is confused, gently going along helps more than correcting them.'},
+ 3:{ask:"Who… are you? You have a kind face.",note:'',good:"I'm someone who loves you very much.",bad:"It's me! Don't you remember me?",goodT:'"Well then," he says softly, "I\'m a lucky old man." He holds your hand for a long time.',badT:'He looks frightened and tries hard to remember.',tip:"It isn't his fault. Sometimes the kindest thing is just to be there. He still feels your love, even when he can't find your name."}};
+const POP_LETTER=`Dear kiddo,
+
+If you're reading this, I've gone on ahead. Don't be sad for too long. I had a long, full life, and the best part of it was watching you grow up among the creatures.
+
+I know these last seasons I forgot things. Names, days, sometimes even you. But I want you to know something: I never forgot that I loved you. That part doesn't live in your memory. It lives somewhere deeper.
+
+Take care of the sanctuary. Feed them, keep them warm, and sit with them when they're scared. Sit with yourself too, when you're scared.
+
+And take care of your Gran for me. She'll pretend she's fine. She won't be, not for a while. Bring her tea.
+
+Every winter it feels like the meadow is gone for good. And every spring it comes back. It always comes back.
+
+I left you my chair, my old keeper's hat, and our photo. Plant something in my garden for me.
+
+Love always,
+Pop`;
+const GRAN_SAY=[["Pop has good days and bad days. Today's a good one, I think.","He still knows my hand when I hold his. Fifty-two years.","Thank you for visiting him. It means the world."],
+ ["The house is so quiet.","I keep setting out two teacups.","Some mornings I forget, just for a second, and then I remember."],
+ ["Did you know he proposed to me under the willow by the gate? He dropped the ring in the grass.","I found his old notebook. Every creature he ever met, drawn in pencil.","I laughed today. It surprised me."],
+ ["I think I'd like to grow a garden around Pop's tree.","The robins came back to the feeder this morning.","Rosa asked me to help with the bakery on Saturdays. Imagine that!"],
+ ["Look at Pop's tree! It's growing so tall.","I miss him every day. And every day is still a good day. Both are true.","It always comes back, doesn't it? Just like he said."]];
+const GRAN_CHOICE={1:{ask:'I keep setting out two teacups. Silly old woman.',good:'Want me to sit in the other chair today?',bad:'Maybe you should try to stop doing that.',goodT:'She pours you a cup, and you sit together in the quiet. After a while she says, "Thank you, sweetheart."',badT:'"Maybe," she says, and looks at the empty chair.',tip:"Grief takes its own time. Being with someone helps more than trying to fix their sadness."},
+ 2:{ask:'Do you think he knew how much we loved him?',good:'He knew, Gran. He told me so.',bad:"Let's not talk about sad things.",goodT:'She smiles through her tears and tells you about the day they met. You laugh together.',badT:'"Oh. All right," she says quietly.',tip:'Talking about the person we lost can help. Remembering them together keeps them close.'},
+ 3:{ask:"Would you help me plant a garden around Pop's tree? I'll need berries for seeds.",good:"I'd love to, Gran!",bad:"I'm a bit busy right now.",goodT:'She claps her hands. "Bring me 10 berries and we\'ll plant it together!"',badT:'"Of course, another time," she says. You can still help her later.',tip:'',quest:true}};
+function popState(){if(!state.pop)state.pop={stage:0,met:false,visited:false,spirits:60,care:{},mem:0,alive:true,choice:{},lost:0,treeStage:0,mournDay:-1,treeDay:-1};return state.pop;}
+function granState(){if(!state.gran)state.gran={stage:0,visited:false,spirits:50,care:{},choice:{},garden:false,done:false};return state.gran;}
+const dayKey=()=>{const c=calOf();return c.year*100+c.season*10+c.day;};
+const popMourning=()=>!!state.pop&&!state.pop.alive&&state.pop.mournDay===dayKey();
+const hearts5=v=>{const n=Math.round(v/20);return'❤️'.repeat(n)+'🤍'.repeat(5-n);};
+function careButtons(st,list){const dk=dayKey();return`<div class="list">${list.map(([a,t,d])=>{const done=st.care[a]===dk;return`<button class="pbtn" type="button" data-act="${a}" ${done?'disabled':''}><span class="grow"><b>${t}</b><small>${done?'Done for today. Come back tomorrow.':d}</small></span></button>`;}).join('')}</div>`;}
+function popPanel(){const P=popState();const first=!P.met;if(first){P.met=true;P.visited=true;if(NET.role==='guest')sendCmd('pop',{a:'meet'});save();}
+  const render=()=>{const st=P.stage,ch=POP_CHOICE[st];
+    const say=first&&st===0?"There's my favorite keeper! Come here, let me look at you. I kept that sanctuary for fifty years, you know. Now it's all yours.":P.lost?"I was going… somewhere important. Where am I?":POP_SAY[st][Math.floor(Date.now()/9000)%POP_SAY[st].length];
+    let body=`<div class="card"><img class="spr" src="${npcPortrait('pop')}" alt=""><div class="cinfo"><div class="nm">Pop</div><p class="say">“${say}”</p></div></div><p class="muted">Pop's spirits: ${hearts5(P.spirits)}</p>`;
+    if(P.lost)body+=`<button class="pbtn go" type="button" data-act="home" data-autofocus>Let's walk home together, Pop.</button>`;
+    else if(ch&&!P.choice[st])body+=`<p class="ab"><b>Pop says:</b> “${ch.ask}” <small class="muted">${ch.note}</small></p><div class="list"><button class="pbtn" type="button" data-act="good">${ch.good}</button><button class="pbtn" type="button" data-act="bad">${ch.bad}</button></div>`;
+    else body+=careButtons(P,[['talk','Sit and talk',P.stage<2?'Hear one of his stories':'Spend some quiet time together'],['tea','Bring berry tea','Uses 3 berries'],['show','Show him a creature','He loves your creatures'],['help','Help around the house','Little things make his day easier']]);
+    return head('Pop')+body;};
+  openPanel(render,a=>{popAct(a);refreshPanel(true);});}
+function popAct(a){const P=popState(),dk=dayKey();if(NET.role==='guest'&&a!=='meet')sendCmd('pop',{a});
+  if(a==='meet'){P.met=true;P.visited=true;return;}
+  if(a==='home'){if(!P.lost)return;P.lost=0;P.visited=true;P.spirits=Math.min(100,P.spirits+15);toast('You take Pop\'s arm and walk him home, slow and steady. "There\'s my porch," he says, relieved.');sfx('pet');save();return;}
+  if(a==='good'||a==='bad'){const ch=POP_CHOICE[P.stage];if(!ch||P.choice[P.stage])return;P.choice[P.stage]=a;P.visited=true;P.spirits=clamp(P.spirits+(a==='good'?15:-10),0,100);toast(a==='good'?ch.goodT:ch.badT);if(ch.tip)toast(ch.tip);sfx(a==='good'?'pet':'miss');save();return;}
+  if(P.care[a]===dk){toast("You've done that today. Come back tomorrow.");return;}
+  let msg='';
+  if(a==='tea'){if(state.berries<3){toast('You need 3 berries to make berry tea.');return;}state.berries-=3;msg=P.stage<3?'Pop wraps his hands around the warm cup. "Berry tea! Your Gran\'s recipe."':'You help him hold the cup. He smiles at the steam.';}
+  else if(a==='talk'){if(P.stage<=1){msg='“'+POP_MEM[P.mem%POP_MEM.length]+'”';if(P.mem<POP_MEM.length)toast('📖 A new memory is saved in your journal.');P.mem++;}
+    else if(P.stage===2)msg='He starts a story about the first Puffbun, then loses the thread. You finish it for him, and he laughs: "Yes! That\'s it!"';
+    else msg="He doesn't say much. You hold his hand and watch the clouds. After a while, he squeezes your hand.";}
+  else if(a==='show'){const c=state.owned[(R()*state.owned.length)|0];if(!c){toast('Befriend a creature first!');return;}const n=SPECIES[c.sp].name;
+    msg=[`"A ${n}! When I was keeper we only had three of those in the whole valley."`,`"A ${n}! Look at that. You take such good care of them."`,`"Oh, look at this one! What do you call it?" You tell him: ${n}. He says it three times, delighted every time.`,`His eyes light up. He doesn't say its name, but he reaches out and pats the ${n} very gently.`][P.stage];hearts(player.x,player.y-20,3,scene);}
+  else if(a==='help')msg=['You fix the squeaky gate on his garden. "Good as new," he says.','You stick labels on his kitchen drawers: SPOONS, TEA, GLASSES. He reads each one out loud, proudly.','You leave a note by his door: "Pop, I\'ll visit soon. Love, me." He reads it again and again.',"You tuck in his blanket and water his plants. He's asleep before you finish."][P.stage];
+  else return;
+  P.care[a]=dk;P.visited=true;P.spirits=Math.min(100,P.spirits+(a==='tea'||a==='show'?15:10));toast(msg);sfx('pet');save();}
+function granPanel(){const P=popState(),Gr=granState();
+  const render=()=>{if(P.alive){const say=GRAN_SAY[0][Math.floor(Date.now()/9000)%3];return head('Gran')+`<div class="card"><img class="spr" src="${npcPortrait('gran')}" alt=""><div class="cinfo"><div class="nm">Gran</div><p class="say">“${say}”</p></div></div><p class="muted">Gran looks after Pop every day. Visiting him helps her too.</p>`;}
+    const st=Math.min(4,Gr.stage+1),ch=GRAN_CHOICE[st],q=QUESTS.find(x=>x.id==='gran_garden');
+    let body=`<div class="card"><img class="spr" src="${npcPortrait('gran')}" alt=""><div class="cinfo"><div class="nm">Gran</div><p class="say">“${GRAN_SAY[st][Math.floor(Date.now()/9000)%GRAN_SAY[st].length]}”</p></div></div><p class="muted">Gran's spirits: ${hearts5(Gr.spirits)}</p>`;
+    if(ch&&!Gr.choice[st])body+=`<p class="ab"><b>Gran says:</b> “${ch.ask}”</p><div class="list"><button class="pbtn" type="button" data-act="good">${ch.good}</button><button class="pbtn" type="button" data-act="bad">${ch.bad}</button></div>`;
+    else{if(st===3&&state.quests.gran_garden!=='done')body+=npcBlock('gran');body+=careButtons(Gr,[['sit','Sit with her','Keep her company'],['tea','Bring her tea','Uses 3 berries'],['walk','Take her for a walk',st>=3?'To Pop\'s tree and back':'Just around the block'],['help','Help with chores','Garden, groceries, a squeaky door']]);}
+    return head('Gran')+body;};
+  openPanel(render,(a,d)=>{if(npcAct(a,d)){refreshPanel(true);return;}granAct(a);refreshPanel(true);});}
+function granAct(a){const Gr=granState(),dk=dayKey(),st=Math.min(4,Gr.stage+1);if(NET.role==='guest')sendCmd('gran',{a});
+  if(a==='good'||a==='bad'){const ch=GRAN_CHOICE[st];if(!ch||Gr.choice[st])return;Gr.choice[st]=a;Gr.visited=true;Gr.spirits=clamp(Gr.spirits+(a==='good'?15:-5),0,100);toast(a==='good'?ch.goodT:ch.badT);if(ch.tip)toast(ch.tip);
+    if(ch.quest&&a==='good'&&!state.quests.gran_garden)state.quests.gran_garden='active';sfx(a==='good'?'pet':'miss');save();return;}
+  if(Gr.care[a]===dk){toast("You've done that today. Come back tomorrow.");return;}
+  let msg='';
+  if(a==='tea'){if(state.berries<3){toast('You need 3 berries to make tea.');return;}state.berries-=3;msg=['She holds the cup without drinking it. "Thank you, sweetheart."','"Berry tea. I taught him to make this, you know. He always used too much honey."','She sips it on the porch and points out a robin.','"Perfect," she says. "Just the right amount of honey."'][st-1];}
+  else if(a==='sit')msg=['You sit together on the porch. Neither of you says much. That\'s okay.','She tells you about Pop\'s terrible singing. You both laugh until you cry a little.','She shows you Pop\'s pencil drawings of creatures. One of them is a Puffbun in a boot.','She hums an old song while she knits. It\'s the one Pop always sang wrong.'][st-1];
+  else if(a==='walk')msg=['A short walk to the end of the street and back. She holds your arm the whole way.','You walk past the willow by the gate. She touches its bark and smiles.','You walk her to Pop\'s tree. She tells it about her day.','She walks faster than you today. "Keep up, slowpoke!"'][st-1];
+  else if(a==='help')msg=['You do her dishes and fold the laundry. She lets you, which is something.','You fix the squeaky door Pop never got around to. "He\'d be jealous," she says.','You carry her groceries home. She bought two teacups\' worth of tea, then laughs and puts one back.','You help her carry a pie to Rosa\'s bakery. Everyone waves hello to her.'][st-1];
+  else return;
+  Gr.care[a]=dk;Gr.visited=true;Gr.spirits=Math.min(100,Gr.spirits+(a==='tea'?15:10));toast(msg);sfx('pet');save();}
+function popSeason(){const P=popState(),Gr=granState();
+  if(!P.alive){if(P.treeStage<3)P.treeStage++;if(!Gr.done&&Gr.visited){Gr.visited=false;Gr.stage++;if(Gr.stage>=3&&state.quests.gran_garden==='done'){Gr.done=true;addInv('f:granquilt',1);toast('Gran sent over a quilt she made, stitched with little creatures. "For my favorite keeper. Love, Gran." (It\'s in your bag.)');}
+      else toast(['','Gran seems a little brighter this season. She has been telling stories about Pop.','Gran has an idea for Pop\'s garden. Go see her.','Gran is doing better. She would love to see you.'][Math.min(3,Gr.stage)]||'');}return false;}
+  if(!P.met||!P.visited)return false;
+  P.visited=false;P.stage++;if(P.stage>=4){popPasses();return true;}
+  if(P.stage===2)P.lost=1+((R()*POP_LOST.length)|0);
+  toast(['','Pop seems a little more forgetful lately. Go say hi.',"Pop is getting confused… and he isn't on his porch! Theo thinks he wandered off.",'Pop is very tired these days. Go sit with him.'][P.stage]);return false;}
+function popPasses(){const P=popState();P.alive=false;P.lost=0;P.mournDay=dayKey();P.treeStage=0;for(const f of['popchair','pophat','popphoto'])addInv('f:'+f,1);sleepFx=2.4;buildTown();if(scene==='town')world=townWorld;popLetter(true);save();}
+function popLetter(first){openPanel(()=>head('A letter from Pop')+(first?'<p class="ab">Pop passed away peacefully in his sleep last night.</p>':'')+`<div class="letter">${POP_LETTER}</div>`+
+  (first?"<p class=\"muted\">The town is gathering in Pop's garden to remember him. His chair, his keeper's hat and your photo are in your bag.</p>":''),()=>{});}
+function popTreePanel(){const P=popState(),dk=dayKey(),S=SEASON,mem=P.mem?POP_MEM[(R()*Math.min(P.mem,POP_MEM.length))|0]:POP_MEM[3];
+  const line=["New leaves on Pop's tree. \"It always comes back,\" he used to say.","The tree's shade is cool. You can almost hear him humming.","A few leaves drift down. You catch one and keep it.","Snow on the branches. Under it, the tree is just resting, waiting for spring."][S];
+  const first=P.treeDay!==dk;if(first){P.treeDay=dk;let n=0;for(const p of state.pens){const c=p.cid&&getC(p.cid);if(c){c.happy=Math.min(100,c.happy+10);n++;}}save();}
+  openPanel(()=>head("Pop's tree")+`<p class="ab">${line}</p><p class="ab"><i>You remember: “${mem}”</i></p>${first?'<p class="muted">You feel a little lighter. Your creatures seem calmer today too.</p>':''}${POP_LETTER?'<button class="pbtn" type="button" data-act="letter">Read Pop\'s letter again</button>':''}`,a=>{if(a==='letter')popLetter(false);});}
+function npcsNow(){if(!popMourning())return NPC_POS;const t=POP_TREE;return[['theo',2,-1],['hoot',2,1],['nell',-1,3],['gus',1,3],['mabel',3,0],['rosa',3,2],['mayor',0,4]].map(([id,a,b])=>({id,x:(t.i+a)*16+8,y:(t.j+b)*16+12}));}
+const MOURN={theo:"I'm sorry about your Pop. He showed me how to hold a Puffbun without scaring it.",hoot:'Your Pop knew more about creatures than any book in my library. I will miss our talks.',nell:'He used to sit by the river with me. He said the water remembers everything.',
+  gus:'He gave me my first job, sweeping these very paths. Best boss I ever had.',mabel:'He bought berries from me every week for forty years. Always the sweetest ones, for the creatures.',rosa:"I baked his favorite cinnamon swirls. Take one, sweetheart. It's okay to be sad.",mayor:'Willowbrook will not be the same without him. We will remember him every spring.'};
+const AFTER={gus:'I still look for your Pop on his porch some mornings.',theo:"I drew a picture of your Pop with a Puffbun. Gran put it on her fridge!",mabel:'I set aside the sweetest berries for your Gran now.',rosa:'Your Gran makes a wonderful pie crust. Better than mine! Don\'t tell anyone.'};
+function drawPopScene(){const P=popState(),Gr=granState(),t=POP_TREE;
+  if(!P.alive||P.stage>=3){const x=POP_SPOT.x,y=POP_SPOT.y;fill(ctx,'rgba(0,0,0,.2)',x-7,y-1,14,3);fill(ctx,'#5a7a4a',x-7,y-14,14,12);fill(ctx,'#4a6a3a',x-7,y-14,14,3);fill(ctx,'#6a8a5a',x-6,y-9,12,4);fill(ctx,'#3a2a1e',x-6,y-2,2,3);fill(ctx,'#3a2a1e',x+4,y-2,2,3);
+    if(!P.alive){fill(ctx,'#c84a4a',x-5,y-9,10,3);fill(ctx,'#e8d8b0',x-5,y-8,10,1);if(Math.sin(time*2)>-2){fill(ctx,'#3f8a32',x+8,y-6,1,6);fill(ctx,'#ff9ac0',x+7,y-8,3,2);fill(ctx,'#ffd860',x+9,y-7,2,2);}}}
+  if(!P.alive){const x=t.i*16+8,y=t.j*16+14,s2=P.treeStage;fill(ctx,'rgba(0,0,0,.2)',x-8,y-1,16,3);
+    const h=[6,10,14,18][s2],rr=[3,6,9,12][s2],C=SEASON===3?['#d8e4ee','#ffffff','#b8c8d4']:SEASON===2?['#c8641e','#f2b040','#a8481e']:SEASON===0?['#4fa04c','#ffb8d0','#3a8a3e']:['#3a8a3e','#6cbc50','#2a6e30'];
+    fill(ctx,'#6a4228',x-1,y-h,3,h);const cy=y-h-rr+3;
+    for(let dy=-rr;dy<=rr;dy++){const half=Math.round(Math.sqrt(rr*rr-dy*dy)*1.15);fill(ctx,dy<-rr/3?C[1]:C[0],x-half,cy+dy,half*2+1,1);}
+    if(s2>=2)for(let k=-rr;k<=rr;k+=3){const len=3+((k*7+30)%5);fill(ctx,C[2],x+k,cy+Math.round(Math.sqrt(Math.max(0,rr*rr-k*k))*.6),1,len);}
+    if(SEASON===0&&s2>=1)for(let k=0;k<rr;k++)fill(ctx,'#ffffff',x-rr+((k*7)%(rr*2)),cy-rr/2+((k*5)%rr),1,1);
+    fill(ctx,'#8a8698',x+6,y-4,6,4);fill(ctx,'#a8a4b8',x+6,y-4,6,1);}
+  if(P.alive&&!P.lost)drawNPCAt('pop',POP_SPOT.x+(P.stage<3?Math.round(Math.sin(time*.3)*4):0),POP_SPOT.y-(P.stage>=3?3:0),popMark());
+  else if(P.alive&&P.lost){const q=POP_LOST[P.lost-1];drawNPCAt('pop',q[0]*16+8,q[1]*16+12,'ready');}
+  const gs=granSpot();drawNPCAt('gran',gs.x,gs.y,granMark());}
+function granSpot(){const P=popState(),Gr=granState();if(P.alive)return GRAN_SPOT;if(Gr.stage===0&&!popMourning())return{x:POP_SPOT.x+16,y:POP_SPOT.y+4};if(Gr.stage>=2)return{x:(POP_TREE.i-1)*16+8,y:(POP_TREE.j+1)*16+12};return GRAN_SPOT;}
+function popMark(){const P=popState(),dk=dayKey();if(!P.met||P.lost)return'offer';const ch=POP_CHOICE[P.stage];if(ch&&!P.choice[P.stage])return'offer';return['talk','tea','show','help'].some(a=>P.care[a]!==dk)?'wait':null;}
+function granMark(){const P=popState(),Gr=granState();if(P.alive)return null;const st=Math.min(4,Gr.stage+1);if(GRAN_CHOICE[st]&&!Gr.choice[st])return'offer';if(state.quests.gran_garden==='active'&&state.berries>=10)return'ready';return null;}
+function drawNPCAt(id,x,y,mk){const spr=NPCSPR[id],bob=Math.sin(time*2+x)>.6?1:0;shadow(x,y,8);ctx.drawImage(spr,Math.round(x-spr.width/2),Math.round(y-spr.height)+bob);drawMark(mk,x,y-spr.height-2);}
+function popJournal(){const P=popState();if(!P.met)return'';const n=Math.min(P.mem,POP_MEM.length);
+  return`<h3>Pop's memories · ${n}/${POP_MEM.length}</h3>${n?`<div class="list">${POP_MEM.slice(0,n).map(m=>`<div class="qrow"><small>“${m}”</small></div>`).join('')}</div>`:'<p class="muted">Sit and talk with Pop to hear his stories.</p>'}${!P.alive?'<p class="muted">Visit Pop\'s tree in his garden any time to remember him.</p>':''}`;}
+function popHousePanel(){const P=popState();if(P.alive){toast("Pop and Gran's house. They're out front on the porch.");return;}
+  openPanel(()=>head("Pop & Gran's house")+'<p class="ab">The house smells like berry tea. Pop\'s reading glasses are folded on the table, next to a pencil drawing of a Puffbun in a boot.</p>'+`<button class="pbtn" type="button" data-act="letter">Read Pop's letter again</button>`,a=>{if(a==='letter')popLetter(false);});}
 function goHome(k=0){if(buildMode)closeBuild();curHouse=houseOk(k)?k:0;buildHome();scene='home';world=homeWorld;ambient=[];player.x=(homeWorld.door+1)*16;player.y=(homeWorld.h-2)*16+12;player.face='up';snapCam();
   if(curHouse){const H=state.houses[curHouse-1];toast(`${H.name||HOUSES[H.kind].name}${H.name?'':' · walk to the nameplate by the door to name it'}`);}
   else if(!state.seenHome){state.seenHome=true;toast('Your cottage! Tap Decorate to arrange furniture. Buy more at Pip\'s Home Goods.');}save();}
-function npcQuest(id){const qs=QUESTS.filter(q=>q.npc===id);return{act:qs.find(q=>state.quests[q.id]==='active'),offer:(()=>{const ok=q=>!state.quests[q.id]&&(!q.after||state.quests[q.after]==='done')&&(q.season==null||q.season===SEASON);return qs.find(q=>q.season!=null&&ok(q))||qs.find(ok);})()};}
+function npcQuest(id){const qs=QUESTS.filter(q=>q.npc===id&&(!q.hidden||state.quests[q.id]));return{act:qs.find(q=>state.quests[q.id]==='active'),offer:(()=>{const ok=q=>!state.quests[q.id]&&(!q.after||state.quests[q.after]==='done')&&(q.season==null||q.season===SEASON);return qs.find(q=>q.season!=null&&ok(q))||qs.find(ok);})()};}
 function npcMark(id){const{act,offer}=npcQuest(id);if(act&&act.ready())return'ready';if(offer)return'offer';if(act)return'wait';return null;}
 function npcBlock(id){const N=NPCINFO[id],{act,offer}=npcQuest(id);let say,extra='';
   if(act){const ok=act.ready();say=ok?'You did it! Is that really for me?':act.ask;extra=`<p class="ab"><b>Quest · ${act.title}.</b> ${act.goal}</p>`+(ok?`<button class="pbtn go" type="button" data-act="turnin" data-q="${act.id}" data-autofocus>Hand it in</button>`:`<p class="muted">Reward: ${act.reward}</p>`);}
   else if(offer){say=offer.ask;extra=`<p class="ab"><b>Quest · ${offer.title}.</b> ${offer.goal}</p><p class="muted">Reward: ${offer.reward}</p><button class="pbtn go" type="button" data-act="accept" data-q="${offer.id}" data-autofocus>I'll do it!</button>`;}
-  else say=N.idle[Math.floor(Date.now()/9000)%N.idle.length];
+  else say=popMourning()&&MOURN[id]?MOURN[id]:state.pop&&!state.pop.alive&&AFTER[id]&&(Math.floor(Date.now()/9000)%3===0)?AFTER[id]:N.idle[Math.floor(Date.now()/9000)%N.idle.length];
   return`<div class="card"><img class="spr" src="${npcPortrait(id)}" alt=""><div class="cinfo"><div class="nm">${N.short}</div><p class="say">“${say}”</p></div></div>${extra}`;}
 function npcAct(a,d){const q=QUESTS.find(x=>x.id===d.q);if(!q)return false;
   if(NET.role==='guest'&&(a==='accept'||a==='turnin')){if(a==='turnin'&&!q.ready())return false;sendCmd('quest',{a,q:q.id});sfx(a==='turnin'?'unlock':'blip');toast(a==='accept'?`New quest: ${q.title}`:q.thanks);return true;}
@@ -1440,7 +1586,7 @@ function drawMark(mk,x,y){if(!mk)return;const b=Math.sin(time*4)>0?0:1;y-=b;cons
   fill(ctx,OUT,x-4,y-11,9,11);fill(ctx,'#fff8e8',x-3,y-10,7,9);
   if(mk==='wait'){fill(ctx,'#8a8698',x-2,y-6,1,1);fill(ctx,'#8a8698',x,y-6,1,1);fill(ctx,'#8a8698',x+2,y-6,1,1);}
   else{fill(ctx,col==='#ffd860'?'#e8a020':'#2f8a3a',x,y-9,1,5);fill(ctx,col==='#ffd860'?'#e8a020':'#2f8a3a',x,y-3,1,1);}}
-function drawNPC(n){const spr=NPCSPR[n.id],bob=Math.sin(time*2+n.x)>.6?1:0;shadow(n.x,n.y,8);ctx.drawImage(spr,Math.round(n.x-spr.width/2),Math.round(n.y-spr.height)+bob);drawMark(npcMark(n.id),n.x,n.y-spr.height-2);}
+function drawNPC(n){const spr=NPCSPR[n.id],bob=Math.sin(time*2+n.x)>.6?1:0;shadow(n.x,n.y,8);ctx.drawImage(spr,Math.round(n.x-spr.width/2),Math.round(n.y-spr.height)+bob);if(!popMourning())drawMark(npcMark(n.id),n.x,n.y-spr.height-2);}
 function drawTownie(v){const spr=VIS[v.v][(v.anim*6|0)%2];shadow(v.x,v.y,8);ctx.drawImage(spr,Math.round(v.x-spr.width/2),Math.round(v.y-spr.height));}
 function drawTrailSign(t){const Z=ZONES[t.zone],ok=state.unlocked[t.zone],x=Math.round(t.x+(t.zone==='lake'?22:t.zone==='plains'?10:0)),y=Math.round(t.y-(t.zone==='lake'||t.zone==='plains'?18:28));
   shadow(x,y+18,8);fill(ctx,'#5a3824',x-1,y,2,18);fill(ctx,'#5a3824',x-11,y-1,22,10);fill(ctx,'#c08a52',x-10,y,20,8);fill(ctx,ELEM[{meadow:'leaf',woods:'moon',peaks:'fire',lake:'ice',plains:'light'}[t.zone]].col,x-8,y+2,5,4);
@@ -1546,6 +1692,11 @@ const FURN={
  wt_pigeon:{name:'Pigeon statue',w:1,h:1,cost:0,tier:3,wt:'found',blurb:'The unofficial mascot of the Square',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#8a8698',x+4,y+9,8,6);fill(g,'#a8a4b8',x+4,y+9,8,1);fill(g,'#8a8698',x+5,y+4,6,5);fill(g,'#6a6680',x+5,y+6,4,2);fill(g,'#7a7690',x+9,y+2,3,3);fill(g,'#1a1424',x+10,y+3,1,1);fill(g,'#f29a3a',x+12,y+3,1,1);fill(g,'#7cc2a8',x+9,y+5,2,1);}},
  wt_books:{name:'Stack of library books',w:1,h:1,cost:0,tier:3,wt:'found',blurb:'Found near the library. Very overdue.',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+2,y+14,12,2);[['#e8553a',3,1],['#5ab4f0',3,2],['#ffd860',2,0],['#6cc24a',3,2],['#b49af4',2,1]].reduce((yy,[c,h2,o])=>{fill(g,c,x+2+o,yy-h2,11-o,h2);fill(g,'#f4f0e6',x+12,yy-h2,1,h2);return yy-h2;},y+14);}},
  wt_muffins:{name:"Bea's berry muffins",w:1,h:1,cost:0,tier:3,wt:'found',blurb:'Still warm, somehow',draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+14,14,2);fill(g,'#f4f4f0',x+1,y+11,14,2);for(const a of[2,6,10]){fill(g,'#e8a0b0',x+a,y+8,4,3);fill(g,'#a8643a',x+a-1,y+5,6,3);fill(g,'#6a4cb8',x+a+1,y+6,1,1);fill(g,'#6a4cb8',x+a+3,y+5,1,1);}}},
+ popchair:{name:"Pop's armchair",w:1,h:1,cost:0,quest:true,tier:4,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+14,14,2);fill(g,'#5a7a4a',x+1,y+2,14,12);fill(g,'#4a6a3a',x+1,y+2,14,3);fill(g,'#6a8a5a',x+3,y+7,10,4);for(let k=0;k<14;k+=4)fill(g,'#3a5a2a',x+1+k,y+2,1,12);fill(g,'#c84a4a',x+4,y+8,8,3);fill(g,'#e8d8b0',x+4,y+9,8,1);fill(g,'#3a2a1e',x+2,y+14,2,2);fill(g,'#3a2a1e',x+12,y+14,2,2);}},
+ pophat:{name:"Pop's keeper hat",w:1,h:1,cost:0,quest:true,tier:4,wall:true,draw(g,x,y){fill(g,'#6a4228',x+7,y+1,2,2);fill(g,'#3a6a3a',x+3,y+5,10,4);fill(g,'#2a5a2a',x+1,y+9,14,2);fill(g,'#c89a3a',x+3,y+7,10,1);fill(g,'#ffd860',x+11,y+6,1,2);}},
+ popphoto:{name:'Photo of you and Pop',w:1,h:1,cost:0,quest:true,tier:4,wall:true,draw(g,x,y){fill(g,'#8a5a34',x+1,y,14,13);fill(g,'#ffe8c8',x+2,y+1,12,11);fill(g,'#bfe6ff',x+2,y+1,12,5);fill(g,'#64b84c',x+2,y+8,12,4);fill(g,'#e8e4f0',x+4,y+3,3,2);fill(g,'#f2c8a0',x+4,y+5,3,2);fill(g,'#7a8a5a',x+4,y+7,3,4);fill(g,'#3a2418',x+9,y+5,2,2);fill(g,'#f2c8a0',x+9,y+7,2,1);fill(g,'#e8553a',x+9,y+8,2,3);fill(g,'#f4f0f8',x+11,y+9,2,2);}},
+ granquilt:{name:"Gran's creature quilt",w:2,h:1,cost:0,quest:true,tier:4,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+14,30,2);for(let j=0;j<3;j++)for(let i=0;i<6;i++)fill(g,['#f6a8c4','#bfe6ff','#ffe2a0','#c8e8b8'][(i+j)%4],x+1+i*5,y+3+j*4,5,4);fill(g,'#ffffff',x+1,y+3,30,1);
+   fill(g,'#f4f0f8',x+7,y+8,3,2);fill(g,'#ffb070',x+17,y+4,3,2);fill(g,'#ff7aa8',x+22,y+11,3,2);}},
  sakura:{name:'Potted cherry blossom',w:1,h:1,cost:0,quest:true,tier:3,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+3,y+14,10,2);fill(g,'#a8643a',x+4,y+10,8,5);fill(g,'#7a4a2a',x+4,y+14,8,1);fill(g,'#6a4228',x+7,y+4,2,7);shape(g,x,y-6,CANOPY,'#d0648c','#f6a8c4','#ffe0ec');for(let k=0;k<4;k++)fill(g,'#ffffff',x+3+k*3,y-3+(k%2)*3,1,1);}},
  kite:{name:'Spring kite',w:1,h:1,cost:0,quest:true,tier:3,wall:true,draw(g,x,y){for(let r=0;r<6;r++){fill(g,'#ff7aa8',x+8-r,y+r,r,1);fill(g,'#5ab4f0',x+8,y+r,r,1);fill(g,'#ffd860',x+8-(6-r),y+6+r,6-r,1);fill(g,'#7cf0b8',x+8,y+6+r,6-r,1);}fill(g,'#3a3448',x+8,y+12,1,3);fill(g,'#ff7aa8',x+9,y+13,2,1);fill(g,'#ffd860',x+7,y+15,2,1);}},
  lemonade:{name:'Lemonade stand',w:1,h:1,cost:0,quest:true,tier:3,draw(g,x,y){fill(g,'rgba(0,0,0,.2)',x+1,y+14,14,2);fill(g,'#c08a52',x+1,y+7,14,7);fill(g,'#a8743e',x+1,y+7,14,1);for(let k=0;k<4;k++)fill(g,k%2?'#fff8e8':'#ffd860',x+1+k*4,y-1,4,3);fill(g,'#8a5a34',x+1,y+2,1,5);fill(g,'#8a5a34',x+14,y+2,1,5);fill(g,'#e2ecff',x+4,y+3,4,4);fill(g,'#ffe27a',x+4,y+5,4,2);fill(g,'#ff9ac0',x+10,y+4,2,3);}},
@@ -1745,7 +1896,10 @@ function findTarget(){const L=[];
     for(const b of BUILDINGS){const d=Math.hypot(player.x-(b.door*16+8),player.y-((b.y+b.h)*16+8));if(d<18)L.push([d,{type:'door',b}]);}
     LOTS.forEach((l,n)=>{const k=houseOnLot(n);if(k>=0){const b=houseBuilding(k),d=Math.hypot(player.x-(b.door*16+8),player.y-((b.y+b.h)*16+8));if(d<18)L.push([d,{type:'hdoor',k,b}]);}
       else{const d=Math.hypot(player.x-(l.x+3)*16,player.y-((l.y+5)*16+14));if(d<20)L.push([d,{type:'lot',lot:n}]);}});
-    for(const n of NPC_POS){const d=Math.hypot(player.x-n.x,player.y-n.y);if(d<20)L.push([d,{type:'npc',id:n.id}]);}
+    for(const n of npcsNow()){const d=Math.hypot(player.x-n.x,player.y-n.y);if(d<20)L.push([d,{type:'npc',id:n.id}]);}
+    {const P=popState(),pp=P.alive?(P.lost?{x:POP_LOST[P.lost-1][0]*16+8,y:POP_LOST[P.lost-1][1]*16+12}:POP_SPOT):null;if(pp){const d=Math.hypot(player.x-pp.x,player.y-pp.y);if(d<20)L.push([d-2,{type:'pop'}]);}
+     const gs=granSpot(),dg=Math.hypot(player.x-gs.x,player.y-gs.y);if(dg<18)L.push([dg,{type:'gran'}]);
+     if(!P.alive){const dt2=Math.hypot(player.x-(POP_TREE.i*16+8),player.y-(POP_TREE.j*16+20));if(dt2<22)L.push([dt2+3,{type:'poptree'}]);}}
     for(const t of TRAILS){const d=Math.hypot(player.x-t.x,player.y-t.y);if(d<28)L.push([d+4,{type:'trail',t}]);}
     if(sanctRank()>=2){const d=Math.hypot(player.x-WTP.x,player.y-WTP.y);if(d<20)L.push([d,{type:'wtportal'}]);}
   }else if(scene==='arcade'){
@@ -1772,7 +1926,7 @@ function label(t){switch(t.type){
   case'pen':{const p=state.pens[t.i];const c=p.cid&&getC(p.cid);return c?`${KA} Visit ${SPECIES[c.sp].name}`:`${KA} Choose who lives here`;}
   case'door':return t.b.id==='cottage'?`${KA} Go inside your cottage`:`${KA} Go into ${t.b.name}`;
   case'npc':return`${KA} Talk to ${NPCINFO[t.id].short}`;
-  case'hdoor':return`${KA} Go into ${t.b.name}`;case'lot':return`${KA} Lot for sale · build a house`;case'nameplate':return`${KA} Name this house`;
+  case'hdoor':return`${KA} Go into ${t.b.name}`;case'pop':return popState().lost?`${KA} Pop! You found him`:`${KA} Visit Pop`;case'gran':return`${KA} Visit Gran`;case'poptree':return`${KA} Sit with Pop's tree`;case'lot':return`${KA} Lot for sale · build a house`;case'nameplate':return`${KA} Name this house`;
   case'trail':return`${KA} Trail to ${ZONES[t.t.zone].name}${state.unlocked[t.t.zone]?'':' (locked)'}`;
   case'furn':return`${KA} `+({bed:'Take a cozy nap',piano:'Play the piano',arcade:'Play the arcade game',jukebox:'Play the jukebox',telescope:'Look through the telescope',crystal:'Gaze into the crystal ball'}[t.use]||'Use it');
   case'cr':return`${KA} Befriend ${SPECIES[t.c.sp].name}`;case'bush':return`${KA} Pick berries`;case'spark':return t.s.locket?`${KA} Pick up the pink glint`:t.s.item?`${KA} Pick up ${WT_ITEM[t.s.item].name}`:`${KA} Dig up treasure`;case'portal':return`${KA} Return home`;
@@ -1792,8 +1946,8 @@ function pressA(){if(titleOpen){startGame();return;}if(catchG){catchPress();retu
   if(buildMode){applyTool(cur.i,cur.j,false);return;}if(tutNextWaiting()){tutAdvance();return;}const t=findTarget();if(!t)return;
   switch(t.type){
     case'gate':gatePanel();break;case'board':boardPanel();break;case'burrow':burrowPanel();break;case'pen':penPanel(t.i);break;
-    case'door':if(t.b.id==='cottage')goHome();else if(t.b.id==='arcade')goArcade();else if(t.b.id==='hall')npcPanel('mayor');else shopPanel(t.b.id);break;
-    case'npc':npcPanel(t.id);break;case'hdoor':goHome(t.k+1);break;case'lot':lotPanel(t.lot);break;case'nameplate':namePanel();break;case'trail':trailPanel(t.t.zone);break;
+    case'door':if(t.b.id==='cottage')goHome();else if(t.b.id==='arcade')goArcade();else if(t.b.id==='pop')popHousePanel();else if(t.b.id==='hall')npcPanel('mayor');else shopPanel(t.b.id);break;
+    case'npc':npcPanel(t.id);break;case'pop':popPanel();break;case'gran':granPanel();break;case'poptree':popTreePanel();break;case'hdoor':goHome(t.k+1);break;case'lot':lotPanel(t.lot);break;case'nameplate':namePanel();break;case'trail':trailPanel(t.t.zone);break;
     case'furn':useFurn(t.use,t.it);break;
     case'cr':startCatch(t.c);break;case'bush':pickBush(t.b);break;case'spark':digSpark(t.s);break;
     case'portal':returnHome();break;
@@ -1868,6 +2022,7 @@ function gatePanel(fixed){
 
 function rumor(){const d=state.dex,u=state.unlocked,q=state.quests;
   if(!state.seenTown)return'Tip: walk out the bottom entrance to visit Willowbrook. The townsfolk have quests and the shops sell upgrades.';
+  {const P=popState();if(!P.met)return'Tip: your Pop and Gran live on the west side of Willowbrook. Go say hi!';if(P.alive&&P.lost)return"Pop isn't on his porch! Someone saw him wandering in town. Find him and walk him home.";if(P.alive&&!P.visited)return'Pop would love a visit this season. He and Gran are on their porch.';if(!P.alive&&state.gran&&!state.gran.done&&!state.gran.visited)return'Gran could use some company this season.';}
   if(sanctRank()>=2&&!u.watertown)return'Rumor: Theo swears he saw a shimmering ring in the trees east of Town Hall…';
   if(d.lilypip!==2)return'Rumor: a shy pond creature in Glimmer Meadow only surfaces for a water song.';
   if(!u.woods)return'Rumor: the Moonlit Woods are dark. A glowing friend would light the way.';
@@ -1900,7 +2055,7 @@ function journalPanel(){const render=()=>{const ks=Object.keys(SPECIES),got=ks.f
   const act=QUESTS.filter(q=>state.quests[q.id]==='active'),done=QUESTS.filter(q=>state.quests[q.id]==='done').length;
   const quests=`<h3>Quests · ${done}/${QUESTS.length} done</h3>`+(act.length?`<div class="list">${act.map(q=>{const ok=q.ready();return`<div class="qrow${ok?' ok':''}"><b>${q.title}</b><small>${q.goal} · from ${NPCINFO[q.npc].short}${ok?' · <span class="good">ready to hand in!</span>':''}</small></div>`;}).join('')}</div>`:`<p class="muted" style="font-size:14px">No quests right now. Townsfolk with a yellow “!” have something to ask.</p>`);
   const bag=[['golden','Golden apples'],['cookie','Creature cookies'],['cake','Rainbow cakes'],['mooncake','Moon cakes'],['clover','Lucky clovers'],['starfruit','Star fruits']].filter(([k])=>state.inv[k]>0).map(([k,n])=>`${n} ×${state.inv[k]}`).join(' · ');
-  const rk=sanctRank();return head(`Field journal · ${got}/${ks.length}`)+`<p class="ab"><b>${rankStars(rk)} ${rankLabel(rk)}</b>${rk<5?`<br><small class="muted">Next: ${reqText(RANKS[rk+1].req)}</small>`:''}</p>`+quests+(bag?`<p class="muted" style="font-size:14px">Bag: ${bag}</p>`:'')+`<h3>Creatures</h3><div class="dex">${ks.map(k=>{const S=SPECIES[k],st=state.dex[k]||0,n=state.owned.filter(c=>c.sp===k).length;
+  const rk=sanctRank();return head(`Field journal · ${got}/${ks.length}`)+`<p class="ab"><b>${rankStars(rk)} ${rankLabel(rk)}</b>${rk<5?`<br><small class="muted">Next: ${reqText(RANKS[rk+1].req)}</small>`:''}</p>`+quests+popJournal()+(bag?`<p class="muted" style="font-size:14px">Bag: ${bag}</p>`:'')+`<h3>Creatures</h3><div class="dex">${ks.map(k=>{const S=SPECIES[k],st=state.dex[k]||0,n=state.owned.filter(c=>c.sp===k).length;
     if(st===2)return`<div><div class="top">${img(k,'spr sm')}<div><b>${S.name}</b><br><small>${n} in the sanctuary${S.huge?' · giant':''}</small></div></div>${tags(S)}<small><b style="color:var(--gold)">${S.abName}.</b> ${S.abText}</small><small>${S.desc}</small></div>`;
     return`<div><div class="top"><img class="spr sm" src="${sprURL('sil-'+k,SIL[k])}" alt=""><div><b>${st?S.name:'???'}</b><br><small>${st?'Seen, not befriended':'Not yet seen'}</small></div></div>
       <small>Lives in ${ZONES[S.zone].hidden&&!state.unlocked[S.zone]?'a secret place…':ZONES[S.zone].name}.${S.season!=null?` ${SEAS[S.season].icon} ${SEAS[S.season].name} only.`:''} ${RAR[S.rar].name}${S.huge?', giant':''}.${S.needs?` ${NEED_HINT[S.needs]}`:''}</small></div>`;}).join('')}</div>`;};openPanel(render,()=>{});}
@@ -1964,7 +2119,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;fi
     for(const v of visitors)L.push({y:v.y,d:()=>drawVisitor(v)});}
   else if(scene==='town'){L.push({y:20,d:drawArch},{y:19*16,d:drawPlazaFountain});for(const b of BUILDINGS)L.push({y:(b.y+b.h)*16,d:()=>drawBuilding(b)});
     LOTS.forEach((l,n)=>{const k=houseOnLot(n);if(k>=0){const b=houseBuilding(k);L.push({y:(b.y+b.h)*16,d:()=>drawBuilding(b)});}else L.push({y:(l.y+5)*16+10,d:()=>drawLotSign(l)});});
-    for(const n of NPC_POS)L.push({y:n.y,d:()=>drawNPC(n)});for(const v of townies)L.push({y:v.y,d:()=>drawTownie(v)});for(const t of TRAILS)L.push({y:t.y,d:()=>drawTrailSign(t)});L.push({y:WTP.y,d:drawWtPortal});}
+    for(const n of npcsNow())L.push({y:n.y,d:()=>drawNPC(n)});L.push({y:POP_SPOT.y,d:drawPopScene});for(const v of townies)L.push({y:v.y,d:()=>drawTownie(v)});for(const t of TRAILS)L.push({y:t.y,d:()=>drawTrailSign(t)});L.push({y:WTP.y,d:drawWtPortal});}
   else if(scene==='arcade'){for(const c of CABS)L.push({y:3*16,d:()=>drawCabinet(c)});for(const n of ARC_NPC)L.push({y:n.y,d:()=>drawNPC(n)});}
   else if(scene==='home'){for(const it of HOME().items){const Fu=FURN[it.f];if(!Fu)continue;L.push({y:Fu.wall?-10:Fu.layer===0?-5:(it.j+Fu.h)*16-1,d:()=>drawFurn(it)});}}
   else{L.push({y:wild.spawn.y,d:drawPortal});for(const b of wild.bushes)if(b.has)L.push({y:b.j*16+15,d:()=>drawBerries(b)});
@@ -2032,7 +2187,7 @@ let lastTouchEnd=0;document.addEventListener('touchend',e=>{const now=Date.now()
    anywhere else (GitHub Pages) it falls back to PeerJS (WebRTC). */
 let NET={role:null,mode:null,code:null,r:null,roomApi:undefined,peer:null,conn:null,partner:null,partnerId:null,pv:null,pc:null,lastSnap:'',snapT:0,posT:0,wT:0,rx:{},solo:null,lastPos:0,gotState:false};
 let crSeq=0;
-const SHARED=['houses','cal','qBase','pipSeen','hiscore','coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
+const SHARED=['pop','gran','houses','cal','qBase','pipSeen','hiscore','coins','berries','nextId','nextPen','owned','pens','zoo','home','inv','unlocks','quests','unlocked','dex','stats','restAt'];
 const PJ_URL='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function myName(){let n='';try{n=localStorage.getItem('as-name')||'';}catch(e){}return n||'Friend';}
@@ -2094,6 +2249,7 @@ function hostRun(c,a){const sv={scene,tool,biomeSel,curHouse},num=v=>typeof v===
     case'dex':if(SPECIES[a.sp]&&(a.st===1||a.st===2)&&(state.dex[a.sp]||0)<a.st)state.dex[a.sp]=a.st;break;
     case'away':{const cc=getC(a.cid);if(cc)cc.away=!!a.v;break;}
     case'rest':rest(true);break;
+    case'pop':if(typeof a.a==='string')popAct(a.a);break;case'gran':if(typeof a.a==='string')granAct(a.a);break;
     case'buildHouse':if(num(a.lot)&&HOUSES[a.kind])buildHouseAt(a.lot,a.kind);break;
     case'nameHouse':if(houseOk(a.h)&&a.h>0&&typeof a.n==='string')state.houses[a.h-1].name=a.n.slice(0,24);break;}}
   catch(e){console.error('cmd',c,e);}

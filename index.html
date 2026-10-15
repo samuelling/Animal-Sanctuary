@@ -1280,7 +1280,7 @@ function bbInfo(){const t=toolDef(tool);if(scene==='home')return homeInfo(t);if(
 function renderBuildbar(){if(!buildMode)return;const sc=bb.querySelector('.tools')?.scrollLeft||0,tl=toolList();
   if(!tl.some(t=>t.id===tool))tool=(tl.find(t=>!locked(t))||tl[0]).id;
   const sel=toolDef(tool);
-  const btn=t=>{const lk=locked(t),tag=scene==='home'?(t.id==='bulldoze'?'put away':'×'+homeAvail(t.furn)):lk?'Bram’s':t.id==='bulldoze'?'refund':toolCost(t);
+  const btn=t=>{const lk=locked(t),tag=scene==='home'?(t.id==='bulldoze'?'put away':t.id==='rotate'?'⟳':'×'+homeAvail(t.furn)):lk?'Bram’s':t.id==='bulldoze'?'refund':toolCost(t);
     return`<button class="tool${lk?' locked':''}" type="button" data-tool="${t.id}" aria-pressed="${tool===t.id}"><img src="${toolIcon(t)}" alt=""><span>${t.name}</span><b>${tag}</b></button>`;};
   bb.innerHTML=`<div class="bb-top"><span class="bb-info">${bbInfo()}</span><button class="pbtn done" type="button" data-bb="done">Done</button></div>
   <div class="tools">${tl.map(btn).join('')}</div>
@@ -1889,12 +1889,27 @@ function buildHome(){const H=HOME(),w=H.w,h=H.h,m=new Uint8Array(w*h).fill(T.HFL
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(j<=1||i===0||i===w-1||j===h-1)m[j*w+i]=T.HWALL;
   const di=Math.floor(w/2)-1;m[(h-1)*w+di]=T.DOORMAT;m[(h-1)*w+di+1]=T.DOORMAT;
   const W={kind:'home',w,h,m,ground:T.HFLOOR,seed:13,door:di};W.solid=makeSolid(W);
-  for(const it of H.items){const Fu=FURN[it.f];if(!Fu||Fu.wall||Fu.layer===0)continue;for(let y=it.j;y<it.j+Fu.h;y++)for(let x=it.i;x<it.i+Fu.w;x++)if(y<h&&x<w)W.solid[y*w+x]=1;}
+  for(const it of H.items){const Fu=FURN[it.f];if(!Fu||Fu.wall||Fu.layer===0)continue;for(let y=it.j;y<it.j+fh(it);y++)for(let x=it.i;x<it.i+fw(it);x++)if(y<h&&x<w)W.solid[y*w+x]=1;}
   renderMap(W);homeWorld=W;if(scene==='home')world=W;}
 function homeAvail(f){return(state.inv['f:'+f]||0)-allHomes().reduce((n,H)=>n+H.items.filter(it=>it.f===f).length,0);}
-function homeToolDef(id){if(id==='bulldoze')return{id,name:'Put away',info:'Tap furniture to put it back in your bag.'};if(!id||!id.startsWith('f:'))return null;const f=id.slice(2),Fu=FURN[f];if(!Fu)return null;return{id,name:Fu.name,furn:f,wall:!!Fu.wall};}
-function homeTools(){const L=[];for(const f in FURN)if((state.inv['f:'+f]||0)>0)L.push(homeToolDef('f:'+f));L.push(homeToolDef('bulldoze'));return L;}
-function homeItemsAt(i,j){return HOME().items.filter(it=>{const Fu=FURN[it.f];return Fu&&i>=it.i&&i<it.i+Fu.w&&j>=it.j&&j<it.j+Fu.h;});}
+function homeToolDef(id){if(id==='rotate')return{id,name:'Turn',info:'Tap furniture to turn it around. Long pieces can turn sideways.'};if(id==='bulldoze')return{id,name:'Put away',info:'Tap furniture to put it back in your bag.'};if(!id||!id.startsWith('f:'))return null;const f=id.slice(2),Fu=FURN[f];if(!Fu)return null;return{id,name:Fu.name,furn:f,wall:!!Fu.wall};}
+function homeTools(){const L=[];for(const f in FURN)if((state.inv['f:'+f]||0)>0)L.push(homeToolDef('f:'+f));L.push(homeToolDef('rotate'));L.push(homeToolDef('bulldoze'));return L;}
+const canSide=Fu=>!!Fu&&!Fu.wall&&Math.max(Fu.w,Fu.h)>=2;
+const fw=it=>{const Fu=FURN[it.f];return!Fu?1:(it.r|0)>=2?Fu.h:Fu.w;},fh=it=>{const Fu=FURN[it.f];return!Fu?1:(it.r|0)>=2?Fu.w:Fu.h;};
+function homeItemsAt(i,j){return HOME().items.filter(it=>{const Fu=FURN[it.f];return Fu&&i>=it.i&&i<it.i+fw(it)&&j>=it.j&&j<it.j+fh(it);});}
+function turnFits(it,r){const H=HOME(),Fu=FURN[it.f],w=r>=2?Fu.h:Fu.w,h=r>=2?Fu.w:Fu.h;if(Fu.wall)return true;
+  if(it.i<1||it.j<2||it.i+w>H.w-1||it.j+h>H.h-1)return false;const lay=Fu.layer===0?0:1,di=Math.floor(H.w/2)-1,pt=playerTile();
+  for(let y=it.j;y<it.j+h;y++)for(let x=it.i;x<it.i+w;x++){if(homeItemsAt(x,y).some(o=>o!==it&&!FURN[o.f].wall&&((FURN[o.f].layer===0?0:1)===lay)))return false;
+    if(lay===1&&y===H.h-2&&(x===di||x===di+1))return false;if(lay===1&&pt.i===x&&pt.j===y)return false;}return true;}
+function turnAt(i,j,quiet){const it=homeItemAt(i,j);if(!it){if(!quiet)toast('Tap a piece of furniture to turn it.');return false;}const Fu=FURN[it.f],n=canSide(Fu)?4:2,r0=it.r|0;
+  for(let k=1;k<n;k++){const r=(r0+k)%n;if(turnFits(it,r)){it.r=r;sfx('blip');sparks((it.i+fw(it)/2)*16,(it.j+fh(it)/2)*16,6,'#fff6b0');buildHome();save();renderBuildbar();return true;}}
+  if(!quiet)toast('There is no room to turn that here. Try moving it first.');return false;}
+let furnTmp=null;
+function drawFurn(it){const Fu=FURN[it.f];if(!Fu)return;const r=it.r|0,X=it.i*16,Y=it.j*16;if(!r){Fu.draw(ctx,X,Y);return;}
+  const W=Fu.w*16,H=Fu.h*16+16;if(!furnTmp)furnTmp=document.createElement('canvas');if(furnTmp.width!==W||furnTmp.height!==H){furnTmp.width=W;furnTmp.height=H;}
+  const g=furnTmp.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,H);g.imageSmoothingEnabled=false;Fu.draw(g,0,16);
+  ctx.save();if(r===1){ctx.translate(X+W,Y-16);ctx.scale(-1,1);}else if(r===2){ctx.translate(X+H,Y);ctx.rotate(Math.PI/2);}else{ctx.translate(X-16,Y+W);ctx.rotate(-Math.PI/2);}
+  ctx.drawImage(furnTmp,0,0);ctx.restore();}
 function homeItemAt(i,j){const L=homeItemsAt(i,j);return L.find(it=>!FURN[it.f].wall&&FURN[it.f].layer!==0)||L.find(it=>FURN[it.f].layer===0)||L[0]||null;}
 function homeProblem(t,i,j){const H=HOME(),Fu=FURN[t.furn];if(!Fu)return'Pick something to place.';if(homeAvail(t.furn)<=0)return"You've placed all of those. Buy more at Pip's Home Goods.";
   if(Fu.wall){if(j!==1)return'Wall decorations go on the wall.';if(i<1||i+Fu.w>H.w-1)return"That doesn't fit there.";
@@ -1906,14 +1921,15 @@ function homeProblem(t,i,j){const H=HOME(),Fu=FURN[t.furn];if(!Fu)return'Pick so
   if(lay===1){const pt=playerTile();if(pt.i>=i&&pt.i<i+Fu.w&&pt.j>=j&&pt.j<j+Fu.h)return'You are standing there!';}
   return null;}
 function homeApply(t,i,j,quiet){
+  if(t.id==='rotate')return turnAt(i,j,quiet);
   if(t.id==='bulldoze'){const it=homeItemAt(i,j);if(!it){if(!quiet)toast('Nothing to put away there.');return false;}HOME().items.splice(HOME().items.indexOf(it),1);poof(i*16+8,j*16+8);sfx('miss');buildHome();save();renderBuildbar();return true;}
   const why=homeProblem(t,i,j);if(why){if(!quiet)toast(why);return false;}
   HOME().items.push({f:t.furn,i,j});sfx('blip');sparks((i+FURN[t.furn].w/2)*16,(j+FURN[t.furn].h/2)*16,8,'#fff6b0');buildHome();save();renderBuildbar();return true;}
-function homeInfo(t){if(!t)return'';if(t.id==='bulldoze')return t.info+` · Coziness ${coziness()}`;const Fu=FURN[t.furn];return`<b>${Fu.name}</b> · ${homeAvail(t.furn)} left to place${Fu.wall?' · goes on the wall':''} · Coziness ${coziness()}`;}
+function homeInfo(t){if(!t)return'';if(t.id==='rotate')return t.info+' (or press R)';if(t.id==='bulldoze')return t.info+` · Coziness ${coziness()}`;const Fu=FURN[t.furn];return`<b>${Fu.name}</b> · ${homeAvail(t.furn)} left to place${Fu.wall?' · goes on the wall':''} · Coziness ${coziness()}`;}
 function cycleStyle(kind){if(G('style',{k:kind,h:curHouse}))return;const H=HOME(),list=state.home.styles[kind];if(list.length<2){toast(`Buy more ${kind==='wall'?'wallpaper':'floors'} at Pip's Home Goods in town.`);return;}
   H[kind]=list[(list.indexOf(H[kind])+1)%list.length];sfx('blip');buildHome();save();renderBuildbar();}
 function furnCanvas(f){const Fu=FURN[f],c=document.createElement('canvas');c.width=Fu.w*16;c.height=Fu.h*16+16;Fu.draw(c.getContext('2d'),0,16);return c;}
-function drawFurn(it){const Fu=FURN[it.f];if(Fu)Fu.draw(ctx,it.i*16,it.j*16);}
+
 function rest(remote){if(G('rest',{})){sleepFx=2.4;sfx('pet');toast('What a cozy nap!');return;}const now=Date.now();if(now-(state.restAt||0)<90000){toast("You're not sleepy yet. Come back in a little while.");return;}state.restAt=now;if(!remote)sleepFx=2.4;
   const boost=15+Math.min(45,Math.floor(coziness()/4));let n=0;for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c){c.happy=Math.min(100,c.happy+boost);n++;}}
   toast(`What a cozy nap! ${n} creature${n===1?'':'s'} feel happier too (+${boost}).`);sfx('pet');sleepToMorning();save();}
@@ -2041,7 +2057,7 @@ function findTarget(){const L=[];
     for(const n of ARC_NPC){const d=Math.hypot(player.x-n.x,player.y-n.y);if(d<20)L.push([d,{type:'npc',id:n.id}]);}
   }else if(scene==='home'){
     if(curHouse){const d=Math.hypot(player.x-(homeWorld.door*16+8),player.y-((homeWorld.h-2)*16+12));if(d<14)L.push([d+6,{type:'nameplate'}]);}
-    for(const it of HOME().items){const Fu=FURN[it.f];if(!Fu||!Fu.use)continue;const cx=(it.i+Fu.w/2)*16,cy=(it.j+Fu.h)*16+4;
+    for(const it of HOME().items){const Fu=FURN[it.f];if(!Fu||!Fu.use)continue;const cx=(it.i+fw(it)/2)*16,cy=(it.j+fh(it))*16+4;
       const d=Math.hypot(Math.max(0,Math.abs(player.x-cx)-Fu.w*6),player.y-cy);if(d<12)L.push([d,{type:'furn',use:Fu.use,it}]);}
   }else if(wild){
     for(const c of wild.crs){const S=SPECIES[c.sp],d=Math.hypot(c.x-player.x,c.y-player.y);if(d<(S.huge?50:24))L.push([d-(S.huge?24:6),{type:'cr',c}]);}
@@ -2264,7 +2280,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;fi
     LOTS.forEach((l,n)=>{const k=houseOnLot(n);if(k>=0){const b=houseBuilding(k);L.push({y:(b.y+b.h)*16,d:()=>drawBuilding(b)});}else L.push({y:(l.y+5)*16+10,d:()=>drawLotSign(l)});});
     for(const n of npcsNow())L.push({y:n.y,d:()=>drawNPC(n)});L.push({y:POP_SPOT.y,d:drawPopScene});for(const v of townies)L.push({y:v.y,d:()=>drawTownie(v)});for(const t of TRAILS)L.push({y:t.y,d:()=>drawTrailSign(t)});L.push({y:WTP.y,d:drawWtPortal});}
   else if(scene==='arcade'){for(const c of CABS)L.push({y:3*16,d:()=>drawCabinet(c)});for(const n of ARC_NPC)L.push({y:n.y,d:()=>drawNPC(n)});}
-  else if(scene==='home'){for(const it of HOME().items){const Fu=FURN[it.f];if(!Fu)continue;L.push({y:Fu.wall?-10:Fu.layer===0?-5:(it.j+Fu.h)*16-1,d:()=>drawFurn(it)});}}
+  else if(scene==='home'){for(const it of HOME().items){const Fu=FURN[it.f];if(!Fu)continue;L.push({y:Fu.wall?-10:Fu.layer===0?-5:(it.j+fh(it))*16-1,d:()=>drawFurn(it)});}}
   else{L.push({y:wild.spawn.y,d:drawPortal});for(const b of wild.bushes)if(b.has)L.push({y:b.j*16+15,d:()=>drawBerries(b)});
     for(const s of wild.sparks)L.push({y:s.y,d:()=>drawSparkle(s)});
     for(const c of wild.crs)L.push({y:c.y,d:()=>{drawCr(c.sp,c.x,c.y,c.face,c.moving,!!SPECIES[c.sp].swim);if(catchG&&catchG.cr===c)drawBang(c);}});
@@ -2295,6 +2311,7 @@ addEventListener('keydown',e=>{const k=e.key;if(gameOpen){if(k==='Escape')closeG
     if((k==='z'||k==='Z')&&!e.repeat){const el=document.activeElement;if(el&&panelEl.contains(el))el.click();}return;}
   if(titleOpen){if(document.activeElement&&titleEl.contains(document.activeElement)&&(k===' '||k==='Enter'))return;if(k===' '||k==='Enter'||k==='z'||k==='Z')startGame();return;}
   if(KMAP[k])keys.add(KMAP[k]);if(e.repeat)return;
+  if((k==='r'||k==='R')&&buildMode&&scene==='home'){const pt=tool==='rotate'||!homeItemAt(cur.i,cur.j)?null:1;const keep=tool;tool='rotate';applyTool(cur.i,cur.j,false);tool=keep;return;}
   if(k===' '||k==='Enter'||k==='z'||k==='Z')pressA();else if(k==='x'||k==='X'||k==='Escape')pressB();});
 addEventListener('keyup',e=>{if(KMAP[e.key])keys.delete(KMAP[e.key]);});
 addEventListener('blur',()=>keys.clear());

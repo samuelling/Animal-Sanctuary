@@ -1,6 +1,6 @@
 # The Making of Animal Sanctuary
 
-Every prompt that went into this game, in order, exactly as it was typed or said. A dad and his daughter talked to Claude, and Claude built it.
+Every prompt that went into this game, in order, exactly as it was typed or said. A dad and his kids talked to Claude, and Claude built it.
 
 A few notes:
 - Some messages were spoken aloud and transcribed, so they ramble a little (that's how talking works).
@@ -53,6 +53,10 @@ A few notes:
 42. one little bug, during the start of the tutorial, the player is hidden behind the text box
 43. can we add lifetimes for the animals in your sanctuary?   so they eventually die in their pen and you need to clean it up and put new ones in there?  also, lets add an option of a limiited lifetime ( to the player in general a toggle in some settings taht you can switch on or off any any pt in the gameplay)...  let them get older, more frail (less able to control animals), slower, and eventually pass away. gracefully  and then a epilogue that touches on the beauty in celebrating beauty and the process during our lives, rather than simply being goal driven, and focused on product...   roll credits..  i think mortality is not nearly well confronted enough in games.
 44. lets bury a link someplace in the credits, semi-hidden, that documents all the prompts that led to this game's creation
+45. Maya would like it if you can rotate the furniture so it can be oriented in different ways?
+46. If I make an iOS version of this, do saved games save locally on each machine?
+47. Emmy had the idea to be able to customize how you look in the game
+48. Can you change the gender too?  And skin color and such…
 
 ---
 

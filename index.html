@@ -237,6 +237,8 @@ details .row{margin-top:8px}
 .tool[aria-pressed="true"]{background:#5a3fb0;border-color:var(--gold)}
 .tool.locked{opacity:.5}
 .say{margin:0;font-size:15px;line-height:1.35}
+.wardrobe{display:flex;flex-direction:column;gap:6px}.wprev{position:sticky;top:-12px;z-index:2;display:flex;align-items:center;gap:10px;padding:6px 0 8px;background:var(--win-top);border-bottom:2px solid var(--win-edge)}.wbtns{display:flex;flex-direction:column;gap:6px;flex:1}.wprev img{width:auto;height:112px;image-rendering:pixelated;background:linear-gradient(#bfe6ff,#e8f6ff);border-radius:10px;padding:10px}
+.wopts{display:flex;flex-direction:column;gap:6px}.wopts h3{margin:8px 0 0}.row.wrap{flex-wrap:wrap}.swr{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 4px}.swc{width:30px;height:30px;border-radius:7px;border:2px solid #1a1424;cursor:pointer;padding:0}.swc[aria-pressed=true]{outline:3px solid #ffd860;outline-offset:1px}
 .letter{white-space:pre-line;background:#fff8e8;color:#3a2a2a;border-radius:10px;padding:14px 16px;font:italic 16px/1.5 Georgia,'Times New Roman',serif;box-shadow:inset 0 0 0 2px #e8d8b8;margin:8px 0}
 .qrow{display:flex;flex-direction:column;gap:2px;padding:6px 8px;background:#0a0d3366;border:1px solid #6a74c8;border-radius:4px}
 .qrow small{color:var(--muted)}
@@ -485,10 +487,10 @@ function defaultZoo(){const w=26,p=new Array(w*ZH).fill('0');for(let j=0;j<ZH;j+
   const deco={};[[3,23,'tree'],[22,23,'tree'],[4,2,'tree'],[21,2,'tree'],[11,23,'bed'],[14,23,'bed']].forEach(([i,j,t])=>deco[j*w+i]=t);
   return{w,path:p.join(''),deco};}
 function defaultHome(){return{w:12,h:10,wall:'cream',floor:'wood',items:[{f:'bed',i:1,j:2},{f:'rug',i:5,j:5},{f:'plant',i:10,j:2},{f:'window',i:4,j:1}],styles:{wall:['cream'],floor:['wood']}};}
-const starterInv=()=>({'f:bed':1,'f:rug':1,'f:plant':1,'f:window':1});
+const starterInv=()=>({'f:wardrobe':1,'f:bed':1,'f:rug':1,'f:plant':1,'f:window':1});
 function defaultState(){return{v:3,coins:30,berries:8,nextId:2,nextPen:4,owned:[{id:1,sp:'puffbun',happy:80,petT:0}],
   pens:[{id:1,i:6,j:4,w:6,h:4,size:'std',biome:'meadow',cid:1},{id:2,i:14,j:4,w:6,h:4,size:'std',biome:'pond',cid:null},{id:3,i:6,j:9,w:6,h:4,size:'std',biome:'meadow',cid:null}],
-  zoo:defaultZoo(),home:defaultHome(),inv:starterInv(),unlocks:{},quests:{},
+  zoo:defaultZoo(),home:defaultHome(),inv:starterInv(),seenWardrobe:true,unlocks:{},quests:{},
   unlocked:{meadow:true,woods:false,peaks:false,lake:false,plains:false},dex:{puffbun:2},stats:{earned:0,visitors:0},tutDone:false,tutStep:0};}
 function migrate(s){if(!s)return s;
   if(s.v===1){const pens=[];let id=1;(s.pens||[]).forEach((p,k)=>{if(!p.built)return;const col=k%2,row=k>>1;pens.push({id:id++,i:col?14:6,j:4+row*5,biome:p.biome,cid:p.cid});});
@@ -616,12 +618,14 @@ function lifeJournal(){const St=settings(),K=keeperS(),mem=state.memorial||[];
     <button class="pbtn" type="button" data-act="crlife" aria-pressed="${St.crLife}"><span class="grow"><b>Creature lifetimes · ${St.crLife?'On':'Off'}</b><small>Creatures grow up, grow old, and one day pass away. While off, nobody ages.</small></span></button>
     <button class="pbtn" type="button" data-act="keeper" aria-pressed="${St.keeper}"><span class="grow"><b>Keeper's lifetime · ${St.keeper?'On':'Off'}</b><small>${St.keeper?`You are ${keeperAge()} years old. You'll grow older, slower and frailer, and one day your story will end.`:'Your keeper grows old over the seasons. Switch it on or off any time.'}</small></span></button>`;
   if(St.keeper)h+=`<div class="row">${Object.keys(KLEN).map(k=>`<button class="pbtn" type="button" data-act="klen" data-k="${k}" aria-pressed="${K.len===k}"><span class="grow"><b>${k[0].toUpperCase()+k.slice(1)} life</b><small>${KLEN_NAME[k]}</small></span></button>`).join('')}</div>`;
+  h+=`<button class="pbtn" type="button" data-act="wardrobe"><span class="grow"><b>Wardrobe</b><small>Change how you look</small></span></button>`;
   h+=`<button class="pbtn" type="button" data-act="credits"><span class="grow"><b>Credits</b><small>Who made this game</small></span></button></div>`;return h;}
 function journalAct(a,d){const St=settings(),K=keeperS();
   if(a==='crlife'){St.crLife=!St.crLife;toast(St.crLife?'Creature lifetimes are on. Every life is precious.':'Creature lifetimes are off. Nobody will grow any older.');}
   else if(a==='keeper'){St.keeper=!St.keeper;if(St.keeper)toast(`Keeper's lifetime is on. You are ${keeperAge()}. Make every season count.`);else toast("Keeper's lifetime is off. You stay just as you are.");}
   else if(a==='klen'&&KLEN[d.k]){const f=keeperF();K.len=d.k;K.days=Math.round(f*KLEN[d.k]);toast(`Your life will last about ${KLEN_NAME[d.k]}.`);}
   else if(a==='credits'){closePanel();openEpilogue(false);return;}
+  else if(a==='wardrobe'){closePanel();wardrobePanel();return;}
   else return;sfx('blip');save();refreshPanel(true);}
 
 /* ---------- the keeper's last day, the epilogue, and the credits ---------- */
@@ -640,7 +644,7 @@ function epilogueLines(){const K=keeperS(),days=K.days,seasons=Math.max(1,Math.f
     'Thank you for playing.'];}
 function creditsHTML(){const sp=Object.keys(SPECIES),mem=[...new Set((state.memorial||[]).map(m=>m.sp))].filter(k=>SPECIES[k]);
   const L=(t,c='')=>`<p class="${c}">${t}</p>`;
-  return'<div class="roller">'+L('ANIMAL SANCTUARY','ct')+L('Dreamed up by Maya &amp; Sam','cb')+L('&nbsp;')+L('Built with Claude')+L('&nbsp;')+
+  return'<div class="roller">'+L('ANIMAL SANCTUARY','ct')+L('Dreamed up by Maya &amp; Sam','cb')+L('Wardrobe idea by Emmy','cs')+L('&nbsp;')+L('Built with Claude')+L('&nbsp;')+
     L('Glimmer Meadow · Moonlit Woods · Ember Peaks','cs')+L('Crystal Lake · Thunder Plains · Willowbrook','cs')+L('and a real town called Watertown','cs')+L('&nbsp;')+
     L('Watertown map © OpenStreetMap contributors and MassGIS, by way of Townies','cs')+L('Music composed live by the game, one note at a time','cs')+L('&nbsp;')+
     L('Starring','ch')+sp.map(k=>L(`${state.dex[k]===2?'':'<span class="dim">'}${SPECIES[k].name}${state.dex[k]===2?'':'</span>'}`,'cs')).join('')+L('&nbsp;')+
@@ -1787,7 +1791,9 @@ const FURN={
  hoard:{name:"Dragon's hoard",w:2,h:1,cost:1200,tier:4,draw(g,x,y){const rows=[[10,2,12],[6,4,20],[3,6,26],[1,8,30],[1,10,30],[1,12,30]];for(const[a,b,w]of rows)fill(g,'#c89a3a',x+a,y+b,w,2);for(const[a,b,w]of rows)fill(g,'#ffd860',x+a+1,y+b,w-3,1);
    for(let k=0;k<9;k++){const px=x+3+((k*11)%26),py=y+4+((k*7)%9);fill(g,'#fff6c0',px,py,1,1);}fill(g,'#e8553a',x+9,y+7,2,2);fill(g,'#72c4ff',x+20,y+9,2,2);fill(g,'#7cf0b8',x+14,y+5,2,2);fill(g,'#b49af4',x+25,y+11,2,2);
    const tw=(time*3|0)%5;fill(g,'#ffffff',x+5+tw*5,y+6+(tw%2)*3,1,1);}},
- mirror:{name:'Magic mirror',w:1,h:1,cost:1100,tier:4,wall:true,draw(g,x,y){[[5,0,6],[3,1,10],[2,2,12],[2,3,12],[2,4,12],[2,5,12],[2,6,12],[2,7,12],[2,8,12],[3,9,10],[5,10,6]].forEach(([a,b,w])=>fill(g,'#c89a3a',x+a,y+b,w,1));
+ wardrobe:{name:'Wardrobe',w:1,h:1,cost:0,quest:true,tier:2,use:'wardrobe',draw(g,x,y){fill(g,'rgba(0,0,0,.25)',x+1,y+14,14,2);fill(g,'#6a4228',x+1,y-12,14,27);fill(g,'#8a5a34',x+2,y-11,12,25);fill(g,'#6a4228',x+7,y-11,2,25);fill(g,'#a8743e',x+2,y-11,12,2);
+   fill(g,'#bfe6ff',x+3,y-7,3,12);fill(g,'#e8f6ff',x+3,y-7,1,6);fill(g,'#ffd860',x+6,y+1,1,2);fill(g,'#ffd860',x+9,y+1,1,2);fill(g,'#e8553a',x+10,y+6,3,4);fill(g,'#5ab4f0',x+11,y+5,2,1);}},
+ mirror:{name:'Magic mirror',w:1,h:1,cost:1100,tier:4,wall:true,use:'wardrobe',draw(g,x,y){[[5,0,6],[3,1,10],[2,2,12],[2,3,12],[2,4,12],[2,5,12],[2,6,12],[2,7,12],[2,8,12],[3,9,10],[5,10,6]].forEach(([a,b,w])=>fill(g,'#c89a3a',x+a,y+b,w,1));
    const c=['#8a6ad0','#5ab4f0','#7cf0b8','#f6a8c4'],f=time*2;[[5,1,6],[4,2,8],[4,3,8],[4,4,8],[4,5,8],[4,6,8],[4,7,8],[4,8,8],[5,9,6]].forEach(([a,b,w],k)=>fill(g,c[((k+f)|0)%4],x+a,y+b,w,1));fill(g,'#ffffff',x+6,y+3,1,2);fill(g,'#ffd860',x+7,y-1,2,1);}},
  ifountain:{name:'Rainbow fountain',w:2,h:2,cost:1400,tier:4,draw(g,x,y){fill(g,'rgba(0,0,0,.25)',x+1,y+28,30,4);fill(g,'#a8a4b8',x+1,y+16,30,13);fill(g,'#d8d4e8',x+1,y+16,30,2);fill(g,'#3b86d4',x+3,y+18,26,8);fill(g,'#7cc2f4',x+5,y+19,10,1);fill(g,'#a8a4b8',x+14,y+2,4,16);
    const C=['#e8553a','#ff9a3a','#ffd860','#6cc24a','#5ab4f0','#8a6ad0'],ph=time*6;for(let k=0;k<6;k++){const a=(k/5-.5)*1.4;for(let s2=0;s2<6;s2++){const px=x+16+Math.round(Math.sin(a)*s2*2.2),py=y+1-Math.round(Math.cos(a)*s2*1.6-s2*s2*.25);fill(g,C[(k+((ph+s2)|0))%6],px,py,1,1);}}fill(g,'#ffffff',x+15,y,2,2);}},
@@ -1933,7 +1939,7 @@ function furnCanvas(f){const Fu=FURN[f],c=document.createElement('canvas');c.wid
 function rest(remote){if(G('rest',{})){sleepFx=2.4;sfx('pet');toast('What a cozy nap!');return;}const now=Date.now();if(now-(state.restAt||0)<90000){toast("You're not sleepy yet. Come back in a little while.");return;}state.restAt=now;if(!remote)sleepFx=2.4;
   const boost=15+Math.min(45,Math.floor(coziness()/4));let n=0;for(const p of state.pens){if(!p.cid)continue;const c=getC(p.cid);if(c){c.happy=Math.min(100,c.happy+boost);n++;}}
   toast(`What a cozy nap! ${n} creature${n===1?'':'s'} feel happier too (+${boost}).`);sfx('pet');sleepToMorning();save();}
-function useFurn(u,it){if(u==='bed')rest();else if(u==='piano')playPiano(it);
+function useFurn(u,it){if(u==='wardrobe'){wardrobePanel();return;}if(u==='bed')rest();else if(u==='piano')playPiano(it);
   else if(u==='arcade'){ensureAudio();if(AC&&!muted){let t=AC.currentTime+.02;for(const n of[72,76,79,84,79,84,88]){const o=AC.createOscillator(),gn=AC.createGain();o.type='square';o.frequency.value=mtof(n);gn.gain.setValueAtTime(.04,t);gn.gain.exponentialRampToValueAtTime(.0001,t+.09);o.connect(gn).connect(AC.destination);o.start(t);o.stop(t+.1);t+=.08;}}
     const sc=(1000+((R()*98)|0)*100);toast(sc>state.hiscore||!state.hiscore?`NEW HIGH SCORE: ${sc.toLocaleString()}!`:`Score: ${sc.toLocaleString()} · best ${state.hiscore.toLocaleString()}`);if(!state.hiscore||sc>state.hiscore)state.hiscore=sc;sparks((it.i+.5)*16,it.j*16-8,8,'#7cf0b8');}
   else if(u==='jukebox'){ensureAudio();if(AC&&!muted){const sc=[0,4,7,9,12,7,4,9];let t=AC.currentTime+.02;for(let k=0;k<8;k++){INST.kalimba(t,mtof(62+sc[k]),.07,.3,AC.destination);t+=.16;}}
@@ -2078,7 +2084,7 @@ function label(t){switch(t.type){
   case'npc':return`${KA} Talk to ${NPCINFO[t.id].short}`;
   case'hdoor':return`${KA} Go into ${t.b.name}`;case'pop':return popState().lost?`${KA} Pop! You found him`:`${KA} Visit Pop`;case'gran':return`${KA} Visit Gran`;case'poptree':return`${KA} Sit with Pop's tree`;case'lot':return`${KA} Lot for sale · build a house`;case'nameplate':return`${KA} Name this house`;
   case'trail':return`${KA} Trail to ${ZONES[t.t.zone].name}${state.unlocked[t.t.zone]?'':' (locked)'}`;
-  case'furn':return`${KA} `+({bed:'Take a cozy nap',piano:'Play the piano',arcade:'Play the arcade game',jukebox:'Play the jukebox',telescope:'Look through the telescope',crystal:'Gaze into the crystal ball'}[t.use]||'Use it');
+  case'furn':return`${KA} `+({wardrobe:'Change how you look',bed:'Take a cozy nap',piano:'Play the piano',arcade:'Play the arcade game',jukebox:'Play the jukebox',telescope:'Look through the telescope',crystal:'Gaze into the crystal ball'}[t.use]||'Use it');
   case'cr':return`${KA} Befriend ${SPECIES[t.c.sp].name}`;case'bush':return`${KA} Pick berries`;case'spark':return t.s.locket?`${KA} Pick up the pink glint`:t.s.item?`${KA} Pick up ${WT_ITEM[t.s.item].name}`:`${KA} Dig up treasure`;case'portal':return`${KA} Return home`;
   case'wtportal':return`${KA} Step into the shimmering portal`;case'cab':return`${KA} Play ${t.c.name}`;case'chest':return`${KA} Open the treasure chest`;
   case'place':return`${KA} ${WT_EMO[t.p.cat]||'📍'} ${t.p.name}`;}}
@@ -2225,8 +2231,70 @@ function drawCr(sp,x,y,face,moving,swim){const S=SPECIES[sp];const right=face>=0
   if(swim){const wl=Math.round(y-spr.height*.15);ctx.globalAlpha=.55;fill(ctx,'#3b86d4',dx,wl,spr.width,Math.max(0,dy+spr.height-wl));ctx.globalAlpha=1;fill(ctx,'rgba(220,245,255,.8)',dx+2,wl,spr.width-4,1);}}
 const pRowsAge=(head,f,hc)=>[...P_HEAD[head].map(r=>r.replace(/N/g,hc)),...P_BODY,...P_LEGS[f]];
 const SPR_PE={},SPR_PO={};for(const[set,hc]of[[SPR_PE,'e'],[SPR_PO,'l']]){set.down=[0,1].map(f=>makeSprite(pRowsAge('down',f,hc)));set.up=[0,1].map(f=>makeSprite(pRowsAge('up',f,hc)));set.right=[0,1].map(f=>makeSprite(pRowsAge('side',f,hc)));set.left=[0,1].map(f=>makeSprite(pRowsAge('side',f,hc),null,true,true));}
-function drawPlayer(){const kf=NET.role==='guest'?0:keeperF();if(kf>.55){const PS=kf>.82?SPR_PO:SPR_PE,set=PS[player.face]||PS.down,spr=set[player.moving?player.frame:0];shadow(player.x,player.y,10);ctx.drawImage(spr,Math.round(player.x-spr.width/2),Math.round(player.y-spr.height)+(kf>.82?1:0));
-    if(kf>.7){const cx=Math.round(player.x+(player.face==='left'?-7:6)),cy=Math.round(player.y);fill(ctx,'#6a4228',cx,cy-11,1,11);fill(ctx,'#6a4228',cx-1,cy-12,3,1);}return;}
+/* ================= WARDROBE =================
+   How your keeper looks is kept on this device (so each player in co-op has their own look),
+   and sent to your partner so they see you as you are. */
+const LOOK_DEF={hat:'cap',hatC:'#3a8a3a',hair:'#5a3824',skin:'#f2c8a0',shirt:'#5ab4f0',scarf:'#e8553a',pants:'#5a3824',kind:'none',hs:'short',fit:'shirt',acc:'none'};
+const LOOK_OPTS={hatC:['#3a8a3a','#e8553a','#5ab4f0','#6a4cb8','#ffd860','#f6a8c4','#1a1424','#ffffff'],hair:['#5a3824','#1a1424','#e8c060','#9a3a20','#c8641e','#e8e4f0','#6a4cb8','#ff7aa8'],
+  skin:['#fde0c8','#f2c8a0','#d49c78','#b07850','#8a5a3a','#5a3a28'],shirt:['#5ab4f0','#e8553a','#6cc24a','#ffd860','#b49af4','#f6a8c4','#ffffff','#2a2a3a'],
+  scarf:['#e8553a','#ffd860','#5ab4f0','#6cc24a','#ff7aa8','#ffffff','#6a4cb8','#1a1424'],pants:['#5a3824','#3a4a8a','#2a2a3a','#6a8a3a','#a8281e','#c8b898']};
+const HATS={cap:{n:'Cap',d:["....CCCC....","...CccccC...",".CCCCCCCCCC."],s:["....CCCC....","...CccccC...",".CCCCCCCCCCC"]},
+  beanie:{n:'Beanie',d:["....CCCC....","...CCCCCC...","..cccccccc.."],s:["....CCCC....","...CCCCCC...","..ccccccccc."]},
+  bow:{n:'Bow',d:["..CC..CC....","...CCCC.....","..HHHHHHHH.."],s:["....CC.CC...",".....CCC....","..HHHHHHHH.."]},
+  witch:{n:'Witch hat',d:[".....CC.....","....CCCC....",".CCCCCCCCCC."],s:["......CC....","....CCCC....",".CCCCCCCCCCC"]},
+  crown:{n:'Crown',d:["...y.yy.y...","...yyyyyy...","..HHHHHHHH.."],s:["...y.yy.y...","...yyyyyy...","..HHHHHHHH.."]},
+  none:{n:'No hat',d:["............","....HHHH....","..HHHHHHHH.."],s:["............","....HHHH....","..HHHHHHHH.."]}};
+const ACCS={none:'Nothing',glasses:'Sunglasses',freckles:'Freckles',rosy:'Rosy cheeks'};
+const KINDS={girl:'Girl',boy:'Boy',none:'Neither'},HSTY={short:'Short',long:'Long',pony:'Ponytail',pig:'Pigtails',buzz:'Buzzed'},FITS={shirt:'Shirt & pants',dress:'Dress',overalls:'Overalls'};
+const FACEROWS={down:["..HssssssH..","..HskssksH..","..HssssssH..","...ssPPss..."],up:["..HHHHHHHH..","..HHHHHHHH..","..HHHHHHHH..","...HHHHHH..."],side:["..HHHsssss..","..HHHsssks..","..HHHsssss..","...HHssss..."]};
+const okCol=c=>typeof c==='string'&&/^#[0-9a-f]{6}$/i.test(c);
+function cleanLook(o){const L={...LOOK_DEF};if(o&&typeof o==='object'){for(const k of['hatC','hair','skin','shirt','scarf','pants'])if(okCol(o[k]))L[k]=o[k];if(HATS[o.hat])L.hat=o.hat;if(ACCS[o.acc])L.acc=o.acc;if(KINDS[o.kind])L.kind=o.kind;if(HSTY[o.hs])L.hs=o.hs;if(FITS[o.fit])L.fit=o.fit;}return L;}
+let LOOK_SAVED=false,LOOK=(()=>{try{const v=localStorage.getItem('as-look');LOOK_SAVED=!!v;return cleanLook(JSON.parse(v||'null'));}catch(e){return{...LOOK_DEF};}})();
+const myLook=()=>!LOOK_SAVED&&NET.role==='guest'?{...LOOK,hatC:'#c84a7a',shirt:'#b49af4',scarf:'#ffd860'}:LOOK;
+const lighten=c=>{const n=parseInt(c.slice(1),16),m=v=>Math.round(v+(255-v)*.4);return'#'+[m(n>>16),m((n>>8)&255),m(n&255)].map(v=>v.toString(16).padStart(2,'0')).join('');};
+function lookRows(L,face,f){const side=face==='side',top=HATS[L.hat][side?'s':'d'].slice();let fr=FACEROWS[face].slice();
+  const put=(r,i,ch)=>r.slice(0,i)+ch+r.slice(i+1);
+  const hs=L.hs;
+  if(hs==='long'){fr=fr.map(r=>side?put(r,1,'H'):put(put(r,1,'H'),10,'H'));if(face==='down')fr[3]=put(put(fr[3],2,'H'),9,'H');}
+  if(hs==='pony'){if(side){fr[0]=put(fr[0],1,'H');fr[1]=put(put(fr[1],0,'H'),1,'H');fr[2]=put(fr[2],0,'H');}if(face==='down'&&L.hat==='none'){top[0]="....HHHH....";top[1]="...HHHHHH...";}}
+  if(hs==='pig'){if(side){fr[2]=put(fr[2],1,'H');fr[3]=put(put(fr[3],1,'H'),2,'H');}else{fr[2]=put(put(fr[2],1,'H'),10,'H');fr[3]=put(put(put(put(fr[3],0,'H'),1,'H'),10,'H'),11,'H');}}
+  if(hs==='buzz'){fr=fr.map(r=>r.replace(/^\.\.H/,'..s').replace(/H\.\.$/,'s..'));if(face==='up')fr=fr.map(r=>r.replace(/H/g,'h'));if(side)fr=fr.map(r=>r.replace('HHH','Hhh'));if(L.hat==='none'&&face!=='up')top[2]=top[2].replace(/H/g,'h');}
+  if(face==='down'){if(L.kind==='girl')fr[0]=put(put(fr[0],3,'k'),8,'k');if(L.kind==='boy')fr[0]=put(put(put(put(fr[0],4,'H'),3,'H'),7,'H'),8,'H');}
+  if(side){if(L.kind==='girl')fr[0]=put(fr[0],9,'k');if(L.kind==='boy')fr[0]=put(put(fr[0],8,'H'),9,'H');}
+  if(face==='down'){if(L.acc==='glasses')fr[1]="..HkkkkkkH..";if(L.acc==='freckles')fr[2]="..HOssssOH..";if(L.acc==='rosy')fr[2]="..HpssssPH..".replace('P','p');}
+  if(side){if(L.acc==='glasses')fr[1]="..HHHskkkk..";if(L.acc==='freckles')fr[2]="..HHHsssOs..";if(L.acc==='rosy')fr[2]=put(fr[2],7,'p');}
+  let body=["..RRRRRRRR..",".sBBRRBBBBs.",".sBBBBBBBBs.","..BBBBBBBB..","..DDDDDDDD.."];
+  if(L.fit==='dress')body=["..RRRRRRRR..",".sBBRRBBBBs.",".sBBBBBBBBs.","..BBBBBBBB..",".BBBBBBBBBB."];
+  if(L.fit==='overalls')body=["..RRRRRRRR..",".sBDBRRBDBs.",".sBDDDDDDBs.","..DDDDDDDD..","..DDDDDDDD.."];
+  if(face==='up'&&(hs==='long'||hs==='pony'))body[0]=hs==='long'?"..HHHHHHHH..":"..RRRHHRRR..";
+  if(face==='up'&&hs==='pig')body[0]=".HRRRRRRRRH.";
+  const leg=L.fit==='dress'?'s':'D',legs=[[`..${leg}${leg}${leg}..${leg}${leg}${leg}..`,"..kkk..kkk.."],[`..${leg}${leg}....${leg}${leg}..`,"..kk....kk.."]][f];return[...top,...fr,...body,...legs];}
+const mixC=(a,b)=>{const x=parseInt(a.slice(1),16),y=parseInt(b.slice(1),16);return'#'+[16,8,0].map(k=>(((x>>k&255)+(y>>k&255))>>1).toString(16).padStart(2,'0')).join('');};
+const LOOKSETS={};
+function lookSet(L,hair){const key=JSON.stringify(L)+(hair||'');if(LOOKSETS[key])return LOOKSETS[key];
+  const o={C:L.hatC,c:lighten(L.hatC),H:hair||L.hair,h:mixC(hair||L.hair,L.skin),s:L.skin,B:L.shirt,R:L.scarf,D:L.pants,O:'#a8643a',p:'#f6a8c4'},mk=(face,f,fl)=>makeSprite(lookRows(L,face,f),o,true,!!fl);
+  const set={down:[0,1].map(f=>mk('down',f)),up:[0,1].map(f=>mk('up',f)),right:[0,1].map(f=>mk('side',f)),left:[0,1].map(f=>mk('side',f,1))};
+  const ks=Object.keys(LOOKSETS);if(ks.length>40)delete LOOKSETS[ks[0]];return LOOKSETS[key]=set;}
+const lookStr=()=>JSON.stringify(myLook());
+function saveLook(){LOOK_SAVED=true;try{localStorage.setItem('as-look',lookStr());}catch(e){}}
+function wardrobePanel(){let face='down';
+  const sw=(k)=>`<div class="swr">${LOOK_OPTS[k].map(c=>`<button class="swc" type="button" data-act="col" data-k="${k}" data-v="${c}" style="background:${c}" aria-label="${k} ${c}" aria-pressed="${LOOK[k]===c}"></button>`).join('')}</div>`;
+  const btns=(k,M)=>`<div class="row wrap">${Object.keys(M).map(v=>`<button class="pbtn" type="button" data-act="pick" data-k="${k}" data-v="${v}" aria-pressed="${LOOK[k]===v}">${M[v]}</button>`).join('')}</div>`;
+  const render=()=>{if(!LOOK_SAVED){LOOK=myLook();saveLook();}const set=lookSet(LOOK),spr=set[face==='side'?'right':face][0];
+    return head('Wardrobe')+`<div class="wardrobe"><div class="wprev"><img class="spr" src="${sprURL('look-'+lookStr()+face,spr,7)}" alt="Your keeper"><div class="wbtns"><button class="pbtn" type="button" data-act="turn">Turn around ⟳</button><button class="pbtn" type="button" data-act="random">Surprise me!</button></div></div>
+      <div class="wopts"><h3>Hat</h3><div class="row wrap">${Object.keys(HATS).map(h=>`<button class="pbtn" type="button" data-act="hat" data-v="${h}" aria-pressed="${LOOK.hat===h}">${HATS[h].n}</button>`).join('')}</div>${LOOK.hat==='crown'?'':`<small class="muted">Hat color</small>${sw('hatC')}`}
+      <h3>You are a…</h3>${btns('kind',KINDS)}
+      <h3>Hair</h3>${btns('hs',HSTY)}${sw('hair')}
+      <h3>Skin</h3>${sw('skin')}<h3>Outfit</h3>${btns('fit',FITS)}<small class="muted">${LOOK.fit==='dress'?'Dress':'Shirt'} color</small>${sw('shirt')}<small class="muted">Scarf</small>${sw('scarf')}${LOOK.fit==='dress'?'':`<small class="muted">${LOOK.fit==='overalls'?'Overalls':'Pants'}</small>${sw('pants')}`}
+      <h3>Extra</h3><div class="row wrap">${Object.keys(ACCS).map(a=>`<button class="pbtn" type="button" data-act="acc" data-v="${a}" aria-pressed="${LOOK.acc===a}">${ACCS[a]}</button>`).join('')}</div>
+      <button class="pbtn go" type="button" data-act="close">Looking good!</button></div></div>`;};
+  openPanel(render,(a,d)=>{if(a==='turn'){face={down:'side',side:'up',up:'down'}[face];}
+    else if(a==='col'&&LOOK_OPTS[d.k]&&okCol(d.v))LOOK[d.k]=d.v;else if(a==='hat'&&HATS[d.v])LOOK.hat=d.v;else if(a==='acc'&&ACCS[d.v])LOOK.acc=d.v;else if(a==='pick'&&({kind:KINDS,hs:HSTY,fit:FITS}[d.k]||{})[d.v])LOOK[d.k]=d.v;
+    else if(a==='random'){const pick=A=>A[(R()*A.length)|0];for(const k in LOOK_OPTS)LOOK[k]=pick(LOOK_OPTS[k]);LOOK.hat=pick(Object.keys(HATS));LOOK.acc=pick(Object.keys(ACCS));LOOK.hs=pick(Object.keys(HSTY));LOOK.fit=pick(Object.keys(FITS));}
+    else return;sfx('blip');saveLook();refreshPanel(true);});}
+function drawPlayer(){const kf=NET.role==='guest'?0:keeperF(),PS=lookSet(myLook(),kf>.82?'#e2ecff':kf>.55?'#9a98b0':null),set=PS[player.face]||PS.down,spr=set[player.moving?player.frame:0];shadow(player.x,player.y,10);ctx.drawImage(spr,Math.round(player.x-spr.width/2),Math.round(player.y-spr.height)+(kf>.82?1:0));
+    if(kf>.7){const cx=Math.round(player.x+(player.face==='left'?-7:6)),cy=Math.round(player.y);fill(ctx,'#6a4228',cx,cy-11,1,11);fill(ctx,'#6a4228',cx-1,cy-12,3,1);}}
+function drawPlayerOld(){
   const PS=NET.role==='guest'?SPR_P2:SPR_P,set=PS[player.face]||PS.down,spr=set[player.moving?player.frame:0];shadow(player.x,player.y,10);ctx.drawImage(spr,Math.round(player.x-spr.width/2),Math.round(player.y-spr.height));}
 function drawGate(){fill(ctx,'#6a4228',146,2,5,30);fill(ctx,'#6a4228',169,2,5,30);fill(ctx,'#8a5a34',146,2,2,30);fill(ctx,'#8a5a34',169,2,2,30);
   fill(ctx,'#5a3824',141,3,38,7);fill(ctx,'#9a6a3e',141,2,38,6);fill(ctx,'#c08a52',141,2,38,1);fill(ctx,'#e8d8a8',153,9,14,8);fill(ctx,'#5a3824',153,16,14,1);
@@ -2416,7 +2484,7 @@ function hostRun(c,a){const sv={scene,tool,biomeSel,curHouse},num=v=>typeof v===
   finally{scene=sv.scene;tool=sv.tool;biomeSel=sv.biomeSel;if(curHouse!==sv.curHouse){curHouse=sv.curHouse;if(scene==='home')buildHome();}fixWorld();if(buildMode)renderBuildbar();if(panelOpen&&panelCtx&&!panelCtx.coop)refreshPanel();}
   NET.snapT=0;save();}
 function myPos(){return{s:scene,z:scene==='wild'&&wild?wild.zone:scene==='home'?curHouse:null,x:Math.round(player.x),y:Math.round(player.y),f:player.face,m:player.moving?1:0,fr:player.frame,
-  c:companion?companion.sp:null,cx:companion?Math.round(companion.x):0,cy:companion?Math.round(companion.y):0,cf:companion?companion.face:1,n:myName(),role:NET.role};}
+  c:companion?companion.sp:null,cx:companion?Math.round(companion.x):0,cy:companion?Math.round(companion.y):0,cf:companion?companion.face:1,n:myName(),role:NET.role,lk:lookStr()};}
 function onPos(p){if(!p||typeof p!=='object'||typeof p.x!=='number'||typeof p.y!=='number')return;const first=!NET.partner;NET.partner=p;NET.lastPos=time;
   if(!NET.pv||first||Math.hypot(p.x-NET.pv.x,p.y-NET.pv.y)>120)NET.pv={x:p.x,y:p.y};if(p.c&&(!NET.pc||first))NET.pc={x:p.cx,y:p.cy,f:p.cf};
   if(first)partnerJoined();}
@@ -2491,7 +2559,8 @@ function coopPanel(){
   openPanel(render,onAct);panelCtx.coop=true;getRoom().then(()=>refreshCoop());}
 panelEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='coopCode'){e.preventDefault();joinGame(e.target.value);}});
 $('#btnCoop').addEventListener('click',()=>{ensureAudio();if(titleOpen)return;if(buildMode)closeBuild();if(panelOpen)closePanel();coopPanel();});
-function drawPartner(){const p=NET.partner,pv=NET.pv,PS=NET.role==='guest'?SPR_P:SPR_P2,set=PS[p.f]||PS.down,spr=set[p.m?(p.fr|0)%2:0];
+const partnerLook=lk=>{try{return typeof lk==='string'&&lk.length<400?cleanLook(JSON.parse(lk)):null;}catch(e){return null;}};
+function drawPartner(){const p=NET.partner,pv=NET.pv,pl=partnerLook(p.lk),PS=pl?lookSet(pl):NET.role==='guest'?SPR_P:SPR_P2,set=PS[p.f]||PS.down,spr=set[p.m?(p.fr|0)%2:0];
   shadow(pv.x,pv.y,10);ctx.drawImage(spr,Math.round(pv.x-spr.width/2),Math.round(pv.y-spr.height));
   const col=NET.role==='guest'?'#86e894':'#f6a8c4',x=Math.round(pv.x),y=Math.round(pv.y-spr.height-4)+(Math.sin(time*4)>0?0:1);fill(ctx,OUT,x-3,y-3,7,4);fill(ctx,col,x-2,y-2,5,2);fill(ctx,col,x-1,y,3,1);}
 function drawPartnerArrow(cx,cy){const pv=NET.pv,x=pv.x-cx,y=pv.y-8-cy;if(x>=0&&x<VW&&y>=0&&y<VH)return;const ax=clamp(x,8,VW-9),ay=clamp(y,8,VH-9),col=NET.role==='guest'?'#86e894':'#f6a8c4';
@@ -2607,7 +2676,8 @@ function startGame(){if(!titleOpen)return;if(DEPTH>0&&SPL.phase==='ready')setTim
   if(!state.tutDone){tutShow();return;}
   if(state.newTown){delete state.newTown;toast('New! Walk out the bottom entrance to explore Willowbrook town: shops, quests, your own cottage, and new wild places with GIANT creatures.');save();}
   if(state.newBuild){delete state.newBuild;toast('New! Tap Build at the top to design your sanctuary: habitats, paths, flowers and more.');toast('Visitors now follow your paths, so connect every habitat to one.');save();}
-  else toast('Welcome back to the Animal Sanctuary!');}
+  else toast('Welcome back to the Animal Sanctuary!');
+  if(!state.seenWardrobe){state.seenWardrobe=true;if(!(state.inv['f:wardrobe']>0))addInv('f:wardrobe',1);toast('New! Change how you look in the Wardrobe: open your Journal, or place the wardrobe in your cottage.');save();}}
 
 /* ================= TUTORIAL ================= */
 const RANGER=makeSprite([...P_HEAD.down,...P_BODY,...P_LEGS[0]],{G:'#7a5a2a',g:'#b08a48',b:'#8a9a4a',r:'#3f8a3a',N:'#6a3a20'});

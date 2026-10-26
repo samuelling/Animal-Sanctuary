@@ -2442,7 +2442,7 @@ function netSend(o){try{
 function onRaw(d){if(!d||typeof d!=='object')return;if(d.t==='chunk'){const b=NET.rx[d.id]||(NET.rx[d.id]={n:d.n,parts:[],got:0,at:time});if(b.parts[d.i]==null){b.parts[d.i]=d.d;b.got++;}
     if(b.got===b.n){delete NET.rx[d.id];try{onNet(JSON.parse(b.parts.join('')));}catch(e){}}for(const k in NET.rx)if(time-NET.rx[k].at>20)delete NET.rx[k];return;}onNet(d);}
 function onNet(m){try{switch(m.t){
-  case'hello':if(NET.role==='host'){NET.lastSnap='';NET.snapT=0;}break;
+  case'hello':NET.lastPosStr='';NET.posT=0;if(NET.role==='host'){NET.lastSnap='';NET.snapT=0;}break;
   case'state':if(NET.role==='guest'&&typeof m.s==='string')applySnap(m.s);break;
   case'cmd':if(NET.role==='host')hostRun(m.c,m.a||{});break;
   case'wcr':if(NET.role==='guest')applyWcr(m);break;
@@ -2488,13 +2488,16 @@ function myPos(){return{s:scene,z:scene==='wild'&&wild?wild.zone:scene==='home'?
 function onPos(p){if(!p||typeof p!=='object'||typeof p.x!=='number'||typeof p.y!=='number')return;const first=!NET.partner;NET.partner=p;NET.lastPos=time;
   if(!NET.pv||first||Math.hypot(p.x-NET.pv.x,p.y-NET.pv.y)>120)NET.pv={x:p.x,y:p.y};if(p.c&&(!NET.pc||first))NET.pc={x:p.cx,y:p.cy,f:p.cf};
   if(first)partnerJoined();}
-function partnerJoined(){toast(`${partnerName()} ${NET.role==='host'?'joined your sanctuary!':'is here!'}`);sfx('unlock');if(NET.role==='host'){NET.lastSnap='';NET.snapT=0;}else netSend({t:'hello'});updCoopChip();if(panelOpen&&panelCtx&&panelCtx.coop)refreshPanel();}
+function partnerJoined(){NET.lastPosStr='';NET.posT=0;toast(`${partnerName()} ${NET.role==='host'?'joined your sanctuary!':'is here!'}`);sfx('unlock');if(NET.role==='host'){NET.lastSnap='';NET.snapT=0;}else netSend({t:'hello'});updCoopChip();if(panelOpen&&panelCtx&&panelCtx.coop)refreshPanel();}
 function partnerLeft(){if(!NET.partner)return;const n=partnerName();NET.partner=null;NET.pv=null;NET.pc=null;toast(`${n} left.`);
   if(NET.role==='guest'){leaveGame(true);return;}updCoopChip();if(panelOpen&&panelCtx&&panelCtx.coop)refreshPanel();}
 function netTick(dt){if(!NET.role)return;
   if(NET.partner&&NET.pv){const p=NET.partner,k=Math.min(1,dt*10);NET.pv.x+=(p.x-NET.pv.x)*k;NET.pv.y+=(p.y-NET.pv.y)*k;if(p.c&&NET.pc){NET.pc.x+=(p.cx-NET.pc.x)*k;NET.pc.y+=(p.cy-NET.pc.y)*k;NET.pc.f=p.cf;}
     if(NET.mode==='peer'&&time-NET.lastPos>8)partnerLeft();}
-  NET.posT-=dt;if(NET.posT<=0){NET.posT=.1;const p=myPos();if(NET.mode==='room'&&NET.r)NET.r.presence({p}).catch(()=>{});else netSend({t:'pos',p});}
+  /* your keeper's position: up to 10 a second while you move, but an unchanged one (standing still, in a menu) only
+     every 2 seconds, which is still well inside the 8 seconds of silence that counts as a friend leaving */
+  NET.posT-=dt;if(NET.posT<=0){NET.posT=.1;const p=myPos(),ps=JSON.stringify(p);
+    if(ps!==NET.lastPosStr||!(time-NET.posSentT<2)){NET.lastPosStr=ps;NET.posSentT=time;if(NET.mode==='room'&&NET.r)NET.r.presence({p}).catch(()=>{});else netSend({t:'pos',p});}}
   if(NET.role==='host'&&NET.partner){NET.snapT-=dt;if(NET.snapT<=0){NET.snapT=.5;const st=snapStr();if(st!==NET.lastSnap){NET.lastSnap=st;netSend({t:'state',s:st});}}
     if(scene==='wild'&&wild&&NET.partner.s==='wild'&&NET.partner.z===wild.zone){NET.wT-=dt;if(NET.wT<=0){NET.wT=.15;netSend({t:'wcr',z:wild.zone,l:wild.crs.filter(c=>!c.gone).map(c=>[c.u,c.sp,Math.round(c.x),Math.round(c.y),c.face])});}}}}
 function attachRoom(r){NET.r=r;

@@ -28,6 +28,29 @@ The portal drops you in front of the Halloween House on Irving Street, with a sk
 
 **Pixel Palace Arcade:** the neon building in Willowbrook. Each cabinet plays one of our other games: Brick Ninja, Toilet Goalie, Townies, Decay Envelope, Bell Weathered, Mind Arcade and Crush Commando. The Animal Sanctuary cabinet boots a real copy of this game inside itself: walk to the arcade in there and do it again, as deep as you dare. Every level down, the cabinet frame gets thicker, rounder and stranger, and a 🌀 counter shows how many games deep you are (games inside games never save). On the GitHub Pages site they open right inside the game (tap "Back to the arcade" to leave); elsewhere they open in a new tab.
 
+**The Immortal Dungeon:** a cave has opened at the north end of Willowbrook, above Mabel's Market. Climb down and the game turns into a Doom-style 3D labyrinth (drawn with a raycaster, like the old Wolfenstein and Doom engines), with a minimap in the corner. Tap the minimap, or press M, for the whole map.
+
+- **You start with just your fists.** Somewhere down there a chainsaw is waiting to be found. Hold A to rev it.
+- **Murder animals** roam the halls: Gnashrats, Skullbats, spitting Fangtoads, charging Razorboars and Howlers. They chase you through the maze, and they drop coins when you beat them.
+- **Kind animals** don't need to be fought. Walk up and pet them: a Glowmoth heals you, a Lantern Snail lights up your map, and a Mossy Mole digs you up a gem.
+- **The immortal beasts** live in four lairs in the corners of the labyrinth. Nothing ordinary can hurt them, and each one can only be stopped by its own ultra weapon from **Grizzle's Armory**. Grizzle stands by the cave in town and at the bottom of the ladder. Knock a beast out with the right weapon, then walk up and catch it before it wakes. Tamed, it shrinks to a cozy size and moves into your sanctuary.
+
+| Beast | Where | Weapon that stops it | Cost |
+| --- | --- | --- | --- |
+| Dreadmaw, a cave crocodile | A lair | Thunder Harpoon | 1,800 |
+| Bonestag, a skeleton stag with blue fire antlers | A lair | Moonsilver Bow (arrows pierce a whole row) | 3,000 |
+| Hydrasaur, three heads of fire | A lair | Dragonbreath Blaster (hold A) | 4,500 |
+| Night Mantis, which vanishes and reappears behind you | A lair | Starfire Cannon (exploding stars) | 7,000 |
+| **Behemoth**, the enormous champion | **The Bone Colosseum**, a giant arena | Void Lance (a beam of pure night) | 12,000 |
+
+- **The Bone Colosseum** is a giant round arena at the far end of the labyrinth. Inside, the Behemoth towers three times taller than the walls. It hurls boulders, stomps, charges, and calls in Gnashrats. It needs a Grand habitat once you've caught it.
+- **Elevators** are tucked into dead ends all over the labyrinth, and they're the only way out. Each one goes somewhere strange up top: out of the plaza fountain, the back of an arcade cabinet, your own closet, the creature burrow, Pop and Gran's flowerbed, the Town Hall mail slot, a lobster trap at the end of the pier, a rabbit hole in Glimmer Meadow, a tombstone in Watertown, or the riverbank.
+- **If you run out of hearts,** you don't die. You pass out and wake up somewhere odd in the main world, and a sneaky Gnashrat has run off with a fifth of your coins. Hearts slowly come back (up to three) if you stay out of trouble for a few seconds.
+- The labyrinth has four regions (the Bone Halls, Mossy Deeps, Crystal Veins and Ember Vaults) plus treasure chests in the dead ends. It's the same maze every visit for your save, and your map stays filled in. When you play together, both players explore the same maze and share weapons and coins, but each fights their own monsters.
+- **Controls down there:** ▲ ▼ walk, ◀ ▶ turn (Q and E sidestep on a keyboard), A attacks or uses whatever is in front of you, B swaps weapons, and 1 to 7 picks a weapon.
+
+**Saltwhistle Harbor:** a trail at the bottom right of Willowbrook, past Maple Lane, leads down to the sea. There's a pier, a lighthouse, Captain Marlow's shack, gulls, and the Leviathan, a great red ship tied up at the east pier. She isn't for sale yet: one day you'll be able to buy her and sail out after the most gargantuan creatures of the deep, for the Grand Aquarium (also coming one day; its lot is fenced off by the promenade).
+
 **Seasons:** spring, summer, fall and winter each last 7 in-game days (about 4 minutes of play per day; napping in your cottage bed skips to the next morning). The whole world changes: blossoms in spring, golden leaves in fall, snow on the ground and roofs in winter, with matching weather and music. A new game starts in whatever season it really is outside. Each season brings two creatures you can only find then (Petalpip and Blossomfawn in spring, Sunnybee and Surfseal in summer, Pumpkit and Maplemunch in fall, Snowpuff and Twinkledeer in winter) and two seasonal quests in Willowbrook with seasonal decorations as rewards. In winter you can build snowmen in your sanctuary; they melt when spring comes. The season chip at the top shows the day.
 
 **Giants:** Crystal Lake and Thunder Plains (unlocked through Professor Hoot's quests) are home to the Glimmerwhale, Mossback Titan and Skyhorn. Giants need a Grand habitat.

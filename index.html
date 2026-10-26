@@ -2498,13 +2498,17 @@ const DG_IMM={
 const DG_WPN={
  fists:{name:'Fists',cost:0,cd:.34,desc:'Punch! Weak, but they never run out.'},
  saw:{name:'Chainsaw',cost:0,found:true,cd:.08,hold:true,desc:'Found somewhere down in the dungeon. Hold A to rev it and shred murder animals.'},
+ sling:{name:'Slingshot',cost:150,cd:.4,mid:1,desc:'Pings pebbles down the hall. Cheap and cheerful.'},
+ club:{name:'Spiked Club',cost:350,cd:.5,mid:1,desc:'A huge swing that bonks two monsters at once and knocks them back.'},
+ rang:{name:'Boomerang',cost:600,cd:.2,mid:1,desc:'Flies out, hits everything in its path, and comes back to you.'},
+ frost:{name:'Frost Wand',cost:900,cd:.55,mid:1,desc:'Ice bolts that freeze murder animals solid for a few seconds.'},
  harpoon:{name:'Thunder Harpoon',cost:1800,cd:.75,catch:'dreadmaw',desc:'Fires crackling harpoons.'},
  bow:{name:'Moonsilver Bow',cost:3000,cd:.42,catch:'bonestag',desc:'Silver arrows fly straight through a whole row of monsters.'},
  blaster:{name:'Dragonbreath Blaster',cost:4500,cd:.09,hold:true,catch:'hydrasaur',desc:'Hold A for a roaring cone of dragon fire.'},
  cannon:{name:'Starfire Cannon',cost:7000,cd:1.1,catch:'nightmantis',desc:'Lobs a star that bursts in a shower of sparks.'},
  lance:{name:'Void Lance',cost:12000,cd:.95,catch:'behemoth',desc:'A beam of pure starless night. The only thing that can stop the Behemoth.'},
 };
-const DG_ORDER=['fists','saw','harpoon','bow','blaster','cannon','lance'];
+const DG_ORDER=['fists','saw','sling','club','rang','frost','harpoon','bow','blaster','cannon','lance'];
 /* -- weapons as you see them, held out in front of you (1 px = 2 screen px) -- */
 const DG_VIEW={
  fists:dgRow(["...ssss....","..ssssss...",".sSsSsSss..",".ssssssss..","sssssssss..","sSsssssss..","ssssssss...",".sssssss...","..ssssss...","..TTTTTT...","..TTTTTT..."],{T:'#e8553a'}),
@@ -2513,6 +2517,10 @@ const DG_VIEW={
  bow:dgRow(["..l......","..ll.....","...l..w..","...l.wkw.","....lw...","....lw...","....lw...","....lw...","....lw...","....lw...","...l.w...","...l.y...","..ll.y...","..l..ss..","....sss.."]),
  blaster:dgRow(["...ggg...","..gyggk..","..ggggg..",".gGGGGGg.",".ggggggg.",".gwgwgwg.",".ggggggg.","..gGgGg..","..ggggg..","..nnnnn..",".nnNnNnn.","..ss.ss.."],{g:'#3aa860',G:'#1a6a3a'}),
  cannon:dgRow(["..YYYYY..",".YyyyyyY.","YyykkkyyY","YykkkkkyY","YykkkkkyY","YyykkkyyY",".YyyyyyY.",".OOOOOOO.","OOyOOOyOO","OOOOOOOOO",".OOOOOOO.","..ss.ss.."]),
+ sling:dgRow(["n.....n","nn...nn",".n...n.",".nkkkn.","..nnn..","...n...","...n...","...n...","..sss..","..sss.."]),
+ club:dgRow(["..e.e.e..",".eNNNNNe.","eNnnnnnNe",".NnnnnnN.","eNnnnnnNe",".NnnnnnN.","..NnnnN..","...NnN...","...NnN...","...NnN...","..sssss..","..sssss.."]),
+ rang:dgRow(["yy.......","yyy......",".yOy.....","..yOy....","...yOy...","...yyyy..","..yyy.yyy",".sss...yy",".sss....."]),
+ frost:dgRow(["...c...","..clc..",".clllc.","..clc..","...c...","...b...","...B...","...B...","...B...","..sBs..","..sss.."]),
  lance:dgRow(["....z....","...zZz...","...ZkZ...","....Z....","....V....","....V....","....V....","....V....","...VVV...","...VzV...","...VVV...","....V....","...sVs...","...sss..."]),
 };
 const DG_SPR={};
@@ -2531,7 +2539,8 @@ function dgSprites(){if(DG_SPR.ok)return;DG_SPR.ok=1;
   for(let f=0;f<2;f++)DG_SPR['fire'+f]=dgPix(dgRow([f?"...y.y.":"..y..y.",f?"..yoyyo":"..yyoy.",".yoooooy",".oorroo.","..eeee..",".EeeeeE.","..EEEE..","...EE...","..EEEE.."]));
   const ball=(c1,c2,r=3)=>{const c=document.createElement('canvas');c.width=c.height=r*2+2;const g=c.getContext('2d');g.fillStyle=c2;g.beginPath();g.arc(r+1,r+1,r+1,0,7);g.fill();g.fillStyle=c1;g.beginPath();g.arc(r+1,r,r-.5,0,7);g.fill();return dgPix(c);};
   DG_SPR.spit=ball('#b8f05a','#3a7a1a');DG_SPR.fireball=ball('#ffd860','#e8402a');DG_SPR.blueflame=ball('#c8f8ff','#3a8ae8');DG_SPR.boulder=ball('#a8a0b8','#4a4460',5);
-  DG_SPR.voidorb=ball('#e8d0ff','#7a3ad8');DG_SPR.harpoon=ball('#e8ffff','#4ad8ff',2);DG_SPR.arrow=ball('#ffffff','#c8d4e8',2);DG_SPR.star=ball('#fffbc8','#ffb020',4);DG_SPR.flame=ball('#fff0a0','#ff6a1a',2);
+  DG_SPR.voidorb=ball('#e8d0ff','#7a3ad8');DG_SPR.pebble=ball('#c8c4d8','#5a5468',2);DG_SPR.frost=ball('#e8ffff','#6ad8ff',3);
+  DG_SPR.rang0=dgPix(dgRow(["yy.....","yOy....",".yOy...","..yOy..","..yyyy.",".yy..yy","yy....y"]));DG_SPR.rang1=dgPix(dgRow(["y....yy","yy..yOy",".yyyOy.","..yOy..",".yOy...","yOy....","yy....."]));DG_SPR.harpoon=ball('#e8ffff','#4ad8ff',2);DG_SPR.arrow=ball('#ffffff','#c8d4e8',2);DG_SPR.star=ball('#fffbc8','#ffb020',4);DG_SPR.flame=ball('#fff0a0','#ff6a1a',2);
 }
 /* -- wall, floor and ceiling textures (32 x 32, drawn in code like everything else) -- */
 const DG_TX={};
@@ -2688,9 +2697,10 @@ function dsfx(k){if(!AC||muted)return;const t=AC.currentTime,o=(type,f1,f2,d,v,d
    case'pet':o('sine',880,880,.08,.06);o('sine',1175,1175,.12,.06,.08);break;case'boom':o('sine',90,30,.7,.25);nz(.6,.25,700);break;
    case'spit':nz(.12,.08,1500,2,'bandpass');break;case'blink':o('sine',300,1600,.25,.05);break;}}
 /* -- the armory: Grizzle sells weapons both by the cave in town and down at the bottom of the ladder -- */
-function dgArmory(){const render=()=>{const D=dgS();return head("Grizzle's Armory")+`<p class="ab">"Ordinary weapons bounce right off the immortals. You need the right tool for the right beast, and the right tools cost a pretty penny."</p><div class="list">${DG_ORDER.map(w=>{const P=DG_WPN[w],own=dgOwn(w),can=!own&&!P.found&&P.cost&&state.coins>=P.cost;
+function dgArmory(){const render=()=>{const D=dgS();return head("Grizzle's Armory")+`<p class="ab">"Ordinary weapons bounce right off the immortals. You need the right tool for the right beast, and the right tools cost a pretty penny."</p><div class="list">${DG_ORDER.map((w,i)=>{const P=DG_WPN[w],own=dgOwn(w),can=!own&&!P.found&&P.cost&&state.coins>=P.cost;
+      const grp=g=>g.mid?1:g.catch?2:0,hd=i&&grp(P)!==grp(DG_WPN[DG_ORDER[i-1]])?`</div><h3>${P.mid?'Everyday weapons':'Ultra weapons for the immortals'}</h3>${P.mid?'<p class="muted" style="font-size:14px">Great against murder animals, but they can\'t touch the immortals.</p>':''}<div class="list">`:'';
       const tgt=P.catch?`Catches the ${SPECIES[P.catch].name}${D.caught[P.catch]?' (caught!)':''}. `:'';
-      return`<button class="pbtn" type="button" data-act="buy" data-w="${w}" ${can?'':'disabled'}><span class="grow"><b>${P.name}</b><small>${tgt}${P.desc}${!own&&P.cost&&state.coins<P.cost?` · need ${P.cost-Math.floor(state.coins)} more coins`:''}</small></span><span class="cost">${own?'✓':P.found?'?':P.cost}</span></button>`;}).join('')}</div>
+      return hd+`<button class="pbtn" type="button" data-act="buy" data-w="${w}" ${can?'':'disabled'}><span class="grow"><b>${P.name}</b><small>${tgt}${P.desc}${!own&&P.cost&&state.coins<P.cost?` · need ${P.cost-Math.floor(state.coins)} more coins`:''}</small></span><span class="cost">${own?'✓':P.found?'?':P.cost}</span></button>`;}).join('')}</div>
       <p class="muted" style="font-size:14px">Coins come from your sanctuary's visitors, treasure, and the murder animals down below.</p>`;};
   openPanel(render,(a,d)=>{if(a==='buy'){if(G('dgbuy',{w:d.w})){sfx('unlock');toast('Asking the host to buy it…');return;}dgBuy(d.w);refreshPanel();}});}
 function dgBuy(w,remote){const P=DG_WPN[w];if(!P||P.found||!P.cost||dgOwn(w)||state.coins<P.cost)return false;state.coins-=P.cost;dgS().own[w]=1;sfx('unlock');
@@ -2721,6 +2731,10 @@ function dgTargets(range,arc){const out=[],dx=Math.cos(DG.pa),dy=Math.sin(DG.pa)
 function dgAttack(){const w=DG.cur,P=DG_WPN[w];if(DG.cd>0)return;DG.cd=P.cd;DG.swing=.22;DG.recoil=1;
   if(w==='fists'){const t=dgTargets(1.05,.5)[0];if(t){dgDamage(t,1.5,w);dsfx('punch');}else dsfx('whiff');DG.punchL=!DG.punchL;}
   else if(w==='saw'){dsfx('saw');const t=dgTargets(1.2,.5);let bit=false;for(const e of t.slice(0,2)){if(dgDamage(e,.62,w))bit=true;}if(bit)dsfx('grind');}
+  else if(w==='sling'){dsfx('bow');dgShot('pebble',12,1.6);}
+  else if(w==='club'){const t=dgTargets(1.35,.75).slice(0,2);if(t.length)dsfx('punch');else dsfx('whiff');for(const e of t){if(dgDamage(e,3,w)&&e.t==='mon'&&!e.dead)dgMove(e,Math.cos(DG.pa)*.6,Math.sin(DG.pa)*.6,.2);}}
+  else if(w==='rang'){if(DG.rangOut){DG.cd=.05;return;}DG.rangOut=true;dsfx('whiff');dgShot('rang',9,2,{rang:1,pierce:1e9,life:99});}
+  else if(w==='frost'){dsfx('blink');DG.flash=.05;dgShot('frost',10,2,{frost:2.8});}
   else if(w==='harpoon'){dsfx('harpoon');DG.flash=.08;dgShot('harpoon',13,6,{zap:1});}
   else if(w==='bow'){dsfx('bow');dgShot('arrow',15,5,{pierce:3});}
   else if(w==='blaster'){if((DG.sawT-=1)<=0){DG.sawT=2;dsfx('flame');}for(let i=0;i<2;i++){const a=DG.pa+(R()-.5)*.35;DG.fx.push({x:DG.px+Math.cos(a)*.4,y:DG.py+Math.sin(a)*.4,z:.45,vx:Math.cos(a)*5.5,vy:Math.sin(a)*5.5,vz:.4,life:.42,col:R()<.5?0xff2a9aff:0xff60e0ff,big:1});}
@@ -2729,7 +2743,7 @@ function dgAttack(){const w=DG.cur,P=DG_WPN[w];if(DG.cd>0)return;DG.cd=P.cd;DG.s
   else if(w==='lance'){dsfx('lance');DG.flash=.15;const dx=Math.cos(DG.pa),dy=Math.sin(DG.pa);let L=0;for(;L<14;L+=.1)if(dgSolid(DG.px+dx*L,DG.py+dy*L))break;
     DG.beams.push({x0:DG.px,y0:DG.py,x1:DG.px+dx*L,y1:DG.py+dy*L,life:.22});
     for(const e of DG.ents){if(e.dead||(e.t!=='mon'&&e.t!=='imm'))continue;const ex=e.x-DG.px,ey=e.y-DG.py,along=ex*dx+ey*dy;if(along<0||along>L)continue;const perp=Math.abs(ex*dy-ey*dx);if(perp<(e.t==='imm'&&e.id==='behemoth'?1.2:.45))dgDamage(e,12,w);}}}
-function dgShot(id,sp,dmg,o){DG.shots.push(Object.assign({id,x:DG.px+Math.cos(DG.pa)*.3,y:DG.py+Math.sin(DG.pa)*.3,z:.42,vx:Math.cos(DG.pa)*sp,vy:Math.sin(DG.pa)*sp,dmg,mine:true,life:2,hit:new Set()},o||{}));}
+function dgShot(id,sp,dmg,o){DG.shots.push(Object.assign({id,w:DG.cur,x:DG.px+Math.cos(DG.pa)*.3,y:DG.py+Math.sin(DG.pa)*.3,z:.42,vx:Math.cos(DG.pa)*sp,vy:Math.sin(DG.pa)*sp,dmg,mine:true,life:2,hit:new Set()},o||{}));}
 function dgEShot(e,id,ang,sp,dmg,z=.45){DG.shots.push({id,x:e.x,y:e.y,z,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,dmg,life:4});}
 /* -- the A button: pet, open, catch, ride, or attack -- */
 function dgFront(){const dx=Math.cos(DG.pa),dy=Math.sin(DG.pa),W=DG.W;let best=null,bd=9;
@@ -2779,17 +2793,20 @@ function dgUpdate(dt){const P=DG,M=DGMAP,W=P.W;P.msgT-=dt;P.cd-=dt;P.inv-=dt;P.s
     else if(e.t==='imm')dgImm(e,dt,d,dx,dy);
     else if(e.t==='coin'||e.t==='heart'){e.vz-=6*dt;e.z=Math.max(e.t==='coin'?.12:.15,e.z+e.vz*dt);e.age=(e.age||0)+dt;if(d<.55&&(e.age>.3)){e.dead=true;if(e.t==='coin'){dgGain(e.v);dsfx('coin');}else{DG.hp=Math.min(10,DG.hp+2);sfx('pet');toast('+1 heart');}}}}
   // shots
-  for(const s of P.shots){s.life-=dt;const nx=s.x+s.vx*dt,ny=s.y+s.vy*dt;if(dgSolid(nx,ny)){s.life=0;if(s.boom)dgBoom(s.x,s.y,s);else dgFx(s.x,s.y,s.z,4,0xffc8d0d8);continue;}s.x=nx;s.y=ny;
+  for(const s of P.shots){s.life-=dt;if(s.rang){if(dgRang(s,dt))continue;}else{const nx=s.x+s.vx*dt,ny=s.y+s.vy*dt;if(dgSolid(nx,ny)){s.life=0;if(s.boom)dgBoom(s.x,s.y,s);else dgFx(s.x,s.y,s.z,4,0xffc8d0d8);continue;}s.x=nx;s.y=ny;}
     if(s.mine){for(const e of P.ents){if(e.dead||s.hit.has(e)||(e.t!=='mon'&&e.t!=='imm'&&e.t!=='kind'))continue;const rr=e.t==='imm'?(e.id==='behemoth'?1.3:.6):.4;if(Math.hypot(e.x-s.x,e.y-s.y)<rr){s.hit.add(e);
-        if(s.boom){s.life=0;dgBoom(s.x,s.y,s);break;}dgDamage(e,s.dmg,s.id==='harpoon'?'harpoon':s.id==='arrow'?'bow':DG.cur);if(s.zap)dgFx(e.x,e.y,.5,6,0xffffe84a);if(!(s.pierce>0&&s.pierce--)){s.life=0;break;}}}}
+        if(s.boom){s.life=0;dgBoom(s.x,s.y,s);break;}dgDamage(e,s.dmg,s.w);if(s.frost&&e.t==='mon'&&!e.dead){e.frozen=s.frost;dgFx(e.x,e.y,.4,6,0xffffe89a);}if(s.zap)dgFx(e.x,e.y,.5,6,0xffffe84a);if(!(s.pierce>0&&s.pierce--)){s.life=0;break;}}}}
     else if(Math.hypot(P.px-s.x,P.py-s.y)<.4){s.life=0;dgHurt(s.dmg);}}
   P.shots=P.shots.filter(s=>s.life>0);
   for(const f of P.fx){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vz-=5*dt;f.z+=f.vz*dt;if(f.z<0){f.z=0;f.vz*=-.3;f.vx*=.5;f.vy*=.5;}f.life-=dt;}P.fx=P.fx.filter(f=>f.life>0);if(P.fx.length>300)P.fx.splice(0,P.fx.length-300);
   for(const b of P.beams)b.life-=dt;P.beams=P.beams.filter(b=>b.life>0);
   if(P.ents.length>400||(time%5)<dt)P.ents=P.ents.filter(e=>!e.dead||e.t==='chest');
   if((time%4)<dt)dgSeenSave();}
+/* the boomerang flies out about four tiles (or until it hits a wall), then homes back to your hand */
+function dgRang(s,dt){if(!s.back){s.d=(s.d||0)+Math.hypot(s.vx,s.vy)*dt;const nx=s.x+s.vx*dt,ny=s.y+s.vy*dt;if(s.d>4.3||dgSolid(nx,ny)){s.back=true;s.hit=new Set();}else{s.x=nx;s.y=ny;}}
+  if(s.back){const dx=DG.px-s.x,dy=DG.py-s.y,l=Math.hypot(dx,dy)||1;if(l<.45){s.life=0;DG.rangOut=false;return true;}s.x+=dx/l*10*dt;s.y+=dy/l*10*dt;}return false;}
 function dgBoom(x,y,s){dsfx('boom');DG.flash=.25;dgFx(x,y,.4,24,0xff40d8ff,3);dgFx(x,y,.4,12,0xffffffff,2);for(const e of DG.ents){if(e.dead||(e.t!=='mon'&&e.t!=='imm'))continue;const d=Math.hypot(e.x-x,e.y-y);if(d<s.boom+(e.id==='behemoth'?1:0))dgDamage(e,s.dmg*(1-d/(s.boom+1)*.5),'cannon');}}
-function dgMon(e,dt,d,dx,dy){const C=DG_MON[e.id],M=DGMAP,W=DG.W;e.ph+=dt;e.cd-=dt;e.rcd-=dt;e.ccd-=dt;e.z=C.fly?.45+Math.sin(e.ph*5)*.12:0;
+function dgMon(e,dt,d,dx,dy){if(e.frozen>0){e.frozen-=dt;return;}const C=DG_MON[e.id],M=DGMAP,W=DG.W;e.ph+=dt;e.cd-=dt;e.rcd-=dt;e.ccd-=dt;e.z=C.fly?.45+Math.sin(e.ph*5)*.12:0;
   const see=d<8&&dgLos(e.x,e.y,DG.px,DG.py);if(see)e.alert=Math.max(e.alert,5);else e.alert-=dt;
   if(see&&e.alert>4.9&&DG.growlT<=0&&d<6){DG.growlT=3;dsfx('growl');}DG.growlT-=dt*.3;
   let vx=0,vy=0,sp=C.spd;
@@ -2863,21 +2880,21 @@ function dgDraw(){const P=DG,M=DGMAP,W=P.W,VWd=VW;
   // sprites
   const S=[],add=(x,y,z,h,spr,o)=>{S.push(Object.assign({x,y,z,h,spr,d:(x-P.px)**2+(y-P.py)**2},o||{}));};
   for(const e of P.ents){if(e.dead&&e.t!=='chest')continue;const dd=(e.x-P.px)**2+(e.y-P.py)**2;if(dd>400)continue;
-    switch(e.t){case'mon':add(e.x,e.y,e.z,DG_MON[e.id].h*(1+.04*Math.sin(e.ph*8)),DG_SPR[e.id],{fl:e.flash>0});break;
+    switch(e.t){case'mon':add(e.x,e.y,e.z,DG_MON[e.id].h*(e.frozen>0?1:1+.04*Math.sin(e.ph*8)),DG_SPR[e.id],{fl:e.flash>0,ice:e.frozen>0});break;
       case'kind':add(e.x,e.y,e.z,DG_KIND[e.id].h,DG_SPR[e.id],{glow:e.id==='glowmoth'?.6:0});break;
       case'imm':{const I=DG_IMM[e.id];add(e.x,e.y,e.sub>0?0:Math.max(0,Math.sin(e.ph*2)*.04),I.h*(e.sub>0?.8:1),DG_SPR[e.id],{fl:e.flash>0,dim:e.sub>0,glow:.62});
         if(e.sub>0)for(let k=0;k<3;k++){const a=time*3+k*2.1;add(e.x+Math.cos(a)*.35,e.y+Math.sin(a)*.35,I.h*.85,.12,DG_SPR.star,{glow:1});}break;}
       case'chest':add(e.x,e.y,0,.42,e.open?DG_SPR.chestO:DG_SPR.chest);break;case'brz':add(e.x,e.y,0,.62,DG_SPR['fire'+((time*6+e.x)|0)%2],{glow:1});break;
       case'pick':add(e.x,e.y,.05+Math.sin(time*3)*.05,.55,DG_SPR.sawpick,{glow:.7});break;case'npc':add(e.x,e.y,0,.85,DG_SPR.grizzle);break;
       case'coin':add(e.x,e.y,e.z,.16,DG_SPR.coin,{glow:.5});break;case'heart':add(e.x,e.y,e.z,.18,DG_SPR.heart,{glow:.5});break;case'deco':add(e.x,e.y,0,e.id==='bones'?.2:.17,DG_SPR[e.id]);break;}}
-  for(const s of P.shots)add(s.x,s.y,s.z-.1,s.id==='boulder'?.42:s.id==='star'?.26:.16,DG_SPR[s.id],{glow:1});
+  for(const s of P.shots)add(s.x,s.y,s.z-.1,s.id==='boulder'?.42:s.id==='star'?.26:s.id==='rang'?.2:.16,DG_SPR[s.id==='rang'?'rang'+((time*14|0)%2):s.id],{glow:1});
   if(partnerHere()&&NET.partner.s==='dungeon'){const pl=partnerLook(NET.partner.lk),PS=pl?lookSet(pl):NET.role==='guest'?SPR_P:SPR_P2;(PS._pix||(PS._pix=dgPix(PS.down[0])));add(NET.pv.x/16,NET.pv.y/16,0,.75,PS._pix);}
   S.sort((a,b)=>b.d-a.d);const invDet=1/(plX*dirY-dirX*plY);
   for(const s of S){const sx=s.x-P.px,sy=s.y-P.py,tX=invDet*(dirY*sx-dirX*sy),tY=invDet*(-plY*sx+plX*sy);if(tY<.12)continue;
     const scx=(VWd/2)*(1+tX/tY),hpx=s.h*F/tY,wpx=hpx*s.spr.w/s.spr.h,yb=hz+(.5-s.z)*F/tY,yt=yb-hpx,x0=Math.round(scx-wpx/2),x1=Math.round(scx+wpx/2);
     if(x1<0||x0>=VWd)continue;const d=Math.sqrt(s.d),L=(((s.glow?Math.max(s.glow,ltAt(s.x,s.y)):ltAt(s.x,s.y))*fog(d)+lant(d))*(s.dim?150:255)+flash)|0,px=s.spr.px,sw=s.spr.w,sh=s.spr.h,ys=Math.max(0,yt|0),ye=Math.min(vh,yb|0);
     for(let x=Math.max(0,x0);x<Math.min(VWd,x1);x++){if(tY>=zb[x])continue;const u=((x-(scx-wpx/2))/wpx*sw)|0;if(u<0||u>=sw)continue;
-      for(let y=ys;y<ye;y++){const v=((y-yt)/hpx*sh)|0;const c=px[v*sw+u];if((c>>>24)<128)continue;buf[y*VWd+x]=s.fl?(dgShade(c,L)>>>1&0x7f7f7f7f)+0x80808080|0xff000000:dgShade(c,L);}}}
+      for(let y=ys;y<ye;y++){const v=((y-yt)/hpx*sh)|0;const c=px[v*sw+u];if((c>>>24)<128)continue;buf[y*VWd+x]=s.fl?(dgShade(c,L)>>>1&0x7f7f7f7f)+0x80808080|0xff000000:s.ice?((dgShade(c,L)>>>1&0x7f7f7f7f)+0x70603818)|0xff000000:dgShade(c,L);}}}
   // particles and beams
   for(const f of P.fx){const sx=f.x-P.px,sy=f.y-P.py,tX=invDet*(dirY*sx-dirX*sy),tY=invDet*(-plY*sx+plX*sy);if(tY<.15)continue;const x=Math.round((VWd/2)*(1+tX/tY)),y=Math.round(hz+(.5-f.z)*F/tY),sz=Math.max(1,Math.min(f.big?6:3,Math.round((f.big?.12:.05)*F/tY)));
     if(x<0||x>=VWd||tY>=zb[Math.min(VWd-1,Math.max(0,x))])continue;for(let b=0;b<sz;b++)for(let a=0;a<sz;a++){const yy=y+b,xx=x+a;if(xx>=0&&xx<VWd&&yy>=0&&yy<vh)buf[yy*VWd+xx]=f.col;}}
@@ -2900,10 +2917,11 @@ function dgWeapon(vh){const P=DG,w=P.cur,bobX=Math.cos(P.walk*.5)*3*((DGI.y||DGI
     const punch=sw>0?Math.sin(sw*Math.PI):0;
     ctx.save();ctx.translate(lx+cw+(P.punchL?punch*22:0),y-(P.punchL?punch*26:0));ctx.scale(-1,1);ctx.drawImage(c,0,0,cw,ch);ctx.restore();
     ctx.drawImage(c,rx-(!P.punchL?punch*22:0),y-(!P.punchL?punch*26:0),cw,ch);}
+  else if(w==='rang'&&P.rangOut){}
   else{const c=w==='saw'?DG_VIEW.saw[(aHeld?(time*20|0):(time*4|0))%2]:DG_VIEW[w],cw=c.width*3,ch=c.height*3;const shake=(w==='saw'&&aHeld)||(w==='blaster'&&aHeld)?(R()-.5)*3:0;
     ctx.drawImage(c,Math.round(VW/2-cw/2+12+bobX+shake),Math.round(vh-ch+14+bobY+P.recoil*8+shake),cw,ch);
     if(w==='blaster'&&aHeld){ctx.globalAlpha=.8;fill(ctx,'#ffb020',VW/2+4+bobX,vh-ch+8+bobY,10,6);ctx.globalAlpha=1;}
-    if(P.recoil>.6&&w!=='saw'&&w!=='blaster'){ctx.globalAlpha=.85;const col={harpoon:'#9ef0ff',bow:'#ffffff',cannon:'#ffe27a',lance:'#c8a2ff'}[w];fill(ctx,col,VW/2+6+bobX,vh-ch+4+bobY,12,8);ctx.globalAlpha=1;}}
+    if(P.recoil>.6&&{harpoon:1,bow:1,cannon:1,lance:1,sling:1,frost:1}[w]){ctx.globalAlpha=.85;const col={harpoon:'#9ef0ff',bow:'#ffffff',cannon:'#ffe27a',lance:'#c8a2ff',sling:'#e8dcc4',frost:'#9ef0ff'}[w];fill(ctx,col,VW/2+6+bobX,vh-ch+4+bobY,12,8);ctx.globalAlpha=1;}}
   ctx.restore();}
 function dgHearts(x,y,sc){for(let i=0;i<5;i++){const v=DG.hp-i*2,hx=x+i*8*sc;ctx.drawImage(SM.heartE,hx,y,SM.heartE.width*sc,SM.heartE.height*sc);
     if(v>=2)ctx.drawImage(SM.heart,hx,y,SM.heart.width*sc,SM.heart.height*sc);else if(v===1)ctx.drawImage(SM.heart,0,0,4,SM.heart.height,hx,y,4*sc,SM.heart.height*sc);}}
@@ -2936,7 +2954,7 @@ function dgHint(){const P=DG;if(P.bigMap)return`${KA} or tap to close the map`;i
     case'imm':return`${KA} CATCH the ${SPECIES[f.e.id].name}!`;case'elev':return`${KA} Ride the elevator up`;}}
   return`${KA} ${DG_WPN[DG.cur].hold?'hold to ':''}${DG.cur==='fists'?'punch':'attack'} · ${KB} swap weapon · ◀ ▶ turn`;}
 function dgKey(k,down){if(!DG)return false;if(k==='q'||k==='Q'){DGI.sq=down;}else if(k==='e'||k==='E'){DGI.se=down;}else if((k==='m'||k==='M'||k==='Tab')&&down){DG.bigMap=!DG.bigMap;sfx('blip');}
-  else if(down&&k>='1'&&k<='7'){const w=DG_ORDER[+k-1];if(w&&dgOwn(w)){DG.cur=w;dgSaveW();DG.swapT=.25;sfx('blip');}else return true;}else return false;DGI.strafe=(DGI.se?1:0)-(DGI.sq?1:0);return true;}
+  else if(down&&/^[0-9]$/.test(k)){const w=DG_ORDER[k==='0'?9:+k-1];if(w&&dgOwn(w)){DG.cur=w;dgSaveW();DG.swapT=.25;sfx('blip');}else return true;}else return false;DGI.strafe=(DGI.se?1:0)-(DGI.sq?1:0);return true;}
 cvs.addEventListener('pointerdown',e=>{if(scene!=='dungeon'||!DG||buildMode)return;const r=cvs.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*VW,y=(e.clientY-r.top)/r.height*VH;
   if(DG.bigMap){DG.bigMap=false;return;}const m=DG.miniR;if(m&&x>=m[0]-4&&x<=m[0]+m[2]+4&&y>=m[1]-4&&y<=m[1]+m[3]+4){DG.bigMap=true;sfx('blip');}});
 /* -- the cave mouth in Willowbrook, north of the market -- */

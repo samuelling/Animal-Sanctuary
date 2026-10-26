@@ -62,6 +62,7 @@ A few notes:
 50. Can we have a cave entrance where there’s an animal sanctuary world, referred to as the immortal dungeon, which is a 3d, doom-like underground labyrinth world (with a minimap) and you have to hunt for the most dangerous of animals, which you can catch only if you have the right, ultra powerful weapons.  Which cost a lot of money to get.  When you first get down there, all you have is your fists, until you stumble upon a chainsaw.  There are some dangerous animals you can kill more easily, and some that are kind and don’t need to be killed.  But a lot of murder animals down there.  And to get out, there are elevators all over the labyrinth that bring you back up to weird places in the main game.   Let’s also add a port, where one day there will be a boat you can purchase, to catch the most gargantuan of sea creatures, for an aquarium that comes later.
 51. If you die down there, you don’t actually die, you just pass out, and wake up ejected back in the main land, with some of your money taken from you.
 52. Down there, there’s a giant underground arena with an enormous monster animal
+53. Maybe add a few middle level weapons that are more affordable
 
 ---
 

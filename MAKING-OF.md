@@ -63,6 +63,9 @@ A few notes:
 51. If you die down there, you don’t actually die, you just pass out, and wake up ejected back in the main land, with some of your money taken from you.
 52. Down there, there’s a giant underground arena with an enormous monster animal
 53. Maybe add a few middle level weapons that are more affordable
+54. Ok so there are a ton more games now at the repo to add to arcade..  wanna scan and run them by me for addition?
+55. Megamax, megazine bbs, mise en place, slapanimal
+56. I love the beaded curtain that had big apple Sam, frisky, and demoseed
 
 ---
 

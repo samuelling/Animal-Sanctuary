@@ -981,20 +981,38 @@ function drawWtPortal(){if(sanctRank()<2)return;const x=WTP.x,y=WTP.y-6;
 const CABS=[
  {name:'Brick Ninja',url:'https://samuelling.github.io/Brick-Ninja/',col:'#e8553a',by:'A game idea by Everett.',desc:'A ninja made of bricks fights through twelve worlds to bring back the Sun Lantern. Up to four ninjas can play together.',i:1,art:'ninja'},
  {name:'Toilet Goalie',url:'https://samuelling.github.io/toilet-goalie/',col:'#5ab4f0',by:'A game idea by Everett.',desc:'Flick the ball past a toilet goalie that shoots water. Watch out for giants, fly traps and toilet-paper zombies!',i:3,art:'goalie'},
- {name:'Townies',url:'https://samuelling.github.io/Townies/',col:'#6cc24a',desc:'Run the real Watertown, SimCity style. Build, zone, and keep the townies happy.',i:5,art:'townies'},
- {name:'Decay Envelope',url:'https://samuelling.github.io/Decay-Envelope/',col:'#b49af4',desc:'Roll through a giant synthesizer and patch it back to life, one module at a time.',i:7,art:'synth'},
- {name:'Bell Weathered',url:'https://samuelling.github.io/Bell-weathered/',col:'#7cc2f4',desc:"A musical instrument that plays today's weather, the time of day and the phase of the moon.",i:9,art:'bell'},
- {name:'Mind Arcade',url:'https://samuelling.github.io/Mind-Arcade/',col:'#ffd860',desc:'Quick brain games for memory, speed and focus that change as you play.',i:11,art:'mind'},
- {name:'Crush Commando',url:'https://samuelling.github.io/crush-commando/',col:'#ff5a7a',desc:'A run-and-gun platformer in the style of Contra: blast your way down through one man\'s memories, all the way to the Heartbreak Core.',i:13,art:'run'},
- {name:'Animal Sanctuary',url:null,col:'#f6a8c4',by:'By Maya & Sam.',desc:'Wait a second… you are already playing this one!',i:15,art:'self'}];
-const ARC_NPC=[{id:'joy',x:16*16+8,y:6*16+12}];
+ {name:'MegaMax',url:'https://samuelling.github.io/EverettGames/games/megamax/',col:'#ff2a8a',by:'A game idea by Everett.',desc:'Arena fights where every fighter you beat joins your team. Catch buddies on Buddy Island to grow stronger, then let loose the MEGAMAX super move. Be the fighter, or be the Coach and call the moves.',i:5,art:'megamax'},
+ {name:'Slapanimal',url:'https://samuelling.github.io/Slapanimal/',col:'#ff8c2b',by:'A game idea by Everett.',desc:'Pick an animal and race to the flag. Spikes hurt you, and then you hurt yourself. Ouch pays, and coins unlock more animals. Try Spike Meadow and Halloween Night.',i:7,art:'slap'},
+ {name:'Townies',url:'https://samuelling.github.io/Townies/',col:'#6cc24a',desc:'Run the real Watertown, SimCity style. Build, zone, and keep the townies happy.',i:9,art:'townies'},
+ {name:'Decay Envelope',url:'https://samuelling.github.io/Decay-Envelope/',col:'#b49af4',desc:'Roll through a giant synthesizer and patch it back to life, one module at a time.',i:11,art:'synth'},
+ {name:'Bell Weathered',url:'https://samuelling.github.io/Bell-weathered/',col:'#7cc2f4',desc:"A musical instrument that plays today's weather, the time of day and the phase of the moon.",i:13,art:'bell'},
+ {name:'Mind Arcade',url:'https://samuelling.github.io/Mind-Arcade/',col:'#ffd860',desc:'Quick brain games for memory, speed and focus that change as you play.',i:15,art:'mind'},
+ {name:'Mise en Place',url:'https://samuelling.github.io/Mise-en-Place/',col:'#6cc24a',desc:'A busy kitchen, Overcooked style. Keep every pot and every ticket on time through three shifts. (Secretly, it is measuring how you split your attention.)',i:17,art:'chef'},
+ {name:'Crush Commando',url:'https://samuelling.github.io/crush-commando/',col:'#ff5a7a',desc:'A run-and-gun platformer in the style of Contra: blast your way down through one man\'s memories, all the way to the Heartbreak Core.',i:19,art:'run'},
+ {name:'MEGAzine BBS',url:'https://samuelling.github.io/BBS/',col:'#3ad46a',desc:'Dial in to a real 1990s bulletin board through a screeching virtual modem. Post messages, send mail and trade files. If every phone line is busy, you get a busy signal!',i:21,art:'bbs'},
+ {name:'Animal Sanctuary',url:null,col:'#f6a8c4',by:'By Maya & Sam.',desc:'Wait a second… you are already playing this one!',i:23,art:'self'},
+ {name:'Big Apple Sam',url:'https://samuelling.github.io/Big-Apple-Sam/',col:'#ffd860',back:'crt',desc:'A night skyline, After Dark style. Zoom into any lit window to find a little room with people living out their evening. Fast-forward and watch the years go by.',i:28,art:'city'},
+ {name:'Frisky',url:'https://samuelling.github.io/Musicbox/',col:'#c8915a',back:'box',by:'Named for Frisky, a golden hamster from long ago.',desc:'A music box you crank with your finger or wind up. Every tine, pin and creak of the wooden box is modelled for real. Light the candle to begin.',i:30,art:'frisky'},
+ {name:'Demoseed 40K',url:'https://samuelling.github.io/DemoVoyager/demoseed/',col:'#5af0ff',back:'crt',desc:'Endless 1990s PC demos. Every seed unfolds into its own tracker song, demo group and effects, all squeezed into 40 kilobytes.',i:32,art:'demo'}];
+const ARC_NPC=[{id:'joy',x:24*16+8,y:7*16+12}];
+const ARC_W=34,ARC_PART=26,ARC_CUR=[4,6];/* back room: columns 27..32, bead curtain in the partition at rows 4-6 */
 let arcadeWorld=null,gameOpen=false;
-function buildArcade(){const w=18,h=10,m=new Uint8Array(w*h).fill(T.AFLOOR);
-  for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(j<=1||i===0||i===w-1||(j===h-1&&i!==8&&i!==9))m[j*w+i]=T.AWALL;
+function buildArcade(){const w=ARC_W,h=10,m=new Uint8Array(w*h).fill(T.AFLOOR);
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(j<=1||i===0||i===w-1||(j===h-1&&i!==12&&i!==13)||(i===ARC_PART&&(j<ARC_CUR[0]||j>ARC_CUR[1])))m[j*w+i]=T.AWALL;
   const W={kind:'arcade',w,h,m,ground:T.AFLOOR,seed:31};W.solid=makeSolid(W);for(const c of CABS)W.solid[2*w+c.i]=1;renderMap(W);arcadeWorld=W;}
-function goArcade(){if(buildMode)closeBuild();if(!arcadeWorld)buildArcade();scene='arcade';world=arcadeWorld;ambient=[];player.x=9*16;player.y=8*16+12;player.face='up';snapCam();
-  if(!state.seenArcade){state.seenArcade=true;toast('Pixel Palace Arcade! Every cabinet is a real game. Walk up to one and press A.');}save();}
-function drawCabinet(c){const x=c.i*16+1,y=18,t=(time*3|0)%4,sx=x+3,sy=y+8;
+function goArcade(){if(buildMode)closeBuild();if(!arcadeWorld)buildArcade();scene='arcade';world=arcadeWorld;ambient=[];player.x=13*16;player.y=8*16+12;player.face='up';snapCam();
+  if(!state.seenArcade){state.seenArcade=true;state.seenBackRoom=true;toast('Pixel Palace Arcade! Every cabinet is a real game. Walk up to one and press A.');}
+  else if(!state.seenBackRoom){state.seenBackRoom=true;toast('New at the Pixel Palace: MegaMax, Slapanimal, Mise en Place and MEGAzine BBS, plus a back room behind the bead curtain!');}save();}
+const softGlow=(x,y,r,col,a)=>{for(let k=4;k>=1;k--){ctx.globalAlpha=a*(5-k)/10;fill(ctx,col,Math.round(x-r*k/4),Math.round(y-r*k/4*.7),Math.round(r*k/2),Math.round(r*k/4*1.4));}ctx.globalAlpha=1;};
+function drawBackRoom(){const x0=(ARC_PART+1)*16,y0=32;ctx.fillStyle='rgba(8,4,26,.68)';ctx.fillRect(x0,y0,(ARC_W-ARC_PART-2)*16,7*16);
+  for(const c of CABS)if(c.back){softGlow(c.i*16+8,c.back==='box'?24:30,16,c.col,.16+.04*Math.sin(time*2.3+c.i));ctx.globalAlpha=.12;fill(ctx,c.col,c.i*16-2,51,20,4);fill(ctx,c.col,c.i*16+1,55,14,2);ctx.globalAlpha=1;}
+  const lx=(ARC_W-2)*16+6;softGlow(lx+3,y0+82,14,'#ff7aa8',.2+.04*Math.sin(time*1.3));fill(ctx,'#2a2250',lx+1,y0+86,4,12);fill(ctx,'#1a1424',lx-1,y0+97,8,2);fill(ctx,'#ff7aa8',lx-2,y0+79,10,7);fill(ctx,'#ffb0d0',lx-1,y0+80,8,2);}
+function drawCurtain(){const x=ARC_PART*16,y0=ARC_CUR[0]*16,H=(ARC_CUR[1]-ARC_CUR[0]+1)*16,cols=['#ff5ab4','#ffd860','#5af0ff','#b49af4','#7cf0b8'];
+  fill(ctx,'#5a3a24',x-1,y0-2,18,3);fill(ctx,'#ffd860',x+5,y0-6,6,3);
+  const near=Math.abs(player.x-(x+8))<14&&player.y>y0-4&&player.y<y0+H+12,push=near?Math.sign(player.x-(x+8))||1:0;
+  for(let k=0;k<6;k++){const sx=x+1+k*3;for(let b=0;b<H-2;b+=3){const f=b/H,sw=Math.round(Math.sin(time*2+k*1.3+b*.15)*f*1.2+(near?push*-f*4*Math.sin(Math.min(1,(k+1)/6)*3.14):0));
+    fill(ctx,cols[(k+((b/3)|0))%cols.length],sx+sw,y0+1+b,2,2);}}}
+function drawCabinet(c){if(c.back)return drawAttraction(c);const x=c.i*16+1,y=18,t=(time*3|0)%4,sx=x+3,sy=y+8;
   ctx.globalAlpha=.14+.08*Math.sin(time*3+c.i);fill(ctx,c.col,x-3,y+4,20,16);ctx.globalAlpha=1;
   fill(ctx,'rgba(0,0,0,.35)',x,y+29,14,3);fill(ctx,'#1a1424',x,y,14,30);fill(ctx,c.col,x+1,y+1,12,28);fill(ctx,'rgba(0,0,0,.18)',x+10,y+1,3,28);
   fill(ctx,'#fff8e8',x+2,y+2,10,4);fill(ctx,c.col,x+3,y+3,8,2);fill(ctx,'#1a1424',x+2,y+7,10,9);
@@ -1006,9 +1024,28 @@ function drawCabinet(c){const x=c.i*16+1,y=18,t=(time*3|0)%4,sx=x+3,sy=y+8;
   else if(c.art==='bell'){S(0,0,8,7,'#2a3070');S(1,1,2,2,'#ffd860');S(4,2,3,2,'#e2ecff');S(5,4,1,2,'#c89a3a');if(t%2)S(2,5,1,1,'#9ef0f0');}
   else if(c.art==='run'){S(0,6,8,1,'#5a3a6a');S(1,4-(t%2),2,2,'#ffd860');S(3,4-(t%2),1,1,'#e8e4f0');S(4+t%3,4,1,1,'#ff5a7a');S(6,1,2,2,'#ff5a7a');S(6,1,1,1,'#ffb0c0');}
   else if(c.art==='mind'){for(let k=0;k<4;k++)S(1+(k%2)*4,1+((k/2)|0)*3,2,2,k===t?'#ffd860':'#3a3060');}
-  else{S(2,2,4,4,'#f6a8c4');S(3,3,1,1,'#1a1424');S(5,3,1,1,'#1a1424');S(1,1,1,2,'#f6a8c4');S(6,1,1,2,'#f6a8c4');}
+  else cabArt(c,S,t);
   fill(ctx,'#3a3448',x+1,y+17,12,4);fill(ctx,'#e8553a',x+3,y+18,2,2);fill(ctx,'#ffd860',x+8,y+18,2,1);fill(ctx,'#5ab4f0',x+10,y+18,2,1);
   fill(ctx,'rgba(0,0,0,.25)',x+2,y+22,10,6);fill(ctx,'#ffd860',x+6,y+24,2,2);}
+function cabArt(c,S,t){
+  if(c.art==='megamax'){S(0,0,8,7,'#3b1c7a');S(3,0,2,7,'#ffd23f');S(0,3,8,1,'#ffd23f');S(1,3-(t%2),2,3,'#ff2a8a');S(5,3-((t+1)%2),2,3,'#5ab4f0');if(t===3)S(3,2,2,2,'#ffffff');}
+  else if(c.art==='slap'){S(0,0,8,7,'#9ad8ff');S(0,6,8,1,'#3f8a3a');S(5,5,1,1,'#a4a4ae');S(6,5,1,1,'#a4a4ae');S(7,0,1,6,'#e8e4f0');S(6,0,1,2,'#ff5a3a');S(1+(t%3),4,2,2,'#ff8c2b');if(t===2)S(1,2,1,1,'#ffd860');}
+  else if(c.art==='chef'){S(0,0,8,7,'#3a3a48');S(0,4,8,3,'#a4a4ae');S(1,3,2,2,'#1a1424');S(5,3,2,2,'#1a1424');S(1,5,2,1,t%2?'#ff5a3a':'#ffd860');S(5,5,2,1,t%2?'#ffd860':'#ff5a3a');S(3,1,2,1,'#ffffff');S(3,0,2,1,'#ffffff');S(1,1+(t%2),1,1,'#e2ecff');}
+  else if(c.art==='bbs'){S(0,0,8,7,'#04140a');for(let k=0;k<3;k++)S(0,1+k*2,(k*3+t*2)%7+1,1,'#3ad46a');if(t%2)S(7,5,1,1,'#3ad46a');}
+  else if(c.art==='city'){S(0,0,8,7,'#0a0a2a');S(0,3,2,4,'#141432');S(2,1,3,6,'#1a1a3c');S(5,2,3,5,'#141432');for(const[a,b,k]of[[0,4,0],[1,5,1],[3,2,2],[2,4,3],[4,5,0],[6,3,1],[5,5,2],[7,4,3]])if(k!==t)S(a,b,1,1,'#ffd860');if(t===1)S(6,0,1,1,'#ffffff');}
+  else if(c.art==='demo'){S(0,0,8,7,'#000000');for(let k=0;k<8;k++)S(k,(Math.round(Math.sin(k*.8+time*6)*2)+3),1,1,['#ff5ab4','#ffd860','#5af0ff','#7cf0b8'][(k+t)%4]);S(t*2,6,2,1,'#5af0ff');}
+  else{S(2,2,4,4,'#f6a8c4');S(3,3,1,1,'#1a1424');S(5,3,1,1,'#1a1424');S(1,1,1,2,'#f6a8c4');S(6,1,1,2,'#f6a8c4');}}
+/* back room attractions: an old CRT monitor on a little table, or a music box on a pedestal */
+function drawAttraction(c){const x=c.i*16+1,y=18,t=(time*3|0)%4;
+  if(c.back==='box'){fill(ctx,'rgba(0,0,0,.35)',x+1,y+29,12,3);fill(ctx,'#3a2a3a',x+3,y+16,8,13);fill(ctx,'#5a4058',x+4,y+16,6,13);
+    fill(ctx,'#1a1424',x,y+8,14,9);fill(ctx,'#a8743e',x+1,y+9,12,7);fill(ctx,'#c8915a',x+1,y+9,12,2);fill(ctx,'#ffd860',x+6,y+12,2,2);
+    const a=time*3;fill(ctx,'#e8d8b0',x+13,y+12,1,1);fill(ctx,'#e8d8b0',x+13+Math.round(Math.cos(a)*2),y+12+Math.round(Math.sin(a)*2),1,1);
+    fill(ctx,'#fff8e8',x+2,y+5,2,3);fill(ctx,'#ffd860',x+2,y+3-(t%2),2,2);ctx.globalAlpha=.25+.1*Math.sin(time*7);fill(ctx,'#ffd860',x-2,y,10,8);ctx.globalAlpha=1;
+    if(t<2){fill(ctx,'#fff8e8',x+9,y+2-t,1,2);fill(ctx,'#fff8e8',x+10,y+1-t,1,1);}return;}
+  const sx=x+3,sy=y+6,S=(a,b,w2,h2,col)=>fill(ctx,col,sx+a,sy+b,w2,h2);
+  fill(ctx,'rgba(0,0,0,.35)',x,y+29,14,3);fill(ctx,'#4a3424',x,y+18,14,3);fill(ctx,'#3a2818',x+1,y+21,2,9);fill(ctx,'#3a2818',x+11,y+21,2,9);
+  fill(ctx,'#1a1424',x+1,y+3,12,14);fill(ctx,'#c8c0a8',x+2,y+4,10,12);fill(ctx,'#a8a088',x+2,y+14,10,2);fill(ctx,'#1a1424',x+2,y+5,10,9);S(0,0,8,7,'#0a0818');
+  cabArt(c,S,t);fill(ctx,c.col,x+10,y+15,1,1);fill(ctx,'#1a1424',x+4,y+17,6,1);fill(ctx,'#c8c0a8',x+3,y+18,8,1);}
 function cabPanel(c){openPanel(()=>head(c.name)+`<p class="ab">${c.desc}</p>${c.by?`<p class="muted">${c.by}</p>`:''}`+
   (c.url?`<button class="pbtn go" type="button" data-act="play" data-autofocus>▶ Insert coin and play</button><p class="muted" style="font-size:13px">Free play! Opens ${c.url.replace('https://','')}</p>`:`<button class="pbtn go" type="button" data-act="self" data-autofocus>▶ Play (go one game deeper)</button><p class="muted" style="font-size:13px">${DEPTH?`You are already ${DEPTH} game${DEPTH>1?'s':''} deep.`:'A real copy of this game, inside this game.'} Nothing you do in there is saved.</p>`),
   a=>{if(a==='play'){closePanel();playExternal(c);}else if(a==='self'){closePanel();playSelf();}});}
@@ -1374,11 +1411,11 @@ const NPCINFO={
  gemma:{short:'Gemma',name:'Gemma',pal:{H:'#7a4a2a',T:'#f29a3a',D:'#3a6a3a'},idle:['Happy Halloween! Grab a treat for the road.',"Don't let Papa Bones add any more skeletons. Okay… maybe one more."]},
  mara:{short:'Mara',name:'Mara',pal:{H:'#3a2418',T:'#6a4cb8',D:'#2a2a3a'},idle:['Welcome to my game! Do you like the sanctuary?',"I'm a witch this year. Hee hee!"]},
  remy:{short:'Remy',name:'Remy',pal:{H:'#1a1424',T:'#1a1424',D:'#1a1424'},idle:["Meow! I'm a black cat this year.",'The spiderwebs are my favorite part.']},
- rhett:{short:'Rhett',name:'Rhett',pal:{H:'#1a1424',T:'#1a1424',D:'#1a1424'},idle:["Hi-yah! I'm a ninja!","Have you played Toilet Goalie? It's at the arcade!",'Brick Ninja is the best game ever! Hi-YAH!']},
+ rhett:{short:'Rhett',name:'Rhett',pal:{H:'#1a1424',T:'#1a1424',D:'#1a1424'},idle:['MegaMax is at the arcade now! The fighter you beat joins your team!',"Hi-yah! I'm a ninja!","Have you played Toilet Goalie? It's at the arcade!",'Brick Ninja is the best game ever! Hi-YAH!']},
  tess:{short:'Tess',name:"Tess's Trinket Cart",pal:{H:'#c8641e',T:'#5ab4f0',D:'#5a3824'},idle:['Little treasures you can only find in Watertown!','Some trinkets are hidden around town. Keep your eyes open for purple glints.']},
  pop:{short:'Pop',name:'Pop',pal:{H:'#e8e4f0',T:'#7a8a5a',D:'#5a5a6a'},idle:['']},
  gran:{short:'Gran',name:'Gran',pal:{H:'#c8c4d0',T:'#c890b0',D:'#6a5a7a'},idle:['']},
- joy:{short:'Joy',name:'Pixel Palace Arcade',pal:{H:'#c84a7a',T:'#7cf0b8',D:'#2a2a3a'},idle:['Every cabinet in here is a real game. Walk up and press A!','Free play today. Have fun!','Brick Ninja and Toilet Goalie were dreamed up by a kid named Everett.']},
+ joy:{short:'Joy',name:'Pixel Palace Arcade',pal:{H:'#c84a7a',T:'#7cf0b8',D:'#2a2a3a'},idle:['Psst. Through the bead curtain is the back room: a city that never sleeps, a music box, and endless demos.','New cabinets! MegaMax and Slapanimal are Everett games, just like Brick Ninja.','The BBS cabinet dials a real bulletin board. Listen to that modem sing!','Every cabinet in here is a real game. Walk up and press A!','Free play today. Have fun!','Brick Ninja and Toilet Goalie were dreamed up by a kid named Everett.']},
 };
 const NPC_POS=[{id:'theo',x:21*16+8,y:19*16+12},{id:'hoot',x:32*16+8,y:16*16+12},{id:'nell',x:42*16+8,y:22*16+12},{id:'gus',x:16*16+8,y:19*16+12}];
 const HOST={trinkets:'tess',market:'mabel',builder:'bram',goods:'pip',bakery:'rosa',hall:'mayor'};
@@ -2101,7 +2138,7 @@ function label(t){switch(t.type){
 function idleHint(){if(scene==='zoo')return state.pens.some(p=>!zooWorld.penReach.has(p.id))?'Some habitats need a path next to them':countHoused()?'Gate to the wilds at the top · town through the bottom entrance':'Visit an empty habitat to give a creature a home';
   if(scene==='town')return'Willowbrook · the sanctuary is up the north road';
   if(scene==='home')return curHouse?`${state.houses[curHouse-1].name||HOUSES[state.houses[curHouse-1].kind].name} · tap Decorate · door at the bottom`:'Your cottage · tap Decorate to arrange things · door at the bottom';
-  if(scene==='arcade')return'Pixel Palace Arcade · walk up to a cabinet to play · door at the bottom';
+  if(scene==='arcade')return player.x>ARC_PART*16+8?'The back room · screensavers and curiosities · the bead curtain leads back':'Pixel Palace Arcade · walk up to a cabinet to play · back room behind the bead curtain · door at the bottom';
   if(wild&&wild.zone==='harbor')return'Saltwhistle Harbor · Captain Marlow is by the shack · trail to town at the top';
   const Z=ZONES[wild.zone],S=comp();
   if(wild.zone==='watertown'){const W=wild.W,k=Math.floor((player.y-4)/16)*W.w+Math.floor(player.x/16),n=W.nm[k],h=W.homeFX,hh=h&&Math.abs(player.x-h.cx)<72&&Math.abs(player.y-h.cy-40)<64;return`${hh?'🎃 The Halloween House on Irving Street':'📍 '+(n?WT_DATA.names[n]:'Watertown')}${S?` · ${S.name}: ${S.abName}`:' · portals home in the parks'}`;}return S?`${Z.name} · ${S.name}: ${S.abName}`:`${Z.name} · step on the portal to go home`;}
@@ -2360,7 +2397,7 @@ function draw(){if(scene==='dungeon'&&DG){ctx.setTransform(1,0,0,1,0,0);ctx.imag
   else if(scene==='town'){L.push({y:20,d:drawArch},{y:19*16,d:drawPlazaFountain});for(const b of BUILDINGS)L.push({y:(b.y+b.h)*16,d:()=>drawBuilding(b)});
     LOTS.forEach((l,n)=>{const k=houseOnLot(n);if(k>=0){const b=houseBuilding(k);L.push({y:(b.y+b.h)*16,d:()=>drawBuilding(b)});}else L.push({y:(l.y+5)*16+10,d:()=>drawLotSign(l)});});
     for(const n of npcsNow())L.push({y:n.y,d:()=>drawNPC(n)});L.push({y:POP_SPOT.y,d:drawPopScene});for(const v of townies)L.push({y:v.y,d:()=>drawTownie(v)});for(const t of TRAILS)L.push({y:t.y,d:()=>drawTrailSign(t)});L.push({y:WTP.y,d:drawWtPortal});L.push({y:5*16,d:drawCave});}
-  else if(scene==='arcade'){for(const c of CABS)L.push({y:3*16,d:()=>drawCabinet(c)});for(const n of ARC_NPC)L.push({y:n.y,d:()=>drawNPC(n)});}
+  else if(scene==='arcade'){L.push({y:-1e4,d:drawBackRoom});L.push({y:(ARC_CUR[1]+1)*16-2,d:drawCurtain});for(const c of CABS)L.push({y:3*16,d:()=>drawCabinet(c)});for(const n of ARC_NPC)L.push({y:n.y,d:()=>drawNPC(n)});}
   else if(scene==='home'){for(const it of HOME().items){const Fu=FURN[it.f];if(!Fu)continue;L.push({y:Fu.wall?-10:Fu.layer===0?-5:(it.j+fh(it))*16-1,d:()=>drawFurn(it)});}}
   else{L.push({y:wild.spawn.y,d:drawPortal});if(wild.W.harbor)harborLayers(L);for(const b of wild.bushes)if(b.has)L.push({y:b.j*16+15,d:()=>drawBerries(b)});
     for(const s of wild.sparks)L.push({y:s.y,d:()=>drawSparkle(s)});

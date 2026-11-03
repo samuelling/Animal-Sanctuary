@@ -66,5 +66,7 @@ The portal drops you in front of the Halloween House on Irving Street, with a sk
 
 **Controls:** arrows/WASD to move, Space = A (act), X = B (journal / close). On phones, use the on-screen D-pad and A/B buttons.
 
+**iPhone and iPad:** `ios/` holds an Xcode project that bundles the game into an app with native saves. See [ios/README.md](ios/README.md).
+
 
 Watertown map data © OpenStreetMap contributors (ODbL) and MassGIS, via Townies.

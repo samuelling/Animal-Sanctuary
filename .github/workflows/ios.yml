@@ -1,0 +1,38 @@
+name: iOS build
+
+# Check that the app's copy of the game matches index.html, then compile the iOS app
+# for a generic iPhone/iPad, unsigned (signing happens in Xcode on the Mac).
+on:
+  push:
+    paths: ['index.html', 'ios/**', '.github/workflows/ios.yml']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Xcode version
+        run: xcodebuild -version
+      - name: App's copy of the game is up to date
+        run: python3 ios/tools/sync_web.py --check
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild -project ios/AnimalSanctuary.xcodeproj -target AnimalSanctuary -sdk iphoneos \
+            -configuration Debug CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build.log | grep -E "error:|warning:|BUILD" || true
+          grep -q "BUILD SUCCEEDED" build.log
+      - name: Bundle contains the game
+        run: |
+          APP=$(find ios/build -name 'AnimalSanctuary.app' -type d | head -1)
+          echo "$APP"; ls -la "$APP" | head -40
+          test -n "$(find "$APP" -name index.html)"
+          test -n "$(find "$APP" -name ios-bridge.js)"
+          test -n "$(find "$APP" -name peerjs.min.js)"
+      - name: Surface warnings as annotations
+        if: always()
+        run: |
+          test -f build.log || exit 0
+          grep -E "^/.*\.swift:[0-9]+:[0-9]+: (warning|error):" build.log | sort -u | head -40 | \
+            sed -E 's#^.*/(AnimalSanctuary)/([^:]+):([0-9]+):[0-9]+: (warning|error): (.*)$#::\4 file=ios/\1/\2,line=\3::\5#' || true

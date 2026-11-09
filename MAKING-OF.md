@@ -67,6 +67,7 @@ A few notes:
 55. Megamax, megazine bbs, mise en place, slapanimal
 56. I love the beaded curtain that had big apple Sam, frisky, and demoseed
 57. can we start prepping this one for ios?
+58. Add Christmas decorations when it’s December in the game
 
 ---
 

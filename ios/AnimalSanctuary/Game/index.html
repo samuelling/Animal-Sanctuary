@@ -570,21 +570,20 @@ const realSeason=()=>{const m=new Date().getMonth();return m>=2&&m<=4?0:m>=5&&m<
 function calOf(){if(!state.cal)state.cal={season:realSeason(),day:1,year:1,t:0};return state.cal;}
 function nextDay(){const c=calOf();c.t=0;c.abs=(c.abs||0)+1;c.day++;if(c.day>SEASON_DAYS){c.day=1;c.season=(c.season+1)%4;if(c.season===0)c.year++;}if(NET.role!=='guest')lifeDay();}
 /* ================= DECEMBER =================
-   The game's calendar has seasons, not months, so "December" is the first four days of Winter,
-   with Christmas Day on Winter day 4. The real December decorates the game too, so the
-   sanctuary is festive whenever the family is. */
+   December follows the real calendar: the decorations go up when it is really December
+   outside and the game's own season is Winter too. The present under the town tree is there
+   from the real Christmas Day (Dec 25) to the end of the month, once a year. */
 let XMAS=false,_rmT=0,_rm=-1,_rd=0;
 const realMD=()=>{if(Date.now()-_rmT>10000){const d=new Date();_rm=d.getMonth();_rd=d.getDate();_rmT=Date.now();}return[_rm,_rd];};
-const gameDec=()=>{const c=calOf();return c.season===3&&c.day<=4;};
-const xmasNow=()=>gameDec()||realMD()[0]===11;
-const xmasDay=()=>{const c=calOf(),[m,d]=realMD();return(c.season===3&&c.day===4)||(m===11&&d>=24&&d<=26);};
-const xmasKey=()=>gameDec()?'g'+calOf().year:'r'+new Date().getFullYear();
+const xmasNow=()=>realMD()[0]===11&&calOf().season===3;
+const xmasDay=()=>{const[m,d]=realMD();return m===11&&d>=25;};
+const xmasKey=()=>'r'+new Date().getFullYear();
 const xmasS=()=>state.xmas||(state.xmas={gift:{},open:{}});
 function applyXmas(announce){XMAS=xmasNow();buildTown();if(scene==='town'){world=townWorld;
     if(XMAS&&player.y>16*16&&player.y<18*16+12&&player.x>17*16&&player.x<20*16+8)player.y=18*16+14;}
   if(!XMAS||NET.role==='guest')return;const X=xmasS(),k=xmasKey();
   if(!X.gift[k]){X.gift[k]=1;addInv('f:xtree',1);addInv('f:xlights',1);addInv('f:xwreath',1);save();
-    if(announce){toast('🎄 December! The town is strung with lights, and there is a great big tree in the plaza.');toast('A holiday tree, twinkle lights and a wreath are in your bag for the cottage.');sfx('unlock');}}}
+    if(announce){toast('🎄 It\'s December, and winter has come to Willowbrook! The town is strung with lights, and there is a great big tree in the plaza.');toast('A holiday tree, twinkle lights and a wreath are in your bag for the cottage.');sfx('unlock');}}}
 function tickCal(dt){if(titleOpen||NET.role==='guest')return;const c=calOf();c.t+=dt;if(c.t>=DAY_LEN)nextDay();}
 const seasonOutdoor=()=>scene==='zoo'||scene==='town'||(scene==='wild'&&!!wild&&['meadow','plains','woods','watertown','harbor'].includes(wild.zone));
 function applySeason(announce){const prev=SEASON;SEASON=calOf().season;if(buildMode)closeBuild();
@@ -1230,7 +1229,7 @@ function nextToast(){const m=toastQ.shift();if(!m){toastBusy=false;return;}toast
   setTimeout(()=>{toastEl.classList.remove('on');setTimeout(nextToast,260);},Math.min(4200,1600+m.length*35));}
 let hintS='';function setHint(h){if(h!==hintS){hintS=h;hintEl.innerHTML=h;}}
 const KA='<span class="ka">A</span>',KB='<span class="kb">B</span>';
-let hudC=-1,hudB=-1,hudS='';function updHUD(){{const c=calOf(),t=`${XMAS?'🎄':SEAS[c.season].icon} ${c.day}/${SEASON_DAYS}`;if(t!==hudS){hudS=t;$('#seasonTxt').textContent=t;$('#seasonChip').title=`${SEAS[c.season].name}, day ${c.day} of ${SEASON_DAYS}`+(gameDec()?(c.day===4?' · Christmas Day':' · December'):XMAS?' · the holidays':'');}}const c=Math.floor(state.coins);if(c!==hudC){hudC=c;$('#coins').textContent=c;}if(state.berries!==hudB){hudB=state.berries;$('#berries').textContent=state.berries;}}
+let hudC=-1,hudB=-1,hudS='';function updHUD(){{const c=calOf(),t=`${XMAS?'🎄':SEAS[c.season].icon} ${c.day}/${SEASON_DAYS}`,tk=t+(XMAS?realMD()[1]:'');if(tk!==hudS){hudS=tk;$('#seasonTxt').textContent=t;$('#seasonChip').title=`${SEAS[c.season].name}, day ${c.day} of ${SEASON_DAYS}`+(XMAS?(realMD()[1]===25?' · Christmas Day':' · December'):'');}}const c=Math.floor(state.coins);if(c!==hudC){hudC=c;$('#coins').textContent=c;}if(state.berries!==hudB){hudB=state.berries;$('#berries').textContent=state.berries;}}
 function updCompChip(){const chip=$('#compChip');if(companion){const S=SPECIES[companion.sp];$('#icComp').src=sprURL(companion.sp,SPR[companion.sp][0]);$('#compName').textContent=S.abName;chip.hidden=false;}else chip.hidden=true;}
 
 /* ================= PARTICLES ================= */
@@ -1720,7 +1719,7 @@ const XMAS_LINES={mabel:'Fresh pine garland, straight from Whisperwood! Smell th
   pop:'When you were little, you would shake every present under the tree. Every single one.',
   gran:"Pop always put the star on top of the tree. I like to think he can see this one from wherever he is."};
 const XMAS_ANY=['Happy holidays!','Look at all the lights!','I love the big tree in the plaza this time of year.','Is that snow on your hat? Merry Christmas!'];
-const xmasLine=id=>{const c=calOf();if(xmasDay()&&Math.floor(Date.now()/9000)%3===0)return'Merry Christmas! Did you find your present under the town tree?';return XMAS_LINES[id]||XMAS_ANY[Math.floor(Date.now()/9000)%XMAS_ANY.length];};
+const xmasLine=id=>{if(xmasDay()&&Math.floor(Date.now()/9000)%3===0)return'Merry Christmas! Did you find your present under the town tree?';return XMAS_LINES[id]||XMAS_ANY[Math.floor(Date.now()/9000)%XMAS_ANY.length];};
 function npcAct(a,d){const q=QUESTS.find(x=>x.id===d.q);if(!q)return false;
   if(NET.role==='guest'&&(a==='accept'||a==='turnin')){if(a==='turnin'&&!q.ready())return false;sendCmd('quest',{a,q:q.id});sfx(a==='turnin'?'unlock':'blip');toast(a==='accept'?`New quest: ${q.title}`:q.thanks);return true;}
   if(a==='accept'){state.quests[q.id]='active';sfx('blip');toast(`New quest: ${q.title}`);if(q.onAccept)q.onAccept();save();return true;}
@@ -1831,7 +1830,7 @@ function santaHat(cx,y){fill(ctx,OUT,cx-4,y-2,8,4);fill(ctx,OUT,cx-3,y-4,7,2);fi
   fill(ctx,'#d8282e',cx-3,y-2,6,1);fill(ctx,'#d8282e',cx-2,y-3,5,1);fill(ctx,'#d8282e',cx,y-4,3,1);fill(ctx,'#b81e24',cx+2,y-4,1,1);
   fill(ctx,'#ffffff',cx-3,y-1,6,2);fill(ctx,'#ffffff',cx+3,y-5,2,2);}
 function xmasTree(){if(xmasDay()&&!xmasS().open[xmasKey()]){if(G('xmasopen',{}))return;xmasOpen();return;}
-  const c=calOf(),left=gameDec()?4-c.day:0;
+  const left=25-realMD()[1];
   toast(xmasS().open[xmasKey()]?'The lights twinkle. Somewhere, a sleigh bell jingles.':left>0?`Only ${left} more day${left>1?'s':''} until Christmas! There might be something under here for you…`:'The star on top shines all the way down the street.');sfx('blip');}
 function xmasOpen(){const X=xmasS(),k=xmasKey();if(!xmasDay()||X.open[k])return;X.open[k]=1;const coins=150+100*sanctRank();state.coins+=coins;addInv('f:snowglobe',1);save();sfx('unlock');
   toast(`🎁 Merry Christmas! A tag says "To our keeper, from the whole town." Inside: ${coins} coins and a snow globe for your cottage!`);}

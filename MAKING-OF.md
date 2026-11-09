@@ -69,6 +69,7 @@ A few notes:
 57. can we start prepping this one for ios?
 58. Add Christmas decorations when it’s December in the game
 59. Let’s make it December in real time, and when it syncs with winter in the game
+60. Let’s just force Christmas and hannukah stuff all around, independent of in game season, in real Dec
 
 ---
 
